@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Valmoré Collective - E-commerce Website
+
+A modern, full-featured e-commerce website for Valmoré Collective, a curated fashion clothing store.
+
+## Features
+
+- 🏠 **Homepage** with hero section and featured products
+- 🛍️ **Product Listing** with search, filter, and sort functionality
+- 📦 **Product Detail Pages** with image gallery, size/color selection, and add to cart
+- 🛒 **Shopping Cart** with quantity management and persistent storage
+- 💳 **Checkout** with form validation and order confirmation
+- 📱 **Responsive Design** - works seamlessly on all devices
+- 🎨 **Modern UI/UX** - clean, elegant design with smooth animations
+
+## Tech Stack
+
+- **Next.js 16** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+- **Lucide React** - Beautiful icon library
+- **React Context API** - State management for shopping cart
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ installed
+- npm or yarn package manager
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd valmore_collective
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the website.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+valmore_collective/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Homepage
+│   ├── products/          # Product pages
+│   ├── cart/              # Shopping cart page
+│   ├── checkout/          # Checkout page
+│   ├── about/             # About page
+│   └── contact/           # Contact page
+├── components/            # React components
+│   ├── Header.tsx         # Navigation header
+│   ├── Footer.tsx         # Footer component
+│   └── ProductCard.tsx    # Product card component
+├── contexts/              # React contexts
+│   └── CartContext.tsx    # Shopping cart state management
+├── lib/                   # Utility functions
+│   └── products.ts        # Product data and functions
+└── types/                 # TypeScript type definitions
+    └── index.ts           # Product and cart types
+```
 
-## Learn More
+## Features in Detail
 
-To learn more about Next.js, take a look at the following resources:
+### Shopping Cart
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Add products to cart with size and color selection
+- Update quantities
+- Remove items
+- Persistent storage using localStorage
+- Cart total calculation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Product Management
 
-## Deploy on Vercel
+- Product listing with search functionality
+- Category filtering
+- Sort by name, price (low to high, high to low)
+- Product detail pages with image gallery
+- Size and color variants
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Checkout Process
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Shipping information form
+- Payment information form
+- Form validation
+- Order confirmation
+
+## Customization
+
+### Adding Products
+
+Edit `lib/products.ts` to add or modify products. Each product should have:
+
+- id, name, description
+- price, images, category
+- sizes, colors, inStock status
+- optional featured flag
+
+### Styling
+
+The project uses Tailwind CSS. Modify the classes in components to change the design. The main color scheme is gray/black, but you can easily customize it.
+
+## Future Enhancements
+
+- User authentication
+- Product reviews and ratings
+- Wishlist functionality
+- Order history
+- Payment gateway integration
+- Admin dashboard
+- Product inventory management
+- Email notifications
+
+## License
+
+This project is open source and available under the MIT License.
+
+## Contact
+
+For questions or support, please contact info@valmorecollective.com
