@@ -165,7 +165,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-8">
         <Link
           href="/cart"
           className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-6 transition-colors"

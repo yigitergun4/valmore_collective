@@ -1,11 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthContextType } from '@/types';
+import { User, AuthContextType, StoredUser, ProviderProps } from '@/types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: ProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,8 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // In a real app, this would validate against a backend
     // For demo purposes, we'll check against localStorage
-    const users = JSON.parse(localStorage.getItem('valmore-users') || '[]');
-    const foundUser = users.find((u: any) => u.email === email && u.password === password);
+    const users: StoredUser[] = JSON.parse(localStorage.getItem('valmore-users') || '[]');
+    const foundUser = users.find((u: StoredUser) => u.email === email && u.password === password);
 
     if (foundUser) {
       const userData: User = {
@@ -51,14 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // In a real app, this would create a user in a database
-    const users = JSON.parse(localStorage.getItem('valmore-users') || '[]');
+    const users: StoredUser[] = JSON.parse(localStorage.getItem('valmore-users') || '[]');
     
     // Check if user already exists
-    if (users.some((u: any) => u.email === email)) {
+    if (users.some((u: StoredUser) => u.email === email)) {
       return false;
     }
 
-    const newUser = {
+    const newUser: StoredUser = {
       id: Date.now().toString(),
       email,
       name,

@@ -63,6 +63,21 @@ export const translations = {
       notFound: "Ürün bulunamadı",
       backToProducts: "Ürünlere Dön",
       selectSizeColor: "Lütfen beden ve renk seçiniz",
+      quickView: "Hızlı Bak",
+      noImage: "Görsel Yok",
+      freeShipping: "Ücretsiz Kargo",
+      addToFavorites: "Favorilere ekle",
+      currency: "TL",
+      sizeGuide: "Beden Rehberi",
+      productDescription: "Açıklama",
+      shippingReturns: "Kargo & İade",
+      freeShippingFrom: "30€ üzeri ücretsiz kargo",
+      returnPolicy: "30 gün iade hakkı",
+      share: "Paylaş",
+      categoryLabel: "Kategori:",
+      brandLabel: "Marka:",
+      relatedProducts: "İlgili Ürünler",
+      swipeMore: "Daha fazla ürün için kaydırın",
     },
     // Cart
     cart: {
@@ -261,6 +276,21 @@ export const translations = {
       notFound: "Product not found",
       backToProducts: "Back to Products",
       selectSizeColor: "Please select both size and color",
+      quickView: "Quick View",
+      noImage: "No Image",
+      freeShipping: "Free Shipping",
+      addToFavorites: "Add to favorites",
+      currency: "TL",
+      sizeGuide: "Size Guide",
+      productDescription: "Description",
+      shippingReturns: "Shipping & Returns",
+      freeShippingFrom: "Free shipping over 30€",
+      returnPolicy: "30 day return policy",
+      share: "Share",
+      categoryLabel: "Category:",
+      brandLabel: "Brand:",
+      relatedProducts: "Related Products",
+      swipeMore: "Swipe for more products",
     },
     // Cart
     cart: {
@@ -400,16 +430,31 @@ export const translations = {
 
 export function getTranslation(lang: Language, key: string): string {
   const keys = key.split(".");
-  let value: any = translations[lang];
+  let value: string | Record<string, unknown> | undefined = translations[lang];
 
   for (const k of keys) {
-    value = value?.[k];
+    if (typeof value === "object" && value !== null && k in value) {
+      value = value[k] as string | Record<string, unknown>;
+    } else {
+      value = undefined;
+    }
     if (value === undefined) {
       // Fallback to Turkish if translation not found
-      value = translations.tr;
+      let fallbackValue: string | Record<string, unknown> | undefined =
+        translations.tr;
       for (const k2 of keys) {
-        value = value?.[k2];
+        if (
+          typeof fallbackValue === "object" &&
+          fallbackValue !== null &&
+          k2 in fallbackValue
+        ) {
+          fallbackValue = fallbackValue[k2] as string | Record<string, unknown>;
+        } else {
+          fallbackValue = undefined;
+          break;
+        }
       }
+      value = fallbackValue;
       break;
     }
   }

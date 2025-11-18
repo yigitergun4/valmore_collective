@@ -2,18 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Language, getTranslation } from "@/lib/translations";
-
-interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-}
+import { LanguageContextType, ProviderProps } from "@/types";
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined
 );
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
+export function LanguageProvider({ children }: ProviderProps) {
   const [language, setLanguageState] = useState<Language>("tr");
 
   // Load language from localStorage on mount

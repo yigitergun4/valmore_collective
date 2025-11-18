@@ -1,11 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartItem, CartContextType, Product } from '@/types';
+import { CartItem, CartContextType, Product, ProviderProps } from '@/types';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children }: ProviderProps) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   // Load cart from localStorage on mount

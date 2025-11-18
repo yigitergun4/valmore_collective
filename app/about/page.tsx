@@ -7,7 +7,7 @@ export default function AboutPage() {
   
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-16">
         <h1 className="text-4xl font-serif font-bold text-primary-800 mb-8">{t('about.title')}</h1>
         
         <div className="prose prose-lg max-w-none">

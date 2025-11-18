@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Instagram, Facebook, Twitter } from "lucide-react";
+import { Instagram, Facebook } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { XIcon } from "./XIcon";
 
 export default function Footer() {
   const { t } = useLanguage();
 
   return (
     <footer className="bg-primary-800 text-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <h3 className="text-2xl font-serif font-bold text-white mb-4">
@@ -34,9 +35,9 @@ export default function Footer() {
               <a
                 href="#"
                 className="text-gray-300 hover:text-white transition-colors"
-                aria-label="Twitter"
+                aria-label="X"
               >
-                <Twitter className="w-5 h-5" />
+                <XIcon className="w-5 h-5" />
               </a>
             </div>
           </div>

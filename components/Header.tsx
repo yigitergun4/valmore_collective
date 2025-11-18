@@ -9,9 +9,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
   const { getTotalItems } = useCart();
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
@@ -19,15 +19,13 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-primary-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-2xl font-serif font-bold text-primary-700">
               Valmoré Collective
             </span>
           </Link>
-
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
@@ -54,10 +52,7 @@ export default function Header() {
               {t("nav.contact")}
             </Link>
           </nav>
-
-          {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
-            {/* Language Switcher */}
             <div className="relative">
               <button
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
@@ -69,7 +64,6 @@ export default function Header() {
                   {language}
                 </span>
               </button>
-
               {isLangMenuOpen && (
                 <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                   <button
@@ -101,8 +95,6 @@ export default function Header() {
                 </div>
               )}
             </div>
-
-            {/* Cart Icon */}
             <Link
               href="/cart"
               className="relative flex items-center justify-center w-10 h-10 text-gray-700 hover:text-primary-600 transition-colors"
@@ -114,8 +106,6 @@ export default function Header() {
                 </span>
               )}
             </Link>
-
-            {/* User Menu */}
             {user ? (
               <div className="relative">
                 <button
@@ -166,8 +156,6 @@ export default function Header() {
               </Link>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 text-gray-700 hover:text-primary-600"
@@ -180,8 +168,6 @@ export default function Header() {
             )}
           </button>
         </div>
-
-        {/* Mobile Navigation */}
         {isMenuOpen && (
           <nav className="md:hidden py-4 space-y-4 border-t border-primary-200">
             <Link
@@ -212,8 +198,6 @@ export default function Header() {
             >
               {t("nav.contact")}
             </Link>
-
-            {/* Language Switcher Mobile */}
             <div className="pt-4 border-t border-primary-200">
               <p className="px-2 text-xs font-semibold text-gray-500 mb-2 uppercase">
                 Dil / Language
@@ -247,7 +231,6 @@ export default function Header() {
                 </button>
               </div>
             </div>
-
             {user ? (
               <div className="pt-4 border-t border-primary-200">
                 <div className="px-2 py-2">
