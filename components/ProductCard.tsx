@@ -123,15 +123,17 @@ export default function ProductCard({ product }: ProductCardProps) {
 
                 <button
                   onClick={handleFavoriteClick}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all z-20 opacity-0 group-hover:opacity-100"
+                  className={`absolute top-2 right-2 p-1.5 backdrop-blur-sm rounded-full transition-all z-20 lg:opacity-0 lg:group-hover:opacity-100 ${
+                    isFavorited
+                      ? "bg-primary-600"
+                      : "bg-white/90 lg:hover:bg-white"
+                  }`}
                   aria-label={t("products.addToFavorites")}
                 >
                   <Heart
                     size={16}
                     className={`transition-colors ${
-                      isFavorited
-                        ? "fill-black text-black"
-                        : "text-black"
+                      isFavorited ? "fill-white text-white" : "text-primary-600"
                     }`}
                   />
                 </button>
@@ -182,7 +184,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                     {originalPrice.toFixed(2)} {t("products.currency")}
                   </span>
                 )}
-                <span className={`text-xs lg:text-sm font-bold ${hasDiscount ? "text-primary-600" : "text-black"}`}>
+                <span
+                  className={`text-xs lg:text-sm font-bold ${
+                    hasDiscount ? "text-primary-600" : "text-black"
+                  }`}
+                >
                   {product.price.toFixed(2)} {t("products.currency")}
                 </span>
               </div>

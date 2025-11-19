@@ -178,14 +178,14 @@ export default function ProductDetailPage() {
                   key={index}
                   className="relative w-full aspect-[3/4] overflow-hidden"
                 >
-                <Image
+                  <Image
                     src={img}
                     alt={`${product.name} - ${index + 1}`}
-                  fill
-                  className="object-cover"
+                    fill
+                    className="object-cover"
                     sizes="(min-width: 1024px) 40vw, 100vw"
                     priority={index === 0}
-                />
+                  />
                 </div>
               ))}
             </div>
@@ -206,36 +206,42 @@ export default function ProductDetailPage() {
             {/* Header Info */}
             <div className="mb-8">
               <div className="flex justify-between items-start mb-2">
-                <h1 className="text-4xl font-bold uppercase tracking-tight leading-none">
+                <h1 className="text-4xl font-bold uppercase tracking-tight leading-none text-black">
                   {product.name}
                 </h1>
                 <button
                   onClick={toggleFavorite}
-                  className="hover:opacity-60 transition-opacity"
+                  className="hover:text-primary-600 transition-colors"
                 >
                   <Heart
-                    className={`w-6 h-6 ${isFavorited ? "fill-black" : ""}`}
+                    className={`w-6 h-6 ${
+                      isFavorited
+                        ? "fill-primary-600 text-primary-600"
+                        : "text-primary-400"
+                    }`}
                   />
                 </button>
               </div>
-              <p className="text-2xl font-medium text-gray-900 mt-2">
+              <p className="text-2xl font-bold text-primary-700 mt-2">
                 {product.price.toFixed(2)} {t("products.currency")}
               </p>
-              <p className="text-sm text-gray-500 mt-2 font-medium">
+              <p className="text-xs text-gray-400 mt-1 font-medium uppercase tracking-wider">
                 REF. {product.id.substring(0, 8).toUpperCase()}
               </p>
             </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-600 leading-relaxed mb-10">
+            <p className="text-sm text-gray-700 leading-relaxed mb-10">
               {product.description}
             </p>
 
             {/* Color Selection */}
             <div className="mb-8">
-              <p className="text-xs font-bold uppercase tracking-widest mb-4 text-gray-400">
+              <p className="text-xs font-bold uppercase tracking-widest mb-4 text-gray-500">
                 {t("products.color")}:{" "}
-                <span className="text-black">{selectedColor || "Select"}</span>
+                <span className="text-primary-700">
+                  {selectedColor || "Select"}
+                </span>
               </p>
               <div className="flex flex-wrap gap-3">
                 {product.colors.map((color) => (
@@ -257,11 +263,13 @@ export default function ProductDetailPage() {
             {/* Size Selection */}
             <div className="mb-10">
               <div className="flex justify-between items-center mb-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
                   {t("products.size")}:{" "}
-                  <span className="text-black">{selectedSize || "Select"}</span>
+                  <span className="text-primary-700">
+                    {selectedSize || "Select"}
+                  </span>
                 </p>
-                <button className="flex items-center text-xs font-bold uppercase underline hover:opacity-60">
+                <button className="flex items-center text-xs font-bold uppercase underline hover:text-primary-600 transition-colors text-gray-700">
                   <Ruler className="w-3 h-3 mr-1" /> {t("products.sizeGuide")}
                 </button>
               </div>
@@ -298,22 +306,22 @@ export default function ProductDetailPage() {
                   : t("products.outOfStock")}
               </button>
 
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-100">
+              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
                 <div className="flex flex-col items-center text-center gap-2">
-                  <Truck className="w-5 h-5 text-gray-400" />
-                  <span className="text-[10px] font-bold uppercase text-gray-500">
+                  <Truck className="w-5 h-5 text-primary-600" />
+                  <span className="text-[10px] font-bold uppercase text-gray-600">
                     Free Shipping
                   </span>
                 </div>
                 <div className="flex flex-col items-center text-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-gray-400" />
-                  <span className="text-[10px] font-bold uppercase text-gray-500">
+                  <ShieldCheck className="w-5 h-5 text-primary-600" />
+                  <span className="text-[10px] font-bold uppercase text-gray-600">
                     Secure Payment
                   </span>
                 </div>
-                <div className="flex flex-col items-center text-center gap-2">
-                  <Share2 className="w-5 h-5 text-gray-400" />
-                  <span className="text-[10px] font-bold uppercase text-gray-500">
+                <div className="flex flex-col items-center text-center gap-2 cursor-pointer hover:text-primary-600 transition-colors">
+                  <Share2 className="w-5 h-5 text-primary-600" />
+                  <span className="text-[10px] font-bold uppercase text-gray-600">
                     Share
                   </span>
                 </div>
@@ -336,11 +344,13 @@ export default function ProductDetailPage() {
           <div className="flex gap-3 pointer-events-auto">
             <button
               onClick={toggleFavorite}
-              className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white"
+              className={`p-2 backdrop-blur-md rounded-full transition-colors ${
+                isFavorited ? "bg-primary-600" : "bg-white/20"
+              } text-white`}
             >
               <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
             </button>
-            <button className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white">
+            <button className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors">
               <Share2 className="w-6 h-6" />
             </button>
           </div>
@@ -386,8 +396,8 @@ export default function ProductDetailPage() {
 
         {/* Bottom Info Bar (Always Visible) */}
         <div className="fixed bottom-0 left-0 right-0 z-30 p-6 pb-8 text-white pointer-events-none">
-          <div className="flex justify-between items-end mb-4">
-            <div>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
               <h2 className="text-2xl font-bold uppercase tracking-tight shadow-black drop-shadow-md">
                 {product.name}
               </h2>
@@ -395,6 +405,14 @@ export default function ProductDetailPage() {
                 {product.price.toFixed(2)} {t("products.currency")}
               </p>
             </div>
+            <button
+              onClick={toggleFavorite}
+              className={`pointer-events-auto p-2.5 backdrop-blur-md rounded-full transition-all ml-3 ${
+                isFavorited ? "bg-primary-600" : "bg-white/20"
+              }`}
+            >
+              <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
+            </button>
           </div>
 
           <button
@@ -419,56 +437,56 @@ export default function ProductDetailPage() {
           />
 
           <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white z-10 pt-4 pb-2 flex justify-center border-b border-gray-100">
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+            <div className="sticky top-0 bg-white z-10 pt-4 pb-2 flex justify-center border-b border-primary-100">
+              <div className="w-12 h-1.5 bg-primary-200 rounded-full" />
             </div>
 
             <div className="p-6 space-y-8 pb-12">
               {/* Header in Drawer */}
               <div>
-                <h3 className="text-2xl font-bold uppercase mb-2">
+                <h3 className="text-2xl font-bold uppercase mb-2 text-black">
                   {product.name}
                 </h3>
-                <p className="text-xl text-gray-900">
+                <p className="text-xl font-bold text-primary-700">
                   {product.price.toFixed(2)} {t("products.currency")}
                 </p>
               </div>
 
               {/* Color Selection */}
               <div>
-                <p className="text-xs font-bold uppercase text-gray-400 mb-3">
+                <p className="text-xs font-bold uppercase text-gray-500 mb-3">
                   {t("products.color")}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {product.colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
                       className={`px-6 py-3 text-sm font-bold uppercase border transition-all ${
-                      selectedColor === color
+                        selectedColor === color
                           ? "border-primary-600 bg-primary-600 text-white"
                           : "border-gray-200 text-black hover:border-primary-600"
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
               {/* Size Selection */}
-            <div>
+              <div>
                 <div className="flex justify-between mb-3">
-                  <p className="text-xs font-bold uppercase text-gray-400">
+                  <p className="text-xs font-bold uppercase text-gray-500">
                     {t("products.size")}
                   </p>
-                  <button className="text-xs font-bold uppercase underline">
+                  <button className="text-xs font-bold uppercase underline hover:text-primary-600 transition-colors text-gray-700">
                     {t("products.sizeGuide")}
-                </button>
+                  </button>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {product.sizes.map((size) => (
-                <button
+                    <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
                       className={`py-3 text-sm font-bold uppercase border transition-all ${
@@ -478,14 +496,14 @@ export default function ProductDetailPage() {
                       }`}
                     >
                       {size}
-                </button>
+                    </button>
                   ))}
+                </div>
               </div>
-            </div>
 
               {/* Add Button */}
-            <button
-              onClick={handleAddToCart}
+              <button
+                onClick={handleAddToCart}
                 disabled={!product.inStock || !selectedSize || !selectedColor}
                 className={`w-full py-4 text-sm font-bold uppercase tracking-widest ${
                   product.inStock && selectedSize && selectedColor
@@ -496,7 +514,7 @@ export default function ProductDetailPage() {
                 {product.inStock
                   ? t("products.addToCart")
                   : t("products.outOfStock")}
-            </button>
+              </button>
 
               {/* Details Accordion */}
               <div className="border-t border-gray-100 pt-6 space-y-4">
