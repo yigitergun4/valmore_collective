@@ -9,115 +9,159 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-primary-800 text-gray-200">
-      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-serif font-bold text-white mb-4">
-              Valmoré Collective
+    <footer className="bg-primary-900 text-white pt-24 pb-8">
+      <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-20">
+          {/* Brand Section */}
+          <div className="lg:col-span-5">
+            <h3 className="text-4xl lg:text-5xl font-bold tracking-tighter uppercase mb-8">
+              VALMORÉ
             </h3>
-            <p className="text-gray-300 mb-4">{t("footer.description")}</p>
-            <div className="flex space-x-4">
+            <p className="text-gray-400 mb-10 max-w-md text-sm leading-relaxed">
+              {t("footer.description")}
+            </p>
+            <div className="flex space-x-6">
               <a
                 href="#"
-                className="text-gray-300 hover:text-white transition-colors"
+                className="text-white hover:text-primary-400 transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-6 h-6" />
               </a>
               <a
                 href="#"
-                className="text-gray-300 hover:text-white transition-colors"
+                className="text-white hover:text-primary-400 transition-colors"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5" />
+                <Facebook className="w-6 h-6" />
               </a>
               <a
                 href="#"
-                className="text-gray-300 hover:text-white transition-colors"
+                className="text-white hover:text-primary-400 transition-colors"
                 aria-label="X"
               >
-                <XIcon className="w-5 h-5" />
+                <XIcon className="w-6 h-6" />
               </a>
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-white font-semibold mb-4">
-              {t("footer.quickLinks")}
-            </h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/products"
-                  className="hover:text-white transition-colors"
-                >
-                  {t("nav.products")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="hover:text-white transition-colors"
-                >
-                  {t("nav.about")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="hover:text-white transition-colors"
-                >
-                  {t("nav.contact")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/cart"
-                  className="hover:text-white transition-colors"
-                >
-                  {t("nav.cart")}
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Links Sections */}
+          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-12 lg:gap-16">
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-500">
+                {t("footer.quickLinks")}
+              </h4>
+              <ul className="space-y-3">
+                <li>
+                  <Link
+                    href="/products"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("nav.products")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/about"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("nav.about")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("nav.contact")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          {/* Customer Service */}
-          <div>
-            <h4 className="text-white font-semibold mb-4">
-              {t("footer.customerService")}
-            </h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  {t("footer.shipping")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  {t("footer.returns")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  {t("footer.sizeGuide")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  {t("footer.faq")}
-                </a>
-              </li>
-            </ul>
+            {/* Customer Service */}
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-500">
+                {t("footer.customerService")}
+              </h4>
+              <ul className="space-y-3">
+                <li>
+                  <a
+                    href="#"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("footer.shipping")}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("footer.returns")}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("footer.sizeGuide")}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-sm hover:text-primary-400 transition-colors"
+                  >
+                    {t("footer.faq")}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Newsletter */}
+            <div className="col-span-2 sm:col-span-1">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-500">
+                Newsletter
+              </h4>
+              <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+                Subscribe for exclusive offers and updates.
+              </p>
+              <div className="flex border-b border-primary-600/30 pb-2 mb-2">
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  className="bg-transparent border-none outline-none text-sm w-full placeholder-gray-700 text-white"
+                />
+                <button className="text-[10px] font-bold uppercase tracking-wider text-primary-400 hover:text-primary-300 transition-colors">
+                  JOIN
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-primary-700 mt-8 pt-8 text-center text-sm text-gray-300">
-          <p>
+        <div className="border-t border-primary-900/50 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-gray-400">
+          <p className="uppercase tracking-wider">
             &copy; {new Date().getFullYear()} Valmoré Collective.{" "}
             {t("footer.rights")}
           </p>
+          <div className="flex space-x-6">
+            <a
+              href="#"
+              className="uppercase tracking-wider hover:text-primary-400 transition-colors"
+            >
+              Privacy
+            </a>
+            <a
+              href="#"
+              className="uppercase tracking-wider hover:text-primary-400 transition-colors"
+            >
+              Terms
+            </a>
+          </div>
         </div>
       </div>
     </footer>

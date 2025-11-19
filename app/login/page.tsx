@@ -45,138 +45,131 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center py-8 px-1 sm:px-2 lg:px-3">
+    <div className="min-h-screen bg-white flex items-center justify-center py-20 px-4">
       <div className="w-full max-w-md">
-        {/* Ana Kart */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 lg:p-10 shadow-sm">
-          {/* Başlık */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">
-              {t("auth.login.title")}
-            </h1>
-            <p className="text-sm text-gray-600">
-              {t("auth.login.noAccount")}{" "}
-              <Link
-                href="/register"
-                className="font-medium text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                {t("auth.login.register")}
-              </Link>
-            </p>
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold uppercase tracking-tighter mb-3">
+            {t("auth.login.title")}
+          </h1>
+          <p className="text-xs uppercase tracking-wider text-gray-500">
+            {t("auth.login.noAccount")}{" "}
+            <Link
+              href="/register"
+              className="font-bold text-primary-600 underline underline-offset-4 hover:text-primary-700 transition-colors"
+            >
+              {t("auth.login.register")}
+            </Link>
+          </p>
+        </div>
+
+        {/* Form */}
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-600 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Email Input */}
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2"
+            >
+              {t("auth.login.email")}
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-primary-600 outline-none bg-transparent transition-all text-sm"
+              placeholder="email@example.com"
+            />
           </div>
 
-          {/* Form */}
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* Hata Mesajı */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Email Input */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                {t("auth.login.email")}
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-sm"
-                  placeholder={t("auth.login.email")}
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                {t("auth.login.password")}
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-sm"
-                  placeholder={t("auth.login.password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <span className="ml-2 text-gray-700">
-                  {t("auth.login.remember")}
-                </span>
-              </label>
-
-              <Link
-                href="#"
-                className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
-              >
-                {t("auth.login.forgot")}
-              </Link>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+          {/* Password Input */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2"
             >
-              {isLoading ? (
-                <span>{t("auth.login.loading")}</span>
-              ) : (
-                <>
-                  <span>{t("auth.login.submit")}</span>
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-        </div>
+              {t("auth.login.password")}
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-0 py-3 border-0 border-b-2 border-gray-200 focus:border-primary-600 outline-none bg-transparent transition-all text-sm pr-10"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-600 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center cursor-pointer">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 border-2 border-primary-600 text-primary-600 focus:ring-0 focus:ring-offset-0"
+              />
+              <span className="ml-2 text-xs uppercase tracking-wider">
+                {t("auth.login.remember")}
+              </span>
+            </label>
+
+            <Link
+              href="#"
+              className="text-xs uppercase tracking-wider text-primary-600 underline underline-offset-4 hover:text-primary-700 transition-colors"
+            >
+              {t("auth.login.forgot")}
+            </Link>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full flex justify-center items-center py-4 bg-primary-600 text-white text-xs font-bold uppercase tracking-wider hover:bg-primary-700 transition-all ${
+              isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {isLoading ? (
+              <span>{t("auth.login.loading")}</span>
+            ) : (
+              <>
+                <span>{t("auth.login.submit")}</span>
+                <ArrowRight className="ml-3 w-4 h-4" />
+              </>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -78,6 +78,20 @@ export const translations = {
       brandLabel: "Marka:",
       relatedProducts: "İlgili Ürünler",
       swipeMore: "Daha fazla ürün için kaydırın",
+      count: "Ürün",
+      categories: {
+        all: "Tümü",
+        shirts: "Gömlekler",
+        pants: "Pantolonlar",
+        outerwear: "Dış Giyim",
+        tops: "Üst Giyim",
+        tshirts: "Tişörtler",
+        sweatshirts: "Sweatshirt",
+        accessories: "Aksesuar",
+        shoes: "Ayakkabı",
+        dresses: "Elbise",
+        shorts: "Şort",
+      },
     },
     // Cart
     cart: {
@@ -291,6 +305,20 @@ export const translations = {
       brandLabel: "Brand:",
       relatedProducts: "Related Products",
       swipeMore: "Swipe for more products",
+      count: "Products",
+      categories: {
+        all: "All",
+        shirts: "Shirts",
+        pants: "Pants",
+        outerwear: "Outerwear",
+        tops: "Tops",
+        tshirts: "T-Shirts",
+        sweatshirts: "Sweatshirts",
+        accessories: "Accessories",
+        shoes: "Shoes",
+        dresses: "Dresses",
+        shorts: "Shorts",
+      },
     },
     // Cart
     cart: {

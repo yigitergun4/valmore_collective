@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Menu, X, User, LogOut, Globe } from "lucide-react";
-import { useState } from "react";
+import { ShoppingBag, Menu, X, User, LogOut, Search } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,123 +12,135 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { getTotalItems } = useCart();
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
 
-  return (
-    <header className="sticky top-0 z-50 bg-white border-b border-primary-200 shadow-sm">
-      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-serif font-bold text-primary-700">
-              Valmoré Collective
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/"
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
-            >
-              {t("nav.home")}
-            </Link>
-            <Link
-              href="/products"
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
-            >
-              {t("nav.products")}
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
-            >
-              {t("nav.about")}
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
-            >
-              {t("nav.contact")}
-            </Link>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <button
-                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 transition-colors p-2"
-                aria-label="Change language"
-              >
-                <Globe className="w-5 h-5" />
-                <span className="hidden md:block text-sm font-medium uppercase">
-                  {language}
-                </span>
-              </button>
-              {isLangMenuOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setLanguage("tr");
-                      setIsLangMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      language === "tr"
-                        ? "bg-primary-50 text-primary-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    🇹🇷 Türkçe
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLanguage("en");
-                      setIsLangMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      language === "en"
-                        ? "bg-primary-50 text-primary-700 font-medium"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    🇬🇧 English
-                  </button>
-                </div>
-              )}
-            </div>
-            <Link
-              href="/cart"
-              className="relative flex items-center justify-center w-10 h-10 text-gray-700 hover:text-primary-600 transition-colors"
-            >
-              <ShoppingBag className="w-6 h-6" />
-              {getTotalItems() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {getTotalItems()}
-                </span>
-              )}
-            </Link>
-            {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    <span className="text-primary-700 font-semibold text-sm">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <span className="hidden md:block text-sm font-medium">
-                    {user.name}
-                  </span>
-                </button>
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    <div className="px-4 py-2 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+  return (
+    <>
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled || isMenuOpen ? "bg-white shadow-sm" : "bg-white/95 backdrop-blur-sm"
+        }`}
+      >
+        <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="lg:hidden p-2 -ml-2 hover:opacity-60 transition-opacity"
+              aria-label="Menu"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+            {/* Logo - Centered on Mobile, Left on Desktop */}
+            <Link 
+              href="/" 
+              className="absolute left-1/2 -translate-x-1/2 lg:relative lg:left-0 lg:translate-x-0 flex items-center"
+            >
+              <span className="text-2xl lg:text-3xl font-bold tracking-tighter uppercase text-primary-600">
+                VALMORÉ
+              </span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-10 absolute left-1/2 -translate-x-1/2">
+              <Link
+                href="/products"
+                className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600"
+              >
+                {t("nav.products")}
+              </Link>
+              <Link
+                href="/about"
+                className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600"
+              >
+                {t("nav.about")}
+              </Link>
+              <Link
+                href="/contact"
+                className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600"
+              >
+                {t("nav.contact")}
+              </Link>
+            </nav>
+
+            {/* Right Icons */}
+            <div className="flex items-center space-x-4 lg:space-x-6">
+              
+              {/* Language Selector - Desktop Only */}
+              <div className="relative hidden lg:block">
+                <button
+                  onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                  className="text-[11px] font-bold uppercase tracking-wider hover:opacity-60 transition-opacity text-primary-600 "
+                >
+                  {language}
+                </button>
+                {isLangMenuOpen && (
+                  <div className="absolute right-0 mt-4 w-24 bg-white border border-primary-600 shadow-lg">
+                    <button
+                      onClick={() => {
+                        setLanguage("tr");
+                        setIsLangMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all ${
+                        language === "tr" ? "bg-primary-600 text-white" : ""
+                      }`}
+                    >
+                      TR
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLanguage("en");
+                        setIsLangMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all ${
+                        language === "en" ? "bg-primary-600 text-white" : ""
+                      }`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Search */}
+              <button className="hover:opacity-60 transition-opacity">
+                <Search className="w-5 h-5" />
+              </button>
+
+              {/* User Menu */}
+              <div className="relative">
+                {user ? (
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="hover:opacity-60 transition-opacity"
+                  >
+                    <User className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <Link href="/login" className="hover:opacity-60 transition-opacity">
+                    <User className="w-5 h-5" />
+                  </Link>
+                )}
+                
+                {user && isUserMenuOpen && (
+                  <div className="absolute right-0 mt-4 w-56 bg-white border border-primary-600 shadow-lg">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-bold truncate">{user.name}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
                     </div>
                     <button
                       onClick={() => {
@@ -136,7 +148,7 @@ export default function Header() {
                         setIsUserMenuOpen(false);
                         router.push("/");
                       }}
-                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="w-full flex items-center px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       {t("nav.logout")}
@@ -144,134 +156,90 @@ export default function Header() {
                   </div>
                 )}
               </div>
-            ) : (
+
+              {/* Cart */}
               <Link
-                href="/login"
-                className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
+                href="/cart"
+                className="relative hover:opacity-60 transition-opacity"
               >
-                <User className="w-5 h-5" />
-                <span className="hidden md:block text-sm font-medium">
-                  {t("nav.login")}
-                </span>
+                <ShoppingBag className="w-5 h-5" />
+                {getTotalItems() > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {getTotalItems()}
+                  </span>
+                )}
               </Link>
-            )}
-          </div>
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-gray-700 hover:text-primary-600"
-            aria-label="Menüyü aç/kapat"
-          >
-            {isMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
-        </div>
-        {isMenuOpen && (
-          <nav className="md:hidden py-4 space-y-4 border-t border-primary-200">
-            <Link
-              href="/"
-              className="block text-gray-700 hover:text-primary-600 font-medium transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {t("nav.home")}
-            </Link>
-            <Link
-              href="/products"
-              className="block text-gray-700 hover:text-primary-600 font-medium transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {t("nav.products")}
-            </Link>
-            <Link
-              href="/about"
-              className="block text-gray-700 hover:text-primary-600 font-medium transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {t("nav.about")}
-            </Link>
-            <Link
-              href="/contact"
-              className="block text-gray-700 hover:text-primary-600 font-medium transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {t("nav.contact")}
-            </Link>
-            <div className="pt-4 border-t border-primary-200">
-              <p className="px-2 text-xs font-semibold text-gray-500 mb-2 uppercase">
-                Dil / Language
-              </p>
-              <div className="space-y-1">
-                <button
-                  onClick={() => {
-                    setLanguage("tr");
-                    setIsMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-2 py-2 text-sm rounded transition-colors ${
-                    language === "tr"
-                      ? "bg-primary-50 text-primary-700 font-medium"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  🇹🇷 Türkçe
-                </button>
-                <button
-                  onClick={() => {
-                    setLanguage("en");
-                    setIsMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-2 py-2 text-sm rounded transition-colors ${
-                    language === "en"
-                      ? "bg-primary-50 text-primary-700 font-medium"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  🇬🇧 English
-                </button>
-              </div>
             </div>
-            {user ? (
-              <div className="pt-4 border-t border-primary-200">
-                <div className="px-2 py-2">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    logout();
-                    setIsMenuOpen(false);
-                    router.push("/");
-                  }}
-                  className="w-full flex items-center px-2 py-2 text-sm text-gray-700 hover:text-primary-600 transition-colors"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  {t("nav.logout")}
-                </button>
-              </div>
-            ) : (
-              <div className="pt-4 border-t border-primary-200 space-y-2">
-                <Link
-                  href="/login"
-                  className="block text-gray-700 hover:text-primary-600 font-medium transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("nav.login")}
-                </Link>
-                <Link
-                  href="/register"
-                  className="block text-gray-700 hover:text-primary-600 font-medium transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("nav.register")}
-                </Link>
-              </div>
-            )}
-          </nav>
-        )}
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      <div 
+        className={`fixed inset-0 bg-white z-40 transition-transform duration-500 ease-out lg:hidden ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ top: "64px" }}
+      >
+        <nav className="flex flex-col p-8 space-y-8 h-full">
+          <Link
+            href="/"
+            className="text-3xl font-bold uppercase tracking-tighter hover:opacity-60 transition-opacity text-primary-600"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.home")}
+          </Link>
+          <Link
+            href="/products"
+            className="text-3xl font-bold uppercase tracking-tighter hover:opacity-60 transition-opacity text-primary-600"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.products")}
+          </Link>
+          <Link
+            href="/about"
+            className="text-3xl font-bold uppercase tracking-tighter hover:opacity-60 transition-opacity text-primary-600"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.about")}
+          </Link>
+          <Link
+            href="/contact"
+            className="text-3xl font-bold uppercase tracking-tighter hover:opacity-60 transition-opacity text-primary-600"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {t("nav.contact")}
+          </Link>
+          
+          <div className="pt-8 mt-auto border-t border-gray-200">
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-4">Language</p>
+            <div className="flex space-x-6">
+              <button
+                onClick={() => {
+                  setLanguage("tr");
+                  setIsMenuOpen(false);
+                }}
+                className={`text-xl font-bold uppercase tracking-tighter ${
+                  language === "tr" ? "text-primary-600 underline underline-offset-4" : "text-gray-400"
+                }`}
+              >
+                TR
+              </button>
+              <button
+                onClick={() => {
+                  setLanguage("en");
+                  setIsMenuOpen(false);
+                }}
+                className={`text-xl font-bold uppercase tracking-tighter ${
+                  language === "en" ? "text-primary-600 underline underline-offset-4" : "text-gray-400"
+                }`}
+              >
+                EN
+              </button>
+            </div>
+          </div>
+        </nav>
       </div>
-    </header>
+    </>
   );
 }
