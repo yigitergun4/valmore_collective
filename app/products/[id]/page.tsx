@@ -190,14 +190,6 @@ export default function ProductDetailPage() {
               ))}
             </div>
           </div>
-
-          {/* Floating Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="fixed top-24 left-8 z-20 bg-white/80 backdrop-blur-md p-3 rounded-full hover:bg-primary-600 hover:text-white transition-all duration-300 shadow-sm"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
         </div>
 
         {/* Right Column: Sticky Product Details */}
