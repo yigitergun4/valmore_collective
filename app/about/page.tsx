@@ -2,7 +2,7 @@
 
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export default function AboutPage() {
+export default function AboutPage(): React.JSX.Element {
   const { t } = useLanguage();
   
   return (

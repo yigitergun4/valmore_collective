@@ -5,8 +5,16 @@ import { Instagram, Facebook } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { XIcon } from "./XIcon";
 
+import { usePathname } from "next/navigation";
+
 export default function Footer() {
   const { t } = useLanguage();
+  const pathname = usePathname();
+
+  // Hide footer on admin pages
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <footer className="bg-primary-900 text-white pt-24 pb-8">

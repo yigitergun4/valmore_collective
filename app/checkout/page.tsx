@@ -7,16 +7,18 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
+import { CheckoutFormData } from "@/types";
 
-export default function CheckoutPage() {
+
+export default function CheckoutPage(): React.JSX.Element | null {
   const { items, getTotalPrice, getTotalItems, clearCart } = useCart();
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [orderPlaced, setOrderPlaced] = useState<boolean>(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CheckoutFormData>({
     firstName: "",
     lastName: "",
     email: "",
@@ -62,7 +64,7 @@ export default function CheckoutPage() {
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  ): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -70,7 +72,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateForm: () => boolean = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName.trim())
@@ -124,7 +126,7 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {

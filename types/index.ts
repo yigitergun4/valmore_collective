@@ -5,7 +5,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  originalPrice?: number; // '?' koyduk çünkü her üründe indirim olmayabilir
+  originalPrice?: number;
   images: string[];
   category: string;
   brand: string;
@@ -13,9 +13,15 @@ export interface Product {
   colors: string[];
   inStock: boolean;
   featured: boolean;
-  // Veritabanı için eklenmesi önerilen alanlar:
-  createdAt?: string; // "En yeniler" sıralaması için gerekli
-  slug?: string; // SEO dostu URL için (örn: /urun/klasik-beyaz-gomlek)
+  createdAt: string; // Made required as per new spec
+  slug?: string;
+}
+
+export interface AdminStats {
+  totalSales: number;
+  totalOrders: number;
+  totalProducts: number;
+  recentOrders: any[]; // Will define Order type later
 }
 
 export interface CartItem {
@@ -82,4 +88,20 @@ export interface Translations {
 
 export interface ProviderProps {
   children: ReactNode;
+}
+
+export interface CheckoutFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  cardNumber: string;
+  cardName: string;
+  cardExpiry: string;
+  cardCVC: string;
 }

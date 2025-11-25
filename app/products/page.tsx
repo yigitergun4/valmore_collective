@@ -5,16 +5,17 @@ import { products } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import { Search, X, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Product } from "@/types";
+import FilterTag from "@/components/FilterTag";
 
-export default function ProductsPage() {
+export default function ProductsPage(): React.JSX.Element {
   const { t } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "price-low" | "price-high">(
     "name"
   );
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
   // Category mapping from Turkish product categories to translation keys
   const categoryMapping: { [key: string]: string } = useMemo(
@@ -42,7 +43,7 @@ export default function ProductsPage() {
   }, [categoryMapping]);
 
   const filteredAndSortedProducts = useMemo(() => {
-    let filtered = products.filter((product) => {
+    let filtered: Product[] = products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -73,7 +74,7 @@ export default function ProductsPage() {
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all";
 
-  const clearFilters = () => {
+  const clearFilters: () => void = () => {
     setSearchQuery("");
     setSelectedCategory("all");
   };
@@ -90,7 +91,7 @@ export default function ProductsPage() {
               className="lg:hidden flex items-center gap-2 text-xs font-bold uppercase tracking-wider hover:text-primary-600 transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters
+              {t("products.filter")}
             </button>
 
             {/* Results Count */}
@@ -132,26 +133,16 @@ export default function ProductsPage() {
           {hasActiveFilters && (
             <div className="px-4 lg:px-8 py-3 bg-gray-50 border-t border-gray-200 flex items-center gap-3 overflow-x-auto">
               {searchQuery && (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-black text-white text-[9px] lg:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                  {searchQuery}
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="hover:opacity-60"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
+                <FilterTag
+                  label={searchQuery}
+                  onRemove={() => setSearchQuery("")}
+                />
               )}
               {selectedCategory !== "all" && (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-black text-white text-[9px] lg:text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                  {t(`products.categories.${selectedCategory}`)}
-                  <button
-                    onClick={() => setSelectedCategory("all")}
-                    className="hover:opacity-60"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
+                <FilterTag
+                  label={t(`products.categories.${selectedCategory}`)}
+                  onRemove={() => setSelectedCategory("all")}
+                />
               )}
               <button
                 onClick={clearFilters}
@@ -222,17 +213,14 @@ export default function ProductsPage() {
               <div className="text-center py-20">
                 <Search className="w-12 h-12 lg:w-16 lg:h-16 text-gray-300 mx-auto mb-4 lg:mb-6" />
                 <h3 className="text-xl lg:text-2xl font-bold uppercase tracking-tighter mb-2 lg:mb-3">
-                  No Products Found
-                </h3>
-                <p className="text-xs lg:text-sm text-gray-500 uppercase tracking-wider mb-6 lg:mb-8">
                   {t("products.noResults")}
-                </p>
+                </h3>
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
                     className="inline-flex items-center px-6 lg:px-8 py-3 bg-primary-600 text-white text-xs font-bold uppercase tracking-wider hover:bg-primary-700 transition-colors"
                   >
-                    Clear Filters
+                    {t("products.clearFilter")}
                   </button>
                 )}
               </div>
@@ -264,7 +252,7 @@ export default function ProductsPage() {
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <h2 className="text-lg font-bold uppercase tracking-tighter">
-                  Filters
+                  {t("products.filter")}
                 </h2>
                 <button
                   onClick={() => setIsMobileFilterOpen(false)}
@@ -285,7 +273,7 @@ export default function ProductsPage() {
                     <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      placeholder="Search products..."
+                      placeholder={t("products.search")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-6 pr-2 py-2 text-sm border-0 border-b border-gray-200 focus:border-primary-600 outline-none bg-transparent transition-all placeholder:text-gray-400"

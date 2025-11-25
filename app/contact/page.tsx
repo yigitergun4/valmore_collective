@@ -4,16 +4,20 @@ import { useState } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export default function ContactPage() {
+export default function ContactPage(): React.JSX.Element {
   const { t } = useLanguage();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    message: string;
+  }>({
     name: '',
     email: '',
     message: '',
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     // In a real application, this would send the form data to a server
     setSubmitted(true);

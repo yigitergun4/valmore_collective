@@ -1,22 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ShoppingBag, Menu, X, User, LogOut, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+import { auth } from "@/lib/firebase";
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
+  const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { getTotalItems } = useCart();
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
+
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        try {
+          const token = await auth.currentUser?.getIdTokenResult();
+          setIsAdmin(!!token?.claims.admin);
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +46,11 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Hide header on admin pages
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <>
@@ -83,17 +109,17 @@ export default function Header() {
               {/* Language Selector - Desktop Only */}
               <div className="relative hidden lg:block">
                 <button
-                  onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                  onClick={() => setIsLangOpen(!isLangOpen)}
                   className="text-[11px] font-bold uppercase tracking-wider hover:opacity-60 transition-opacity text-primary-600 "
                 >
                   {language}
                 </button>
-                {isLangMenuOpen && (
+                {isLangOpen && (
                   <div className="absolute right-0 mt-4 w-24 bg-white border border-primary-600 shadow-lg">
                     <button
                       onClick={() => {
                         setLanguage("tr");
-                        setIsLangMenuOpen(false);
+                        setIsLangOpen(false);
                       }}
                       className={`w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all ${
                         language === "tr" ? "bg-primary-600 text-white" : ""
@@ -104,7 +130,7 @@ export default function Header() {
                     <button
                       onClick={() => {
                         setLanguage("en");
-                        setIsLangMenuOpen(false);
+                        setIsLangOpen(false);
                       }}
                       className={`w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all ${
                         language === "en" ? "bg-primary-600 text-white" : ""
@@ -125,7 +151,7 @@ export default function Header() {
               <div className="relative">
                 {user ? (
                   <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="hover:opacity-60 transition-opacity"
                   >
                     <User className="w-5 h-5" />
@@ -136,16 +162,27 @@ export default function Header() {
                   </Link>
                 )}
                 
-                {user && isUserMenuOpen && (
-                  <div className="absolute right-0 mt-4 w-56 bg-white border border-primary-600 shadow-lg">
+                {user && isProfileOpen && (
+                  <div className="absolute right-0 mt-4 w-56 bg-white border border-primary-600 shadow-lg z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-bold truncate">{user.name}</p>
                       <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
                     </div>
+                    
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="w-full flex items-center px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 transition-all border-b border-gray-100"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        ⚡ Admin Panel
+                      </Link>
+                    )}
+
                     <button
                       onClick={() => {
                         logout();
-                        setIsUserMenuOpen(false);
+                        setIsProfileOpen(false);
                         router.push("/");
                       }}
                       className="w-full flex items-center px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all"

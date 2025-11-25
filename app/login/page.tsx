@@ -8,17 +8,17 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Mail, Lock, ArrowRight, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 
-function LoginForm() {
+function LoginForm(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, user } = useAuth();
   const { t } = useLanguage();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -27,7 +27,7 @@ function LoginForm() {
     }
   }, [user, router, searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -44,7 +44,7 @@ function LoginForm() {
       }
     } catch (err: any) {
       if (err.message === "Email not verified") {
-        setError("Please verify your email address before logging in.");
+        setError(t("auth.login.emailNotVerified"));
       } else {
         setError(t("auth.login.error"));
       }
@@ -188,14 +188,14 @@ function LoginForm() {
             </div>
           </div>
 
-          <GoogleAuthButton text={t("auth.login.google")} />
+          <GoogleAuthButton />
         </form>
       </div>
     </div>
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage(): React.JSX.Element {
   return (
     <Suspense
       fallback={

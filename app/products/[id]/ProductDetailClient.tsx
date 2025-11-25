@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   getProductById,
@@ -25,7 +25,7 @@ import Link from "next/link";
 import SelectionButton from "@/components/SelectionButton";
 import MobileSelectionButton from "@/components/MobileSelectionButton";
 
-export default function ProductDetailClient() {
+export default function ProductDetailClient(): React.JSX.Element {
   const params = useParams();
   const router = useRouter();
   const product = getProductById(params.id as string);
@@ -33,8 +33,13 @@ export default function ProductDetailClient() {
   const { t } = useLanguage();
   const { user } = useAuth();
 
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  const searchParams = useSearchParams();
+  const [selectedSize, setSelectedSize] = useState<string>(
+    searchParams.get("size") || ""
+  );
+  const [selectedColor, setSelectedColor] = useState<string>(
+    searchParams.get("color") || ""
+  );
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
@@ -83,7 +88,7 @@ export default function ProductDetailClient() {
   }, [isDrawerOpen]);
 
   // Mobile Swipe Logic
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: React.TouchEvent): void => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isHorizontalSwipe.current = false;

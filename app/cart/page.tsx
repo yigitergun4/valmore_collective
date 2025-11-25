@@ -7,13 +7,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function CartPage() {
+export default function CartPage(): React.JSX.Element {
   const {
     items,
     removeFromCart,
     updateQuantity,
     getTotalPrice,
-    getTotalItems,
   } = useCart();
   const { t } = useLanguage();
   const router = useRouter();
@@ -57,7 +56,10 @@ export default function CartPage() {
                 className="border-b border-gray-100 pb-6 flex gap-4 lg:gap-6"
               >
                 {/* Product Image */}
-                <div className="relative w-24 h-32 lg:w-32 lg:h-40 bg-gray-50 overflow-hidden flex-shrink-0">
+                <Link
+                  href={`/products/${item.product.id}?size=${item.size}&color=${item.color}`}
+                  className="relative w-24 h-32 lg:w-32 lg:h-40 bg-gray-50 overflow-hidden flex-shrink-0 block"
+                >
                   {item.product.images[0] ? (
                     <Image
                       src={item.product.images[0]}
@@ -71,12 +73,14 @@ export default function CartPage() {
                       No Image
                     </div>
                   )}
-                </div>
+                </Link>
 
                 {/* Product Info */}
                 <div className="flex-grow flex flex-col justify-between">
                   <div>
-                    <Link href={`/products/${item.product.id}`}>
+                    <Link
+                      href={`/products/${item.product.id}?size=${item.size}&color=${item.color}`}
+                    >
                       <h3 className="text-sm lg:text-base font-bold uppercase tracking-wider hover:opacity-60 transition-opacity mb-2">
                         {item.product.name}
                       </h3>

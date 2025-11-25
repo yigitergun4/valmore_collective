@@ -15,6 +15,8 @@ import {
   User as FirebaseUser,
   UserCredential,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -55,7 +57,7 @@ export function AuthProvider({ children }: ProviderProps) {
       
       return true;
     } catch (error: any) {
-      // Re-throw if it's our verification error so the UI can handle it
+      console.error("Login error:", error);
       if (error.message === "Email not verified") {
         throw error;
       }
@@ -96,7 +98,21 @@ const register: AuthContextType['register'] = async (name: string, email: string
       // 3. Doğrulama e-postasını gönder
       await sendEmailVerification(userCredential.user);
 
-      // 4. Local state güncelleme
+      // 4. Firestore'a kullanıcıyı kaydet
+      // Bunu en sona koyuyoruz ki veritabanı hatası olsa bile mail gitmiş olsun
+      try {
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          name,
+          email,
+          role: "user",
+          createdAt: new Date().toISOString(),
+        });
+      } catch (firestoreError: any) {
+        console.error("Firestore save error:", firestoreError);
+        // Firestore hatası kayıt akışını bozmasın
+      }
+
+      // 5. Local state güncelleme
       // Note: We don't set user state here because we want to force them to login after verification
       // Firebase automatically signs in after registration, so we sign them out
       await signOut(auth);
@@ -105,6 +121,7 @@ const register: AuthContextType['register'] = async (name: string, email: string
       console.log("Kullanıcı oluşturuldu, doğrulama maili gönderildi ve çıkış yapıldı.");
       return true;
     } catch (error: any) {
+      console.error("Registration error:", error);
       return false;
     }
   };

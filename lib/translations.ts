@@ -47,7 +47,7 @@ export const translations: Record<Language, any> = {
         priceLow: "Fiyat: Düşükten Yükseğe",
         priceHigh: "Fiyat: Yüksekten Düşüğe",
       },
-      noResults: "Arama kriterlerinize uygun ürün bulunamadı.",
+      noResults: "Arama kriterlerinize uygun ürün bulunamadı",
       all: "Tümü",
       size: "Beden",
       color: "Renk",
@@ -99,7 +99,7 @@ export const translations: Record<Language, any> = {
       title: "Alışveriş Sepeti",
       empty: {
         title: "Sepetiniz boş",
-        description: "Alışverişe devam etmek için sepete ürün ekleyin.",
+        description: "Alışverişe devam etmek için sepete ürün ekleyin",
         browse: "Ürünlere Göz At",
       },
       size: "Beden",
@@ -119,9 +119,9 @@ export const translations: Record<Language, any> = {
       backToCart: "Sepete Dön",
       guestMessageBefore: "",
       guestMessageAfter:
-        " ve bilgilerinizin otomatik doldurulmasını sağla veya misafir olarak devam et.",
+        " ve bilgilerinizin otomatik doldurulmasını sağla veya misafir olarak devam et",
       loggedInMessage:
-        "olarak giriş yaptınız. Bilgileriniz otomatik dolduruldu, isterseniz değiştirebilirsiniz.",
+        "olarak giriş yaptınız. Bilgileriniz otomatik dolduruldu, isterseniz değiştirebilirsiniz",
       shipping: "Teslimat Bilgileri",
       payment: "Ödeme Bilgileri",
       orderSummary: "Sipariş Özeti",
@@ -143,7 +143,7 @@ export const translations: Record<Language, any> = {
       success: {
         title: "Sipariş Başarıyla Verildi!",
         message:
-          "Satın aldığınız için teşekkürler. Kısa süre içinde onay e-postası alacaksınız.",
+          "Satın aldığınız için teşekkürler. Kısa süre içinde onay e-postası alacaksınız",
         continue: "Alışverişe Devam Et",
       },
       required: "gereklidir",
@@ -155,8 +155,8 @@ export const translations: Record<Language, any> = {
     // Auth
     auth: {
       login: {
-        emailNotVerified: "Lütfen e-postanızı doğrulayın.",
-        title: "Giriş Yap",
+        emailNotVerified: "Lütfen e-postanızı doğrulayın",
+        title: "Giriş Yap"  ,
         noAccount: "Hesabınız yok mu?",
         register: "Kayıt olun",
         email: "E-posta",
@@ -165,13 +165,13 @@ export const translations: Record<Language, any> = {
         forgot: "Şifrenizi mi unuttunuz?",
         submit: "Giriş Yap",
         loading: "Giriş yapılıyor...",
-        error: "E-posta veya şifre hatalı. Lütfen tekrar deneyin.",
+        error: "E-posta veya şifre hatalı. Lütfen tekrar deneyin",
         back: "Ana Sayfaya Dön",
         or: "veya",
         google: "Google ile Giriş Yap",
       },
       register: {
-        title: "Kayıt Ol",
+        title: "Kayıt Ol",  
         hasAccount: "Zaten hesabınız var mı?",
         login: "Giriş yapın",
         name: "Ad Soyad",
@@ -181,9 +181,9 @@ export const translations: Record<Language, any> = {
         minLength: "En az 6 karakter",
         submit: "Kayıt Ol",
         loading: "Kayıt yapılıyor...",
-        passwordMismatch: "Şifreler eşleşmiyor.",
-        passwordTooShort: "Şifre en az 6 karakter olmalıdır.",
-        emailExists: "Bu e-posta adresi zaten kullanılıyor.",
+        passwordMismatch: "Şifreler eşleşmiyor",
+        passwordTooShort: "Şifre en az 6 karakter olmalıdır",
+        emailExists: "Bu e-posta adresi zaten kullanılıyor",
         back: "Ana Sayfaya Dön",
         google: "Google ile Kayıt Ol",
       },
@@ -192,9 +192,9 @@ export const translations: Record<Language, any> = {
     about: {
       title: "Valmoré Collective Hakkında",
       description1:
-        "Valmoré Collective'te modanın sadece giyimden ibaret olmadığına inanıyoruz—bu bir kendini ifade etme biçimidir. Misyonumuz, kaliteli işçilik ile çağdaş tasarımı harmanlayan zamansız parçaları küratörlüğünü yaparak, benzersiz stilini ifade etmeni sağlamaktır.",
+        "Valmoré Collective'te modanın sadece giyimden ibaret olmadığına inanıyoruz—bu bir kendini ifade etme biçimidir. Misyonumuz, kaliteli işçilik ile çağdaş tasarımı harmanlayan zamansız parçaları küratörlüğünü yaparak, benzersiz stilini ifade etmeni sağlamaktır",
       description2:
-        "Koleksiyonumuzdaki her ürün, mükemmellik standartlarımıza uygunluğunu sağlamak için özenle seçilmiştir. Sürdürülebilirlik ve etik uygulamalara olan bağlılığımızı paylaşan güvenilir tedarikçilerle çalışıyoruz, böylece moda tercihlerinin olumlu bir etki yaratmasını sağlıyoruz.",
+        "Koleksiyonumuzdaki her ürün, mükemmellik standartlarımıza uygunluğunu sağlamak için özenle seçilmiştir. Sürdürülebilirlik ve etik uygulamalara olan bağlılığımızı paylaşan güvenilir tedarikçilerle çalışıyoruz, böylece moda tercihlerinin olumlu bir etki yaratmasını sağlıyoruz",
       values: "Değerlerimiz",
       value1:
         "Nicelikten ziyade nitelik - iyi yapılmış, dayanıklı parçalara odaklanıyoruz",
@@ -205,13 +205,13 @@ export const translations: Record<Language, any> = {
       value4: "Müşteri memnuniyeti - deneyimin bizim en büyük önceliğimizdir",
       story: "Hikayemiz",
       storyText:
-        "Moda tutkusu ve kaliteye bağlılıkla kurulan Valmoré Collective, küçük bir butik olarak başladı ve kaliteli giyim ve aksesuarları takdir edenler için güvenilir bir adres haline geldi.",
+        "Moda tutkusu ve kaliteye bağlılıkla kurulan Valmoré Collective, küçük bir butik olarak başladı ve kaliteli giyim ve aksesuarları takdir edenler için güvenilir bir adres haline geldi",
     },
     // Contact
     contact: {
       title: "İletişim",
       description:
-        "Sizden haber almak isteriz! Aşağıdaki bilgileri kullanarak bizimle iletişime geçin veya formu doldurun.",
+        "Sizden haber almak isteriz! Aşağıdaki bilgileri kullanarak bizimle iletişime geçin veya formu doldurun",
       email: "E-posta",
       phone: "Telefon",
       address: "Adres",
@@ -223,7 +223,7 @@ export const translations: Record<Language, any> = {
     // Footer
     footer: {
       description:
-        "Modern bireyler için küratörlü moda. Stilini tanımlayan zamansız parçaları keşfet.",
+        "Modern bireyler için küratörlü moda. Stilini tanımlayan zamansız parçaları keşfet",
       quickLinks: "Hızlı Bağlantılar",
       customerService: "Müşteri Hizmetleri",
       shipping: "Kargo Bilgisi",
@@ -231,10 +231,10 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Beden Rehberi",
       faq: "Sık Sorulan Sorular",
       newsletter: "Bülten",
-      newsletterDescription: "Özel teklifler ve güncellemeler için abone olun.",
+      newsletterDescription: "Özel teklifler ve güncellemeler için abone olun", 
       emailPlaceholder: "E-posta adresiniz",
       joinButton: "KATIL",
-      rights: "Tüm hakları saklıdır.",
+      rights: "Tüm hakları saklıdır",
     },
   },
   en: {
@@ -254,21 +254,21 @@ export const translations: Record<Language, any> = {
       hero: {
         title: "Valmoré Collective",
         subtitle:
-          "Curated fashion for the modern individual. Discover timeless pieces that define your style.",
+          "Curated fashion for the modern individual. Discover timeless pieces that define your style",
         cta: "Shop Now",
       },
       featured: {
         title: "Featured Collection",
         description:
-          "Handpicked selections from our latest collection, designed to elevate your wardrobe.",
+          "Handpicked selections from our latest collection, designed to elevate your wardrobe",
         viewAll: "View All Products",
       },
       about: {
         title: "About Valmoré Collective",
         description1:
-          "At Valmoré Collective, we believe that fashion is more than just clothing—it's a form of self-expression. Our curated collection features timeless pieces that blend quality craftsmanship with contemporary design.",
+          "At Valmoré Collective, we believe that fashion is more than just clothing—it's a form of self-expression. Our curated collection features timeless pieces that blend quality craftsmanship with contemporary design",
         description2:
-          "Every item in our collection is carefully selected to ensure it meets our standards of excellence. We work with trusted suppliers who share our commitment to sustainability and ethical practices.",
+          "Every item in our collection is carefully selected to ensure it meets our standards of excellence. We work with trusted suppliers who share our commitment to sustainability and ethical practices",
         learnMore: "Learn More",
       },
     },
@@ -283,7 +283,7 @@ export const translations: Record<Language, any> = {
         priceLow: "Price: Low to High",
         priceHigh: "Price: High to Low",
       },
-      noResults: "No products found matching your criteria.",
+      noResults: "No products found matching your criteria",
       all: "All",
       size: "Size",
       color: "Color",
@@ -335,7 +335,7 @@ export const translations: Record<Language, any> = {
       title: "Shopping Cart",
       empty: {
         title: "Your cart is empty",
-        description: "Start adding items to your cart to continue shopping.",
+        description: "Start adding items to your cart to continue shopping",
         browse: "Browse Products",
       },
       size: "Size",
@@ -355,9 +355,9 @@ export const translations: Record<Language, any> = {
       backToCart: "Back to Cart",
       guestMessageBefore: "",
       guestMessageAfter:
-        " to have your information automatically filled in. Or continue as a guest.",
+        " to have your information automatically filled in. Or continue as a guest",
       loggedInMessage:
-        "logged in. Your information has been automatically filled in, you can change it if you wish.",
+        "logged in. Your information has been automatically filled in, you can change it if you wish",
       shipping: "Shipping Information",
       payment: "Payment Information",
       orderSummary: "Order Summary",
@@ -379,7 +379,7 @@ export const translations: Record<Language, any> = {
       success: {
         title: "Order Placed Successfully!",
         message:
-          "Thank you for your purchase. You will receive a confirmation email shortly.",
+          "Thank you for your purchase. You will receive a confirmation email shortly",
         continue: "Continue Shopping",
       },
       required: "is required",
@@ -391,7 +391,7 @@ export const translations: Record<Language, any> = {
     // Auth
     auth: {
       login: {
-        emailNotVerified: "Please verify your email address before logging in.",
+        emailNotVerified: "Please verify your email address before logging in",
         title: "Login",
         noAccount: "Don't have an account?",
         register: "Sign up",
@@ -417,9 +417,9 @@ export const translations: Record<Language, any> = {
         minLength: "At least 6 characters",
         submit: "Register",
         loading: "Registering...",
-        passwordMismatch: "Passwords do not match.",
-        passwordTooShort: "Password must be at least 6 characters.",
-        emailExists: "This email address is already in use.",
+        passwordMismatch: "Passwords do not match",
+        passwordTooShort: "Password must be at least 6 characters",
+        emailExists: "This email address is already in use",
         back: "Back to Home",
         google: "Sign up with Google",
       },
@@ -428,9 +428,9 @@ export const translations: Record<Language, any> = {
     about: {
       title: "About Valmoré Collective",
       description1:
-        "At Valmoré Collective, we believe that fashion is more than just clothing—it's a form of self-expression. Our mission is to curate timeless pieces that blend quality craftsmanship with contemporary design, allowing you to express your unique style.",
+        "At Valmoré Collective, we believe that fashion is more than just clothing—it's a form of self-expression. Our mission is to curate timeless pieces that blend quality craftsmanship with contemporary design, allowing you to express your unique style",
       description2:
-        "Every item in our collection is carefully selected to ensure it meets our standards of excellence. We work with trusted suppliers who share our commitment to sustainability and ethical practices, ensuring that your fashion choices make a positive impact.",
+        "Every item in our collection is carefully selected to ensure it meets our standards of excellence. We work with trusted suppliers who share our commitment to sustainability and ethical practices, ensuring that your fashion choices make a positive impact",
       values: "Our Values",
       value1: "Quality over quantity - we focus on well-made, durable pieces",
       value2:
@@ -440,13 +440,13 @@ export const translations: Record<Language, any> = {
       value4: "Customer satisfaction - your experience is our top priority",
       story: "Our Story",
       storyText:
-        "Founded with a passion for fashion and a commitment to quality, Valmoré Collective started as a small boutique and has grown into a trusted destination for those who appreciate fine clothing and accessories.",
+        "Founded with a passion for fashion and a commitment to quality, Valmoré Collective started as a small boutique and has grown into a trusted destination for those who appreciate fine clothing and accessories",
     },
     // Contact
     contact: {
       title: "Contact Us",
       description:
-        "We'd love to hear from you! Get in touch with us using the information below or fill out the form.",
+        "We'd love to hear from you! Get in touch with us using the information below or fill out the form",
       email: "Email",
       phone: "Phone",
       address: "Address",
@@ -458,7 +458,7 @@ export const translations: Record<Language, any> = {
     // Footer
     footer: {
       description:
-        "Curated fashion for the modern individual. Discover timeless pieces that define your style.",
+        "Curated fashion for the modern individual. Discover timeless pieces that define your style",
       quickLinks: "Quick Links",
       customerService: "Customer Service",
       shipping: "Shipping Info",
@@ -466,10 +466,10 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Size Guide",
       faq: "FAQ",
       newsletter: "Newsletter",
-      newsletterDescription: "Subscribe for exclusive offers and updates.",
+      newsletterDescription: "Subscribe for exclusive offers and updates",
       emailPlaceholder: "Your email",
       joinButton: "JOIN",
-      rights: "All rights reserved.",
+      rights: "All rights reserved",
     },
   },
 };

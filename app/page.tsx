@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Image from "next/image";
 
-export default function Home() {
+export default function Home(): React.JSX.Element {
   const featuredProducts = getFeaturedProducts();
   const { t } = useLanguage();
 

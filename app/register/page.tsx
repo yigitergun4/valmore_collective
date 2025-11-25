@@ -9,7 +9,7 @@ import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 
-export default function RegisterPage() {
+export default function RegisterPage(): React.JSX.Element {
   const router = useRouter();
   const { register, sendVerificationEmail } = useAuth();
   const { t } = useLanguage();
@@ -29,7 +29,7 @@ export default function RegisterPage() {
   // Verification States
   const [step, setStep] = useState<'register' | 'verify'>('register');
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError("");
 
@@ -60,7 +60,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleResendEmail = async () => {
+  const handleResendEmail = async (): Promise<void> => {
     setIsLoading(true);
     const success = await sendVerificationEmail();
     setIsLoading(false);
@@ -244,7 +244,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <GoogleAuthButton text={t("auth.register.google")} />
+            <GoogleAuthButton />
           </form>
         ) : (
           <div className="space-y-6">
