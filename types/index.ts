@@ -1,33 +1,21 @@
 import { ReactNode } from "react";
 
 export interface Product {
-  // Temel Kimlik Bilgileri
   id: string;
   name: string;
-  description: string; // SEO ve kullanıcı bilgisi için kısa/uzun açıklama
-  slug: string; // URL yapısı için (örn: 'kirmizi-kazak-123')
-
-  // Fiyatlandırma
-  price: number; // Güncel satış fiyatı
-  originalPrice?: number; // İndirim varsa üstü çizili eski fiyat (Opsiyonel)
-
-  // Görseller
-  images: string[]; // İlk eleman genellikle kapak fotoğrafı olur
-
-  // Kategorizasyon
+  description: string;
+  price: number;
+  originalPrice?: number; // '?' koyduk çünkü her üründe indirim olmayabilir
+  images: string[];
   category: string;
-  brand?: string; // Markasız ürünler olabileceği için opsiyonel
-
-  // Varyasyonlar (Her üründe olmayacağı için opsiyonel yaptım)
-  sizes?: string[];
-  colors?: string[];
-
-  // Durum Bilgileri
-  inStock: boolean; // Stok var/yok kontrolü
-  featured?: boolean; // Anasayfada "Öne Çıkanlar"da göstermek için
-
-  // Lojistik/Satış Teşviki
-  freeShipping?: boolean; // Kargo bedava etiketi için
+  brand: string;
+  sizes: string[];
+  colors: string[];
+  inStock: boolean;
+  featured: boolean;
+  // Veritabanı için eklenmesi önerilen alanlar:
+  createdAt?: string; // "En yeniler" sıralaması için gerekli
+  slug?: string; // SEO dostu URL için (örn: /urun/klasik-beyaz-gomlek)
 }
 
 export interface CartItem {

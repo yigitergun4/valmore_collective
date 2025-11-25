@@ -4,6 +4,7 @@ export const products: Product[] = [
   {
     id: "1",
     name: "Klasik Beyaz Gömlek",
+    slug: "klasik-beyaz-gomlek",
     description:
       "Premium pamuktan yapılmış zamansız beyaz gömlek. Gündelikten resmiye her duruma uygun.",
     price: 89.99,
@@ -18,12 +19,12 @@ export const products: Product[] = [
     colors: ["Beyaz", "Siyah", "Lacivert"],
     inStock: true,
     featured: true,
-    reviewCount: 234,
-    freeShipping: true,
+    createdAt: "2024-01-01T00:00:00Z",
   },
   {
     id: "2",
     name: "Slim Fit Kot Pantolon",
+    slug: "slim-fit-kot-pantolon",
     description:
       "Esnek konforlu modern slim-fit kot pantolon. Sürdürülebilir denimden üretilmiştir.",
     price: 129.99,
@@ -38,13 +39,12 @@ export const products: Product[] = [
     colors: ["Mavi", "Siyah"],
     inStock: true,
     featured: true,
-    rating: 4.3,
-    reviewCount: 567,
-    freeShipping: true,
+    createdAt: "2024-01-02T00:00:00Z",
   },
   {
     id: "3",
     name: "Yün Palto",
+    slug: "yun-palto",
     description:
       "Soğuk mevsimler için zarif yün palto. Detaylara özen gösterilerek el yapımı.",
     price: 349.99,
@@ -59,13 +59,12 @@ export const products: Product[] = [
     colors: ["Deve Tüyü", "Siyah", "Lacivert"],
     inStock: true,
     featured: true,
-    rating: 4.7,
-    reviewCount: 189,
-    freeShipping: true,
+    createdAt: "2024-01-03T00:00:00Z",
   },
   {
     id: "4",
     name: "Kaşmir Kazak",
+    slug: "kasmir-kazak",
     description: "Üstün konfor ve stil için lüks kaşmir kazak.",
     price: 199.99,
     originalPrice: 279.99,
@@ -79,13 +78,12 @@ export const products: Product[] = [
     colors: ["Bej", "Gri", "Lacivert"],
     inStock: true,
     featured: false,
-    rating: 4.6,
-    reviewCount: 423,
-    freeShipping: true,
+    createdAt: "2024-01-04T00:00:00Z",
   },
   {
     id: "5",
     name: "Deri Ceket",
+    slug: "deri-ceket",
     description: "Modern dokunuşlu klasik deri ceket. Dayanıklı ve şık.",
     price: 449.99,
     originalPrice: 649.99,
@@ -99,13 +97,12 @@ export const products: Product[] = [
     colors: ["Kahverengi", "Siyah"],
     inStock: true,
     featured: false,
-    rating: 4.8,
-    reviewCount: 312,
-    freeShipping: true,
+    createdAt: "2024-01-05T00:00:00Z",
   },
   {
     id: "6",
     name: "Chino Pantolon",
+    slug: "chino-pantolon",
     description:
       "Hem gündelik hem de smart-casual görünümler için çok yönlü chino pantolon.",
     price: 99.99,
@@ -120,13 +117,12 @@ export const products: Product[] = [
     colors: ["Haki", "Lacivert", "Zeytin Yeşili"],
     inStock: true,
     featured: false,
-    rating: 4.4,
-    reviewCount: 678,
-    freeShipping: true,
+    createdAt: "2024-01-06T00:00:00Z",
   },
   {
     id: "7",
     name: "Oversize Basic Tişört",
+    slug: "oversize-basic-tisort",
     description: "Yumuşak pamuklu oversize kesim günlük tişört.",
     price: 49.99,
     originalPrice: 79.99,
@@ -140,14 +136,12 @@ export const products: Product[] = [
     colors: ["Beyaz", "Siyah", "Krem"],
     inStock: true,
     featured: true,
-    rating: 4.4,
-    reviewCount: 152,
-    freeShipping: true,
+    createdAt: "2024-01-07T00:00:00Z",
   },
-
   {
     id: "8",
     name: "Relax Fit Hoodie",
+    slug: "relax-fit-hoodie",
     description: "Sıcak tutan ve rahat kesimli kapüşonlu hoodie.",
     price: 159.99,
     originalPrice: 219.99,
@@ -161,14 +155,12 @@ export const products: Product[] = [
     colors: ["Gri", "Siyah", "Bordo"],
     inStock: true,
     featured: false,
-    rating: 4.6,
-    reviewCount: 421,
-    freeShipping: true,
+    createdAt: "2024-01-08T00:00:00Z",
   },
-
   {
     id: "9",
     name: "Minimal Deri Omuz Çantası",
+    slug: "minimal-deri-omuz-cantasi",
     description: "Modern ve sade tasarımlı kompakt deri omuz çantası.",
     price: 199.99,
     originalPrice: 249.99,
@@ -182,14 +174,12 @@ export const products: Product[] = [
     colors: ["Siyah", "Bej"],
     inStock: true,
     featured: true,
-    rating: 4.7,
-    reviewCount: 318,
-    freeShipping: true,
+    createdAt: "2024-01-09T00:00:00Z",
   },
-
   {
     id: "10",
     name: "Yüksek Taban Spor Ayakkabı",
+    slug: "yuksek-taban-spor-ayakkabi",
     description: "Gün boyu konfor sağlayan yüksek taban sneaker.",
     price: 299.99,
     originalPrice: 399.99,
@@ -203,14 +193,12 @@ export const products: Product[] = [
     colors: ["Beyaz", "Gri"],
     inStock: true,
     featured: true,
-    rating: 4.8,
-    reviewCount: 984,
-    freeShipping: true,
+    createdAt: "2024-01-10T00:00:00Z",
   },
-
   {
     id: "11",
     name: "Saten Midi Elbise",
+    slug: "saten-midi-elbise",
     description: "Şık davetler için zarif saten midi elbise.",
     price: 279.99,
     originalPrice: 359.99,
@@ -224,14 +212,12 @@ export const products: Product[] = [
     colors: ["Kırmızı", "Siyah"],
     inStock: true,
     featured: true,
-    rating: 4.9,
-    reviewCount: 502,
-    freeShipping: true,
+    createdAt: "2024-01-11T00:00:00Z",
   },
-
   {
     id: "12",
     name: "Bomber Ceket",
+    slug: "bomber-ceket",
     description: "Sokak stilinin vazgeçilmezi bomber model ceket.",
     price: 229.99,
     originalPrice: 299.99,
@@ -245,13 +231,12 @@ export const products: Product[] = [
     colors: ["Siyah", "Haki"],
     inStock: true,
     featured: false,
-    reviewCount: 277,
-    freeShipping: true,
+    createdAt: "2024-01-12T00:00:00Z",
   },
-
   {
     id: "13",
     name: "Oversize Sweatshirt",
+    slug: "oversize-sweatshirt",
     description: "Yumuşak dokulu, tam bir konfor oversize sweatshirt.",
     price: 129.99,
     originalPrice: 169.99,
@@ -265,14 +250,12 @@ export const products: Product[] = [
     colors: ["Krem", "Gri"],
     inStock: true,
     featured: false,
-    rating: 4.4,
-    reviewCount: 332,
-    freeShipping: true,
+    createdAt: "2024-01-13T00:00:00Z",
   },
-
   {
     id: "14",
     name: "Retro Sneaker",
+    slug: "retro-sneaker",
     description: "Vintage detaylara sahip hafif spor ayakkabı.",
     price: 259.99,
     originalPrice: 349.99,
@@ -286,14 +269,12 @@ export const products: Product[] = [
     colors: ["Beyaz", "Siyah"],
     inStock: true,
     featured: false,
-    rating: 4.7,
-    reviewCount: 712,
-    freeShipping: true,
+    createdAt: "2024-01-14T00:00:00Z",
   },
-
   {
     id: "15",
     name: "Kargo Şort",
+    slug: "kargo-sort",
     description: "Hafif kumaşı ile rahat kesim çok cepli kargo şort.",
     price: 89.99,
     originalPrice: 129.99,
@@ -307,14 +288,12 @@ export const products: Product[] = [
     colors: ["Haki", "Bej"],
     inStock: true,
     featured: false,
-    rating: 4.3,
-    reviewCount: 112,
-    freeShipping: true,
+    createdAt: "2024-01-15T00:00:00Z",
   },
-
   {
     id: "16",
     name: "Ketenden Gömlek",
+    slug: "ketenden-gomlek",
     description: "Nefes alabilen keten kumaştan yazlık gömlek.",
     price: 119.99,
     originalPrice: 159.99,
@@ -328,13 +307,12 @@ export const products: Product[] = [
     colors: ["Bej", "Beyaz"],
     inStock: true,
     featured: false,
-    rating: 4.6,
-    reviewCount: 265,
-    freeShipping: true,
+    createdAt: "2024-01-16T00:00:00Z",
   },
   {
     id: "17",
     name: "Wide Leg Palazzo Pantolon",
+    slug: "wide-leg-palazzo-pantolon",
     description:
       "Akıcı kumaşı ve geniş paça kesimiyle modern palazzo pantolon. Günlük ve şık kullanım için ideal.",
     price: 149.99,
@@ -349,14 +327,12 @@ export const products: Product[] = [
     colors: ["Siyah", "Bej"],
     inStock: true,
     featured: false,
-    rating: 4.6,
-    reviewCount: 231,
-    freeShipping: true,
+    createdAt: "2024-01-17T00:00:00Z",
   },
-
   {
     id: "18",
     name: "Straight Fit Denim",
+    slug: "straight-fit-denim",
     description:
       "Günlük kullanım için rahat straight-fit kesimli denim pantolon. Dayanıklı kumaş yapısı ile uzun ömürlü.",
     price: 139.99,
@@ -371,13 +347,12 @@ export const products: Product[] = [
     colors: ["Açık Mavi", "Koyu Mavi"],
     inStock: true,
     featured: false,
-    rating: 4.4,
-    reviewCount: 482,
-    freeShipping: true,
+    createdAt: "2024-01-18T00:00:00Z",
   },
   {
     id: "19",
     name: "Kargo Jogger Pantolon",
+    slug: "kargo-jogger-pantolon",
     description:
       "Rahat kesimli ve yan cepli modern kargo jogger pantolon. Sokak stiline sportif bir dokunuş katar.",
     price: 119.99,
@@ -392,9 +367,7 @@ export const products: Product[] = [
     colors: ["Haki", "Siyah"],
     inStock: true,
     featured: true,
-    rating: 4.7,
-    reviewCount: 367,
-    freeShipping: true,
+    createdAt: "2024-01-19T00:00:00Z",
   },
 ];
 
@@ -419,12 +392,6 @@ export function getDiscountedProducts(): Product[] {
 
 export function getProductsByBrand(brand: string): Product[] {
   return products.filter((product) => product.brand === brand);
-}
-
-export function getTopRatedProducts(minRating: number = 4.5): Product[] {
-  return products.filter(
-    (product) => product.rating && product.rating >= minRating
-  );
 }
 
 export function getRelatedProducts(
