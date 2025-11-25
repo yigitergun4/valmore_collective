@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Mail, Lock, ArrowRight, ChevronLeft, Eye, EyeOff } from "lucide-react";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 function LoginForm() {
   const router = useRouter();
@@ -31,16 +32,24 @@ function LoginForm() {
     setError("");
     setIsLoading(true);
 
-    const success = await login(email, password);
+    try {
+      const success = await login(email, password);
 
-    setIsLoading(false);
-
-    if (success) {
-      const redirect = searchParams.get("redirect") || "/";
-      router.push(redirect);
-      router.refresh();
-    } else {
-      setError(t("auth.login.error"));
+      if (success) {
+        const redirect = searchParams.get("redirect") || "/";
+        router.push(redirect);
+        router.refresh();
+      } else {
+        setError(t("auth.login.error"));
+      }
+    } catch (err: any) {
+      if (err.message === "Email not verified") {
+        setError("Please verify your email address before logging in.");
+      } else {
+        setError(t("auth.login.error"));
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -169,6 +178,17 @@ function LoginForm() {
               </>
             )}
           </button>
+
+          <div className="relative flex items-center justify-center my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative bg-white px-4 text-xs text-gray-500 uppercase tracking-wider">
+              {t("auth.login.or")}
+            </div>
+          </div>
+
+          <GoogleAuthButton text={t("auth.login.google")} />
         </form>
       </div>
     </div>

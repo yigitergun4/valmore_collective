@@ -9,7 +9,11 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  sendEmailVerification,
+  GoogleAuthProvider,
+  signInWithPopup,
   User as FirebaseUser,
+  UserCredential,
 } from 'firebase/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,7 +25,7 @@ export function AuthProvider({ children }: ProviderProps) {
   // Listen to Firebase auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
+      if (firebaseUser && firebaseUser.emailVerified) {
         // Map Firebase user to application user
         const userData: User = {
           id: firebaseUser.uid,
@@ -42,44 +46,88 @@ export function AuthProvider({ children }: ProviderProps) {
 
   const login: AuthContextType['login'] = async (email: string, password: string): Promise<boolean> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        throw new Error("Email not verified");
+      }
+      
       return true;
     } catch (error: any) {
-      console.error('Login error:', error);
+      // Re-throw if it's our verification error so the UI can handle it
+      if (error.message === "Email not verified") {
+        throw error;
+      }
       return false;
     }
   };
 
-  const register: AuthContextType['register'] = async (name: string, email: string, password: string): Promise<boolean> => {
+  const loginWithGoogle: AuthContextType['loginWithGoogle'] = async (): Promise<boolean> => {
     try {
-      // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
       
-      // Update user profile with display name
+      // Update local state with the new user info
+      const userData: User = {
+        id: result.user.uid,
+        email: result.user.email || '',
+        name: result.user.displayName || '',
+        createdAt: result.user.metadata.creationTime || new Date().toISOString(),
+      };
+      setUser(userData);
+      
+      return true;
+    } catch (error: any) {
+      return false;
+    }
+  };
+
+const register: AuthContextType['register'] = async (name: string, email: string, password: string): Promise<boolean> => {
+    try {
+      // 1. Kullanıcıyı oluştur
+      const userCredential: UserCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. Profil ismini güncelle
       await updateProfile(userCredential.user, {
         displayName: name,
       });
 
-      // Update local state with the new user info
-      const userData: User = {
-        id: userCredential.user.uid,
-        email: userCredential.user.email || '',
-        name: name,
-        createdAt: userCredential.user.metadata.creationTime || new Date().toISOString(),
-      };
-      setUser(userData);
+      // 3. Doğrulama e-postasını gönder
+      await sendEmailVerification(userCredential.user);
 
+      // 4. Local state güncelleme
+      // Note: We don't set user state here because we want to force them to login after verification
+      // Firebase automatically signs in after registration, so we sign them out
+      await signOut(auth);
+      setUser(null);
+
+      console.log("Kullanıcı oluşturuldu, doğrulama maili gönderildi ve çıkış yapıldı.");
       return true;
     } catch (error: any) {
-      console.error('Registration error:', error);
       return false;
     }
   };
 
   const logout: AuthContextType['logout'] = () => {
     signOut(auth).catch((error) => {
-      console.error('Logout error:', error);
     });
+  };
+
+  const sendVerificationEmail: AuthContextType['sendVerificationEmail'] = async (): Promise<boolean> => {
+    try {
+      if (auth.currentUser) {
+        const actionCodeSettings = {
+          url: `${window.location.origin}/login`, // Redirect to login page after verification
+          handleCodeInApp: true,
+        };
+        await sendEmailVerification(auth.currentUser, actionCodeSettings);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      return false;
+    }
   };
 
   return (
@@ -87,8 +135,10 @@ export function AuthProvider({ children }: ProviderProps) {
       value={{
         user,
         login,
+        loginWithGoogle,
         register,
         logout,
+        sendVerificationEmail,
         isLoading,
       }}
     >

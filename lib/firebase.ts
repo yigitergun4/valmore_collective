@@ -1,8 +1,10 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
+import { FirebaseAppConfig } from "../types/firebaseAppConfig";
+
 
 // Firebase configuration from environment variables
-const firebaseConfig = {
+const firebaseConfig: FirebaseAppConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
@@ -13,7 +15,7 @@ const firebaseConfig = {
 };
 
 // Validate that all required environment variables are present
-const requiredEnvVars = [
+const requiredEnvVars: string[] = [
   "NEXT_PUBLIC_FIREBASE_API_KEY",
   "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
   "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
@@ -21,16 +23,6 @@ const requiredEnvVars = [
   "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
   "NEXT_PUBLIC_FIREBASE_APP_ID",
 ];
-
-const missingEnvVars = requiredEnvVars.filter(
-  (varName) => !process.env[varName]
-);
-
-if (missingEnvVars.length > 0) {
-  throw new Error(
-    `Missing required Firebase environment variables: ${missingEnvVars.join(", ")}`
-  );
-}
 
 // Initialize Firebase (only once)
 let app: FirebaseApp;

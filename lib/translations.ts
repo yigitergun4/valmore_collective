@@ -155,6 +155,7 @@ export const translations: Record<Language, any> = {
     // Auth
     auth: {
       login: {
+        emailNotVerified: "Lütfen e-postanızı doğrulayın.",
         title: "Giriş Yap",
         noAccount: "Hesabınız yok mu?",
         register: "Kayıt olun",
@@ -166,6 +167,8 @@ export const translations: Record<Language, any> = {
         loading: "Giriş yapılıyor...",
         error: "E-posta veya şifre hatalı. Lütfen tekrar deneyin.",
         back: "Ana Sayfaya Dön",
+        or: "veya",
+        google: "Google ile Giriş Yap",
       },
       register: {
         title: "Kayıt Ol",
@@ -182,6 +185,7 @@ export const translations: Record<Language, any> = {
         passwordTooShort: "Şifre en az 6 karakter olmalıdır.",
         emailExists: "Bu e-posta adresi zaten kullanılıyor.",
         back: "Ana Sayfaya Dön",
+        google: "Google ile Kayıt Ol",
       },
     },
     // About
@@ -387,6 +391,7 @@ export const translations: Record<Language, any> = {
     // Auth
     auth: {
       login: {
+        emailNotVerified: "Please verify your email address before logging in.",
         title: "Login",
         noAccount: "Don't have an account?",
         register: "Sign up",
@@ -398,6 +403,8 @@ export const translations: Record<Language, any> = {
         loading: "Logging in...",
         error: "Invalid email or password. Please try again.",
         back: "Back to Home",
+        or: "or",
+        google: "Continue with Google",
       },
       register: {
         title: "Register",
@@ -414,6 +421,7 @@ export const translations: Record<Language, any> = {
         passwordTooShort: "Password must be at least 6 characters.",
         emailExists: "This email address is already in use.",
         back: "Back to Home",
+        google: "Sign up with Google",
       },
     },
     // About
