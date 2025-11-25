@@ -24,7 +24,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-10">
       <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-16">
         <h1 className="text-4xl font-serif font-bold text-primary-800 mb-8">{t('contact.title')}</h1>
 

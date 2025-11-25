@@ -6,7 +6,7 @@ export default function AboutPage() {
   const { t } = useLanguage();
   
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen mt-10 bg-white">
       <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-16">
         <h1 className="text-4xl font-serif font-bold text-primary-800 mb-8">{t('about.title')}</h1>
         

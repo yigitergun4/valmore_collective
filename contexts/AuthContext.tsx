@@ -1,7 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthContextType, StoredUser, ProviderProps } from '@/types';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { User, AuthContextType, ProviderProps } from '@/types';
+import { auth } from '@/lib/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+  User as FirebaseUser,
+} from 'firebase/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -9,81 +18,68 @@ export function AuthProvider({ children }: ProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Listen to Firebase auth state changes
   useEffect(() => {
-    const savedUser = localStorage.getItem('valmore-user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Failed to load user from localStorage:', error);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // Map Firebase user to application user
+        const userData: User = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || '',
+          createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
+        };
+        setUser(userData);
+      } else {
+        setUser(null);
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // In a real app, this would validate against a backend
-    // For demo purposes, we'll check against localStorage
-    const users: StoredUser[] = JSON.parse(localStorage.getItem('valmore-users') || '[]');
-    const foundUser = users.find((u: StoredUser) => u.email === email && u.password === password);
-
-    if (foundUser) {
-      const userData: User = {
-        id: foundUser.id,
-        email: foundUser.email,
-        name: foundUser.name,
-        createdAt: foundUser.createdAt,
-      };
-      setUser(userData);
-      localStorage.setItem('valmore-user', JSON.stringify(userData));
+  const login: AuthContextType['login'] = async (email: string, password: string): Promise<boolean> => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       return true;
-    }
-
-    return false;
-  };
-
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // In a real app, this would create a user in a database
-    const users: StoredUser[] = JSON.parse(localStorage.getItem('valmore-users') || '[]');
-    
-    // Check if user already exists
-    if (users.some((u: StoredUser) => u.email === email)) {
+    } catch (error: any) {
+      console.error('Login error:', error);
       return false;
     }
-
-    const newUser: StoredUser = {
-      id: Date.now().toString(),
-      email,
-      name,
-      password, // In a real app, this would be hashed
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    localStorage.setItem('valmore-users', JSON.stringify(users));
-
-    const userData: User = {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      createdAt: newUser.createdAt,
-    };
-
-    setUser(userData);
-    localStorage.setItem('valmore-user', JSON.stringify(userData));
-    return true;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('valmore-user');
+  const register: AuthContextType['register'] = async (name: string, email: string, password: string): Promise<boolean> => {
+    try {
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Update user profile with display name
+      await updateProfile(userCredential.user, {
+        displayName: name,
+      });
+
+      // Update local state with the new user info
+      const userData: User = {
+        id: userCredential.user.uid,
+        email: userCredential.user.email || '',
+        name: name,
+        createdAt: userCredential.user.metadata.creationTime || new Date().toISOString(),
+      };
+      setUser(userData);
+
+      return true;
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      return false;
+    }
+  };
+
+  const logout: AuthContextType['logout'] = () => {
+    signOut(auth).catch((error) => {
+      console.error('Logout error:', error);
+    });
   };
 
   return (
@@ -108,4 +104,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -1,6 +1,6 @@
 export type Language = "tr" | "en";
 
-export const translations = {
+export const translations: Record<Language, any> = {
   tr: {
     // Navigation
     nav: {
@@ -92,6 +92,7 @@ export const translations = {
         dresses: "Elbise",
         shorts: "Şort",
       },
+      clearFilter: "Filtreleri Temizle",
     },
     // Cart
     cart: {
@@ -225,6 +226,10 @@ export const translations = {
       returns: "İade & Değişim",
       sizeGuide: "Beden Rehberi",
       faq: "Sık Sorulan Sorular",
+      newsletter: "Bülten",
+      newsletterDescription: "Özel teklifler ve güncellemeler için abone olun.",
+      emailPlaceholder: "E-posta adresiniz",
+      joinButton: "KATIL",
       rights: "Tüm hakları saklıdır.",
     },
   },
@@ -319,6 +324,7 @@ export const translations = {
         dresses: "Dresses",
         shorts: "Shorts",
       },
+      clearFilter: "Clear All",
     },
     // Cart
     cart: {
@@ -451,6 +457,10 @@ export const translations = {
       returns: "Returns",
       sizeGuide: "Size Guide",
       faq: "FAQ",
+      newsletter: "Newsletter",
+      newsletterDescription: "Subscribe for exclusive offers and updates.",
+      emailPlaceholder: "Your email",
+      joinButton: "JOIN",
       rights: "All rights reserved.",
     },
   },

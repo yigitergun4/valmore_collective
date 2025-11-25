@@ -124,19 +124,19 @@ export default function Footer() {
             {/* Newsletter */}
             <div className="col-span-2 sm:col-span-1">
               <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-500">
-                Newsletter
+                {t("footer.newsletter")}
               </h4>
               <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-                Subscribe for exclusive offers and updates.
+                {t("footer.newsletterDescription")}
               </p>
               <div className="flex border-b border-primary-600/30 pb-2 mb-2">
                 <input
                   type="email"
-                  placeholder="Your email"
+                  placeholder={t("footer.emailPlaceholder")}
                   className="bg-transparent border-none outline-none text-sm w-full placeholder-gray-700 text-white"
                 />
                 <button className="text-[10px] font-bold uppercase tracking-wider text-primary-400 hover:text-primary-300 transition-colors">
-                  JOIN
+                  {t("footer.joinButton")}
                 </button>
               </div>
             </div>

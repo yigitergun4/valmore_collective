@@ -157,7 +157,7 @@ export default function ProductsPage() {
                 onClick={clearFilters}
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-wider text-primary-600 underline underline-offset-2 hover:text-primary-700 transition-colors whitespace-nowrap ml-auto"
               >
-                Clear All
+                {t("products.clearFilter")}
               </button>
             </div>
           )}
@@ -319,21 +319,6 @@ export default function ProductsPage() {
                   </ul>
                 </div>
               </div>
-
-              {/* Footer */}
-              {hasActiveFilters && (
-                <div className="p-6 border-t border-gray-200">
-                  <button
-                    onClick={() => {
-                      clearFilters();
-                      setIsMobileFilterOpen(false);
-                    }}
-                    className="w-full py-3 bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-primary-600 transition-colors"
-                  >
-                    Clear All Filters
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>

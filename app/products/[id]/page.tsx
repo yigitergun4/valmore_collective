@@ -17,13 +17,13 @@ import {
   Share2,
   ChevronUp,
   ChevronRight,
-  Info,
   Truck,
   ShieldCheck,
   Ruler,
 } from "lucide-react";
 import Link from "next/link";
-import ProductCard from "@/components/ProductCard";
+import SelectionButton from "@/components/SelectionButton";
+import MobileSelectionButton from "@/components/MobileSelectionButton";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -35,9 +35,9 @@ export default function ProductDetailPage() {
 
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFavorited, setIsFavorited] = useState<boolean>(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
   // Refs for mobile interactions
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -49,6 +49,7 @@ export default function ProductDetailPage() {
   const allProducts = getAllProducts();
   const currentProductIndex = allProducts.findIndex((p) => p.id === params.id);
   const relatedProducts = getRelatedProducts(params.id as string, 4);
+
 
   // Mobile Scroll Handler
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function ProductDetailPage() {
     isHorizontalSwipe.current = false;
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove: (e: React.TouchEvent) => void = (e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
     const touchEndY = e.touches[0].clientY;
     const deltaX = Math.abs(touchStartX.current - touchEndX.current);
@@ -102,7 +103,7 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd: () => void = () => {
     if (!product || !isHorizontalSwipe.current) {
       if (imageContainerRef.current) {
         imageContainerRef.current.style.overflowY = "scroll";
@@ -110,8 +111,8 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const swipeThreshold = 50;
-    const diff = touchStartX.current - touchEndX.current;
+    const swipeThreshold: number = 50;
+    const diff: number = touchStartX.current - touchEndX.current;
 
     if (Math.abs(diff) > swipeThreshold) {
       if (diff > 0) {
@@ -148,7 +149,29 @@ export default function ProductDetailPage() {
     );
   }
 
-  const handleAddToCart = () => {
+  // Early validation for required product data
+  if (!product.colors || product.colors.length === 0 || !product.sizes || product.sizes.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold uppercase mb-4">
+            Product Data Incomplete
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            This product is missing required information.
+          </p>
+          <Link
+            href="/products"
+            className="text-sm underline font-bold uppercase hover:opacity-60 transition-opacity"
+          >
+            {t("products.backToProducts")}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAddToCart: () => void = () => {
     if (!selectedSize || !selectedColor) {
       // Could add a toast notification here
       return;
@@ -157,12 +180,28 @@ export default function ProductDetailPage() {
     setIsDrawerOpen(false);
   };
 
-  const toggleFavorite = () => {
+  const toggleFavorite: () => void = () => {
     if (!user) {
       router.push("/login?redirect=/products/" + params.id);
       return;
     }
     setIsFavorited(!isFavorited);
+  };
+
+  const toggleColorSelection: (value: string) => void = (value: string) => {
+    if (value === selectedColor) {
+      setSelectedColor("");
+    } else {
+      setSelectedColor(value);
+    }
+  };
+
+  const toggleSizeSelection: (value: string) => void = (value: string) => {
+    if (value === selectedSize) {
+      setSelectedSize("");
+    } else {
+      setSelectedSize(value);
+    }
   };
 
   return (
@@ -237,17 +276,13 @@ export default function ProductDetailPage() {
               </p>
               <div className="flex flex-wrap gap-3">
                 {product.colors.map((color) => (
-                  <button
+                  <SelectionButton
                     key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`h-10 px-6 text-sm font-bold uppercase transition-all duration-200 border ${
-                      selectedColor === color
-                        ? "border-primary-600 bg-primary-600 text-white"
-                        : "border-gray-200 text-black hover:border-primary-600"
-                    }`}
-                  >
-                    {color}
-                  </button>
+                    value={color}
+                    isSelected={selectedColor === color}
+                    onClick={toggleColorSelection}
+                    variant="compact"
+                  />
                 ))}
               </div>
             </div>
@@ -267,17 +302,12 @@ export default function ProductDetailPage() {
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {product.sizes.map((size) => (
-                  <button
+                  <SelectionButton
                     key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`h-12 text-sm font-bold uppercase transition-all duration-200 border ${
-                      selectedSize === size
-                        ? "border-primary-600 bg-primary-600 text-white"
-                        : "border-gray-200 text-black hover:border-primary-600"
-                    }`}
-                  >
-                    {size}
-                  </button>
+                    value={size}
+                    isSelected={selectedSize === size}
+                    onClick={toggleSizeSelection}
+                  />
                 ))}
               </div>
             </div>
@@ -451,17 +481,13 @@ export default function ProductDetailPage() {
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {product.colors.map((color) => (
-                    <button
+                    <MobileSelectionButton
                       key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`px-6 py-3 text-sm font-bold uppercase border transition-all ${
-                        selectedColor === color
-                          ? "border-primary-600 bg-primary-600 text-white"
-                          : "border-gray-200 text-black hover:border-primary-600"
-                      }`}
-                    >
-                      {color}
-                    </button>
+                      value={color}
+                      isSelected={selectedColor === color}
+                      onClick={toggleColorSelection}
+                      type="color"
+                    />
                   ))}
                 </div>
               </div>
@@ -478,17 +504,13 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {product.sizes.map((size) => (
-                    <button
+                    <MobileSelectionButton
                       key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-3 text-sm font-bold uppercase border transition-all ${
-                        selectedSize === size
-                          ? "border-primary-600 bg-primary-600 text-white"
-                          : "border-gray-200 text-black hover:border-primary-600"
-                      }`}
-                    >
-                      {size}
-                    </button>
+                      value={size}
+                      isSelected={selectedSize === size}
+                      onClick={toggleSizeSelection}
+                      type="size"
+                    />
                   ))}
                 </div>
               </div>
