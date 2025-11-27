@@ -8,7 +8,7 @@ import {
   getRelatedProducts,
   getAllProducts,
 } from "@/lib/products";
-import { useCart } from "@/contexts/CartContext";
+import { useShop } from "@/contexts/ShopContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -24,23 +24,23 @@ import {
 import Link from "next/link";
 import SelectionButton from "@/components/SelectionButton";
 import MobileSelectionButton from "@/components/MobileSelectionButton";
-
 export default function ProductDetailClient(): React.JSX.Element {
-  const params = useParams();
-  const router = useRouter();
-  const product = getProductById(params.id as string);
-  const { addToCart } = useCart();
+  const params: { id: string } = useParams();
+  const router: ReturnType<typeof useRouter> = useRouter();
+  const product= getProductById(params.id as string);
+  const { addToCart, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
   const { user } = useAuth();
 
-  const searchParams = useSearchParams();
+  const searchParams: ReturnType<typeof useSearchParams> = useSearchParams();
   const [selectedSize, setSelectedSize] = useState<string>(
     searchParams.get("size") || ""
   );
   const [selectedColor, setSelectedColor] = useState<string>(
     searchParams.get("color") || ""
   );
-  const [isFavorited, setIsFavorited] = useState<boolean>(false);
+  
+  const isFavorited: boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
@@ -51,20 +51,20 @@ export default function ProductDetailClient(): React.JSX.Element {
   const touchStartY = useRef<number>(0);
   const isHorizontalSwipe = useRef<boolean>(false);
 
-  const allProducts = getAllProducts();
+  const allProducts: ReturnType<typeof getAllProducts> = getAllProducts();
   const currentProductIndex = allProducts.findIndex((p) => p.id === params.id);
-  const relatedProducts = getRelatedProducts(params.id as string, 4);
+  const relatedProducts: ReturnType<typeof getRelatedProducts> = getRelatedProducts(params.id as string, 4);
 
 
   // Mobile Scroll Handler
   useEffect(() => {
-    const container = imageContainerRef.current;
+    const container: HTMLDivElement | null = imageContainerRef.current;
     if (!container || !product) return;
 
-    const isMobile = window.innerWidth < 1024;
+    const isMobile: boolean = window.innerWidth < 1024;
     if (!isMobile) return;
 
-    const handleScroll = () => {
+    const handleScroll: () => void = () => {
       const scrollTop = container.scrollTop;
       const itemHeight = container.clientHeight;
       const index = Math.round(scrollTop / itemHeight);
@@ -77,7 +77,7 @@ export default function ProductDetailClient(): React.JSX.Element {
 
   // Mobile Drawer Scroll Lock
   useEffect(() => {
-    const container = imageContainerRef.current;
+    const container: HTMLDivElement | null = imageContainerRef.current;
     if (!container || window.innerWidth >= 1024) return;
 
     if (isDrawerOpen) {
@@ -88,7 +88,7 @@ export default function ProductDetailClient(): React.JSX.Element {
   }, [isDrawerOpen]);
 
   // Mobile Swipe Logic
-  const handleTouchStart = (e: React.TouchEvent): void => {
+  const handleTouchStart: (e: React.TouchEvent) => void = (e: React.TouchEvent): void => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isHorizontalSwipe.current = false;
@@ -181,16 +181,14 @@ export default function ProductDetailClient(): React.JSX.Element {
       // Could add a toast notification here
       return;
     }
-    addToCart(product, selectedSize, selectedColor, 1);
+    addToCart(product, selectedSize, selectedColor);
     setIsDrawerOpen(false);
   };
 
-  const toggleFavorite: () => void = () => {
-    if (!user) {
-      router.push("/login?redirect=/products/" + params.id);
-      return;
+  const handleToggleFavorite: () => void = () => {
+    if (product) {
+      toggleFavorite(product.id);
     }
-    setIsFavorited(!isFavorited);
   };
 
   const toggleColorSelection: (value: string) => void = (value: string) => {
@@ -246,7 +244,7 @@ export default function ProductDetailClient(): React.JSX.Element {
                   {product.name}
                 </h1>
                 <button
-                  onClick={toggleFavorite}
+                  onClick={handleToggleFavorite}
                   className="hover:text-primary-600 transition-colors"
                 >
                   <Heart
@@ -370,7 +368,7 @@ export default function ProductDetailClient(): React.JSX.Element {
           </button>
           <div className="flex gap-3 pointer-events-auto">
             <button
-              onClick={toggleFavorite}
+              onClick={handleToggleFavorite}
               className={`p-2 backdrop-blur-md rounded-full transition-colors ${
                 isFavorited ? "bg-primary-600" : "bg-white/20"
               } text-white`}
@@ -433,7 +431,7 @@ export default function ProductDetailClient(): React.JSX.Element {
               </p>
             </div>
             <button
-              onClick={toggleFavorite}
+              onClick={handleToggleFavorite}
               className={`pointer-events-auto p-2.5 backdrop-blur-md rounded-full transition-all ml-3 ${
                 isFavorited ? "bg-primary-600" : "bg-white/20"
               }`}

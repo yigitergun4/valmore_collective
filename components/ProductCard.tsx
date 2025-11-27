@@ -4,8 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types";
 import { useState, useRef, useMemo, useCallback } from "react";
-import { Heart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import FavoriteButton from "./FavoriteButton";
 
 interface ProductCardProps {
   product: Product;
@@ -15,26 +15,25 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { t } = useLanguage();
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [isFavorited, setIsFavorited] = useState<boolean>(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const images = useMemo(
+  const images: string[] = useMemo(
     () => product.images.filter((img) => img && img.trim() !== ""),
     [product.images]
   );
-  const hasMultipleImages = images.length > 1;
-  const imagesLength = images.length;
+  const hasMultipleImages: boolean = images.length > 1;
+  const imagesLength: number = images.length;
 
-  const originalPrice = product.originalPrice || product.price * 1.3;
-  const discountPercentage = Math.round(
+  const originalPrice: number = product.originalPrice || product.price * 1.3;
+  const discountPercentage: number = Math.round(
     ((originalPrice - product.price) / originalPrice) * 100
   );
-  const hasDiscount = discountPercentage > 0;
+  const hasDiscount: boolean = discountPercentage > 0;
 
-  const handleMouseMove = useCallback(
+  const handleMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!hasMultipleImages || !imageContainerRef.current) return;
 
@@ -44,12 +43,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         throttleTimeoutRef.current = null;
       }, 50);
 
-      const rect = imageContainerRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const cardWidth = rect.width;
-      const mousePosition = mouseX / cardWidth;
-      const sectionIndex = Math.floor(mousePosition * imagesLength);
-      const newIndex = Math.min(sectionIndex, imagesLength - 1);
+      const rect: DOMRectReadOnly = imageContainerRef.current.getBoundingClientRect();
+      const mouseX: number = e.clientX - rect.left;
+      const cardWidth: number = rect.width;
+      const mousePosition: number = mouseX / cardWidth;
+      const sectionIndex: number = Math.floor(mousePosition * imagesLength);
+      const newIndex: number = Math.min(sectionIndex, imagesLength - 1);
 
       if (newIndex !== currentImageIndex) {
         setCurrentImageIndex(newIndex);
@@ -58,17 +57,23 @@ export default function ProductCard({ product }: ProductCardProps) {
     [hasMultipleImages, imagesLength, currentImageIndex]
   );
 
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
     if (!hasMultipleImages) return;
     touchStartX.current = e.touches[0].clientX;
-  };
+  },
+    [hasMultipleImages]
+  );
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchMove: (e: React.TouchEvent<HTMLDivElement>) => void = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
     if (!hasMultipleImages) return;
     touchEndX.current = e.touches[0].clientX;
-  };
+  },
+    [hasMultipleImages]
+  );
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd: () => void = useCallback(() => {
     if (!hasMultipleImages) return;
 
     const swipeThreshold = 50;
@@ -83,13 +88,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         );
       }
     }
-  };
+  },
+    [hasMultipleImages, imagesLength]
+  );
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsFavorited(!isFavorited);
-  };
+
 
   return (
     <div
@@ -121,22 +124,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                 />
 
-                <button
-                  onClick={handleFavoriteClick}
-                  className={`absolute top-2 right-2 p-1.5 backdrop-blur-sm rounded-full transition-all z-20 lg:opacity-0 lg:group-hover:opacity-100 ${
-                    isFavorited
-                      ? "bg-primary-600"
-                      : "bg-white/90 lg:hover:bg-white"
-                  }`}
-                  aria-label={t("products.addToFavorites")}
-                >
-                  <Heart
-                    size={16}
-                    className={`transition-colors ${
-                      isFavorited ? "fill-white text-white" : "text-primary-600"
-                    }`}
+                <div className="absolute top-2 right-2 z-20 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                  <FavoriteButton
+                    productId={product.id}
+                    className="bg-white/90 hover:bg-white shadow-sm"
                   />
-                </button>
+                </div>
 
                 {hasDiscount && (
                   <div className="absolute top-2 left-2 bg-primary-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-[0.15em] z-10">

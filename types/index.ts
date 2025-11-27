@@ -16,6 +16,29 @@ export interface Product {
   createdAt: string; // Made required as per new spec
   slug?: string;
 }
+export interface ShopContextType {
+  cart: CartItem[];
+  favorites: string[];
+  isCartOpen: boolean;
+  cartCount: number;
+  addToCart: (product: Product, size: string, color: string) => Promise<boolean>;
+  removeFromCart: (productId: string, size: string, color: string) => Promise<void>;
+  updateQuantity: (productId: string, size: string, color: string, quantity: number) => Promise<void>;
+  toggleFavorite: (productId: string) => Promise<void>;
+  setIsCartOpen: (isOpen: boolean) => void;
+  clearCart: () => void;
+}
+
+// Type Definitions
+export interface CartItem {
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  selectedSize: string;
+  selectedColor: string;
+  quantity: number;
+}
 
 export interface AdminStats {
   totalSales: number;
@@ -24,32 +47,7 @@ export interface AdminStats {
   recentOrders: any[]; // Will define Order type later
 }
 
-export interface CartItem {
-  product: Product;
-  quantity: number;
-  size: string;
-  color: string;
-}
 
-export interface CartContextType {
-  items: CartItem[];
-  addToCart: (
-    product: Product,
-    size: string,
-    color: string,
-    quantity?: number
-  ) => void;
-  removeFromCart: (productId: string, size: string, color: string) => void;
-  updateQuantity: (
-    productId: string,
-    size: string,
-    color: string,
-    quantity: number
-  ) => void;
-  clearCart: () => void;
-  getTotalPrice: () => number;
-  getTotalItems: () => number;
-}
 
 export interface User {
   id: string;

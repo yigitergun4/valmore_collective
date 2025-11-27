@@ -2,18 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCart } from "@/contexts/CartContext";
+import { useShop } from "@/contexts/ShopContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { CartItem } from "@/types";
 
 export default function CartPage(): React.JSX.Element {
   const {
-    items,
+    cart: items,
     removeFromCart,
     updateQuantity,
-    getTotalPrice,
-  } = useCart();
+  } = useShop();
+  
+  const getTotalPrice: () => number = () => {
+    return items.reduce((total: number, item: CartItem) => total + item.price * item.quantity, 0);
+  };
+
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -52,18 +57,18 @@ export default function CartPage(): React.JSX.Element {
           <div className="lg:col-span-8 space-y-6">
             {items.map((item, index) => (
               <div
-                key={`${item.product.id}-${item.size}-${item.color}-${index}`}
+                key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`}
                 className="border-b border-gray-100 pb-6 flex gap-4 lg:gap-6"
               >
                 {/* Product Image */}
                 <Link
-                  href={`/products/${item.product.id}?size=${item.size}&color=${item.color}`}
+                  href={`/products/${item.productId}?size=${item.selectedSize}&color=${item.selectedColor}`}
                   className="relative w-24 h-32 lg:w-32 lg:h-40 bg-gray-50 overflow-hidden flex-shrink-0 block"
                 >
-                  {item.product.images[0] ? (
+                  {item.image ? (
                     <Image
-                      src={item.product.images[0]}
-                      alt={item.product.name}
+                      src={item.image}
+                      alt={item.name}
                       fill
                       className="object-cover"
                       sizes="128px"
@@ -79,23 +84,23 @@ export default function CartPage(): React.JSX.Element {
                 <div className="flex-grow flex flex-col justify-between">
                   <div>
                     <Link
-                      href={`/products/${item.product.id}?size=${item.size}&color=${item.color}`}
+                      href={`/products/${item.productId}?size=${item.selectedSize}&color=${item.selectedColor}`}
                     >
                       <h3 className="text-sm lg:text-base font-bold uppercase tracking-wider hover:opacity-60 transition-opacity mb-2">
-                        {item.product.name}
+                        {item.name}
                       </h3>
                     </Link>
                     <div className="space-y-1">
                       <p className="text-xs text-gray-500 uppercase tracking-wider">
                         {t("cart.size")}:{" "}
                         <span className="text-black font-bold">
-                          {item.size}
+                          {item.selectedSize}
                         </span>
                       </p>
                       <p className="text-xs text-gray-500 uppercase tracking-wider">
                         {t("cart.color")}:{" "}
                         <span className="text-black font-bold">
-                          {item.color}
+                          {item.selectedColor}
                         </span>
                       </p>
                     </div>
@@ -107,9 +112,9 @@ export default function CartPage(): React.JSX.Element {
                       <button
                         onClick={() =>
                           updateQuantity(
-                            item.product.id,
-                            item.size,
-                            item.color,
+                            item.productId,
+                            item.selectedSize,
+                            item.selectedColor,
                             item.quantity - 1
                           )
                         }
@@ -124,9 +129,9 @@ export default function CartPage(): React.JSX.Element {
                       <button
                         onClick={() =>
                           updateQuantity(
-                            item.product.id,
-                            item.size,
-                            item.color,
+                            item.productId,
+                            item.selectedSize,
+                            item.selectedColor,
                             item.quantity + 1
                           )
                         }
@@ -140,11 +145,11 @@ export default function CartPage(): React.JSX.Element {
                     {/* Price and Remove */}
                     <div className="flex items-center gap-4">
                       <p className="text-base lg:text-lg font-bold">
-                        ₺{(item.product.price * item.quantity).toFixed(2)}
+                        ₺{(item.price * item.quantity).toFixed(2)}
                       </p>
                       <button
                         onClick={() =>
-                          removeFromCart(item.product.id, item.size, item.color)
+                          removeFromCart(item.productId, item.selectedSize, item.selectedColor)
                         }
                         className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
                         aria-label="Remove item"

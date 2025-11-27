@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ShoppingBag, Menu, X, User, LogOut, Search } from "lucide-react";
+import { ShoppingBag, Menu, X, User, LogOut, Search, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useCart } from "@/contexts/CartContext";
+import { useShop } from "@/contexts/ShopContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -16,7 +16,7 @@ export default function Header() {
   const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const { getTotalItems } = useCart();
+  const { favorites, cartCount } = useShop();
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
@@ -194,15 +194,28 @@ export default function Header() {
                 )}
               </div>
 
+                {/* Favorites */}
+              <Link
+                href="/favorites"
+                className="relative hover:opacity-60 transition-opacity"
+              >
+                <Heart className="w-5 h-5" />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
+
               {/* Cart */}
               <Link
                 href="/cart"
                 className="relative hover:opacity-60 transition-opacity"
               >
                 <ShoppingBag className="w-5 h-5" />
-                {getTotalItems() > 0 && (
+                {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                    {getTotalItems()}
+                    {cartCount}
                   </span>
                 )}
               </Link>

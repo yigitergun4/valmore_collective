@@ -156,7 +156,7 @@ export const translations: Record<Language, any> = {
     auth: {
       login: {
         emailNotVerified: "Lütfen e-postanızı doğrulayın",
-        title: "Giriş Yap"  ,
+        title: "Giriş Yap",
         noAccount: "Hesabınız yok mu?",
         register: "Kayıt olun",
         email: "E-posta",
@@ -171,7 +171,7 @@ export const translations: Record<Language, any> = {
         google: "Google ile Giriş Yap",
       },
       register: {
-        title: "Kayıt Ol",  
+        title: "Kayıt Ol",
         hasAccount: "Zaten hesabınız var mı?",
         login: "Giriş yapın",
         name: "Ad Soyad",
@@ -231,10 +231,15 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Beden Rehberi",
       faq: "Sık Sorulan Sorular",
       newsletter: "Bülten",
-      newsletterDescription: "Özel teklifler ve güncellemeler için abone olun", 
+      newsletterDescription: "Özel teklifler ve güncellemeler için abone olun",
       emailPlaceholder: "E-posta adresiniz",
       joinButton: "KATIL",
       rights: "Tüm hakları saklıdır",
+    }, favorites: {
+      title: "Favorilerim",
+      empty: "Henüz favori ürününüz yok",
+      continue: "Alışverişe Devam Et",
+      items: "ürün",
     },
   },
   en: {
@@ -470,6 +475,13 @@ export const translations: Record<Language, any> = {
       emailPlaceholder: "Your email",
       joinButton: "JOIN",
       rights: "All rights reserved",
+    },
+    // Favorites
+    favorites: {
+      title: "My Favorites",
+      empty: "No favorite items yet",
+      continue: "Continue Shopping",
+      items: "items",
     },
   },
 };

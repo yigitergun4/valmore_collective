@@ -1,18 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useCart } from "@/contexts/CartContext";
+import { useShop } from "@/contexts/ShopContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
 import { CheckoutFormData } from "@/types";
+import { CartItem } from "@/types";
 
 
 export default function CheckoutPage(): React.JSX.Element | null {
-  const { items, getTotalPrice, getTotalItems, clearCart } = useCart();
-  const { user } = useAuth();
+  const { cart: items, cartCount: getTotalItems, clearCart } = useShop();
+  
+  const getTotalPrice: () => number = () => {
+    return items.reduce((total: number, item: CartItem) => total + item.price * item.quantity, 0);
+  };
+
+  const { user } = useAuth(); 
   const { t, language } = useLanguage();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -40,7 +46,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
   useEffect(() => {
     if (user) {
       // Split user name into first and last name
-      const nameParts = user.name.split(" ");
+      const nameParts: string[] = user.name.split(" ");
       setFormData((prev) => ({
         ...prev,
         firstName: nameParts[0] || "",
@@ -62,7 +68,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
     return null;
   }
 
-  const handleInputChange = (
+  const handleInputChange: React.ChangeEventHandler<HTMLInputElement | HTMLSelectElement> = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ): void => {
     const { name, value } = e.target;
@@ -482,7 +488,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
               <div className="space-y-2 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>
-                    {t("cart.items")} ({getTotalItems()})
+                    {t("cart.items")} ({getTotalItems})
                   </span>
                   <span>₺{getTotalPrice().toFixed(2)}</span>
                 </div>

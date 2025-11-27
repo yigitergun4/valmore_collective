@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/contexts/CartContext";
+import { ShopProvider } from "@/contexts/ShopContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Header from "@/components/Header";
@@ -34,11 +34,11 @@ export default function RootLayout({
       >
         <LanguageProvider>
           <AuthProvider>
-            <CartProvider>
+            <ShopProvider>
               <Header />
               <main className="flex-grow">{children}</main>
               <Footer />
-            </CartProvider>
+            </ShopProvider>
           </AuthProvider>
         </LanguageProvider>
       </body>
