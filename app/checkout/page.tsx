@@ -141,12 +141,64 @@ export default function CheckoutPage(): React.JSX.Element | null {
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Calculate totals
+      const subtotal: number = getTotalPrice();
+      const shippingCost: number = subtotal >= 500 ? 0 : 49.99; // Free shipping over 500 TL
+      const total: number = subtotal + shippingCost;
 
-    setIsProcessing(false);
-    setOrderPlaced(true);
-    clearCart();
+      // Prepare order data
+      const orderData = {
+        userId: user?.id || null, // null for guest users
+        customer: {
+          id: user?.id || null,
+          fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          phone: formData.phone,
+        },
+        items: items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor,
+        })),
+        subtotal,
+        shippingCost,
+        total,
+        currency: "TRY",
+        paymentMethod: "credit_card" as const,
+        status: "pending" as const,
+        shippingAddress: {
+          title: "Teslimat Adresi",
+          fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+          address: formData.address,
+          city: formData.city,
+          district: formData.state, // Using state field as district
+          zipCode: formData.zipCode,
+          country: formData.country,
+        },
+      };
+
+      // Simulate payment processing
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Create order in Firestore
+      const { createOrder } = await import("@/lib/orderService");
+      const orderId: string = await createOrder(orderData);
+
+      console.log("Order created successfully with ID:", orderId);
+
+      setIsProcessing(false);
+      setOrderPlaced(true);
+      clearCart();
+    } catch (error) {
+      console.error("Error creating order:", error);
+      setIsProcessing(false);
+      alert("Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+    }
   };
 
   if (orderPlaced) {
@@ -173,10 +225,10 @@ export default function CheckoutPage(): React.JSX.Element | null {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full mx-auto px-1 sm:px-2 lg:px-3 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/cart"
-          className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-6 transition-colors"
+          className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-6 transition-colors font-medium"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           {t("checkout.backToCart")}
