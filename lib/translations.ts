@@ -53,6 +53,8 @@ export const translations: Record<Language, any> = {
       color: "Renk",
       quantity: "Adet",
       addToCart: "Sepete Ekle",
+      updateCart: "Sepeti Güncelle",
+      cartUpdated: "✓ Güncellendi",
       addedToCart: "Sepete Eklendi!",
       outOfStock: "Stokta Yok",
       productDetails: "Ürün Detayları",
@@ -112,6 +114,8 @@ export const translations: Record<Language, any> = {
       items: "ürün",
       proceed: "Ödemeye Geç",
       continue: "Alışverişe Devam Et",
+      viewCart: "Sepete Git",
+      checkout: "Ödemeye Git",
     },
     // Checkout
     checkout: {
@@ -294,6 +298,8 @@ export const translations: Record<Language, any> = {
       color: "Color",
       quantity: "Quantity",
       addToCart: "Add to Cart",
+      updateCart: "Update Cart",
+      cartUpdated: "✓ Updated",
       addedToCart: "Added to Cart!",
       outOfStock: "Out of Stock",
       productDetails: "Product Details",
@@ -353,6 +359,8 @@ export const translations: Record<Language, any> = {
       items: "items",
       proceed: "Proceed to Checkout",
       continue: "Continue Shopping",
+      viewCart: "View Cart",
+      checkout: "Checkout",
     },
     // Checkout
     checkout: {

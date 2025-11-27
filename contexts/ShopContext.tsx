@@ -159,6 +159,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         selectedSize: size,
         selectedColor: color,
         quantity: 1,
+        updatedAt: Date.now(),
       };
 
       let newCart = [...cart];
@@ -170,9 +171,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
       if (existingIndex > -1) {
         newCart[existingIndex].quantity += 1;
+        newCart[existingIndex].updatedAt = Date.now(); // Update timestamp
       } else {
         newCart.push(newItem);
       }
+
+      // Open cart immediately for better UX
+      setIsCartOpen(true);
+      console.log('🛒 addToCart - Opening cart drawer, isCartOpen set to true');
 
       if (user) {
         const userRef = doc(db, 'users', user.id);
@@ -181,7 +187,6 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         setCart(newCart);
       }
 
-      setIsCartOpen(true);
       return true;
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -217,6 +222,48 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
     if (user) {
       const userRef = doc(db, 'users', user.id);
+      await updateDoc(userRef, { cart: newCart });
+    } else {
+      setCart(newCart);
+    }
+  };
+
+  const updateCartItem: (productId: string, oldSize: string, oldColor: string, newSize: string, newColor: string) => Promise<void> = async (productId: string, oldSize: string, oldColor: string, newSize: string, newColor: string) => {
+    // Find the existing item to preserve its quantity
+    const existingItem: CartItem | undefined = cart.find(
+      item => item.productId === productId && item.selectedSize === oldSize && item.selectedColor === oldColor
+    );
+
+    if (!existingItem) return;
+
+    const preservedQuantity: number = existingItem.quantity;
+
+    // Remove old item and add new one with preserved quantity
+    const newCart: CartItem[] = cart.filter(
+      item => !(item.productId === productId && item.selectedSize === oldSize && item.selectedColor === oldColor)
+    );
+
+    // Check if new combination already exists
+    const existingNewItem: CartItem | undefined  = newCart.find(
+      item => item.productId === productId && item.selectedSize === newSize && item.selectedColor === newColor
+    );
+
+    if (existingNewItem) {
+      // Merge quantities
+      existingNewItem.quantity += preservedQuantity;
+      existingNewItem.updatedAt = Date.now(); // Update timestamp
+    } else {
+      // Add with preserved quantity
+      newCart.push({
+        ...existingItem,
+        selectedSize: newSize,
+        selectedColor: newColor,
+        updatedAt: Date.now(), // Update timestamp
+      });
+    }
+
+    if (user) {
+      const userRef: DocumentReference<DocumentData> = doc(db, 'users', user.id);
       await updateDoc(userRef, { cart: newCart });
     } else {
       setCart(newCart);
@@ -264,6 +311,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const openCart: () => void = () => {
+    setIsCartOpen(true);
+  };
+
+  const closeCart: () => void = () => {
+    setIsCartOpen(false);
+  };
+
   return (
     <ShopContext.Provider
       value={{
@@ -274,8 +329,11 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         addToCart,
         removeFromCart,
         updateQuantity,
+        updateCartItem,
         toggleFavorite,
         setIsCartOpen,
+        openCart,
+        closeCart,
         clearCart,
       }}
     >

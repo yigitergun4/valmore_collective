@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import CartDrawer from "@/components/CartDrawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
           <AuthProvider>
             <ShopProvider>
               <Header />
+              <CartDrawer />
               <main className="flex-grow">{children}</main>
               <Footer />
             </ShopProvider>

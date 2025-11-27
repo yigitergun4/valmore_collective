@@ -28,7 +28,7 @@ export default function ProductDetailClient(): React.JSX.Element {
   const params: { id: string } = useParams();
   const router: ReturnType<typeof useRouter> = useRouter();
   const product= getProductById(params.id as string);
-  const { addToCart, favorites, toggleFavorite } = useShop();
+  const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
   const { user } = useAuth();
 
@@ -43,6 +43,12 @@ export default function ProductDetailClient(): React.JSX.Element {
   const isFavorited: boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [isUpdated, setIsUpdated] = useState<boolean>(false);
+
+  // Reset success state when user changes size or color
+  useEffect(() => {
+    setIsUpdated(false);
+  }, [selectedSize, selectedColor]);
 
   // Refs for mobile interactions
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -176,12 +182,27 @@ export default function ProductDetailClient(): React.JSX.Element {
     );
   }
 
-  const handleAddToCart: () => void = () => {
-    if (!selectedSize || !selectedColor) {
-      // Could add a toast notification here
+  // Check if we're in edit mode
+  const originalSize: string | null = searchParams.get("size");
+  const originalColor: string | null = searchParams.get("color");
+  const isEditMode: boolean = !!(originalSize && originalColor);
+
+  const handleAddToCart: () => void = async () => {
+    if (!selectedSize || !selectedColor || !product) {
       return;
     }
-    addToCart(product, selectedSize, selectedColor);
+
+    if (isEditMode && (originalSize !== selectedSize || originalColor !== selectedColor)) {
+      // Update existing cart item
+      await updateCartItem(product.id, originalSize!, originalColor!, selectedSize, selectedColor);
+      setIsUpdated(true);
+      // Keep URL params so button stays as "Update Cart"
+    } else if (!isEditMode) {
+      // Normal add to cart flow (only open drawer when adding new items)
+      await addToCart(product, selectedSize, selectedColor);
+    }
+    // If in edit mode but nothing changed, do nothing
+    
     setIsDrawerOpen(false);
   };
 
@@ -327,7 +348,11 @@ export default function ProductDetailClient(): React.JSX.Element {
                 }`}
               >
                 {product.inStock
-                  ? t("products.addToCart")
+                  ? isUpdated
+                    ? t("products.cartUpdated")
+                    : isEditMode
+                      ? t("products.updateCart")
+                      : t("products.addToCart")
                   : t("products.outOfStock")}
               </button>
 
@@ -444,7 +469,13 @@ export default function ProductDetailClient(): React.JSX.Element {
             onClick={() => setIsDrawerOpen(true)}
             className="w-full py-4 bg-primary-600 text-white font-bold uppercase tracking-widest rounded-none pointer-events-auto hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
           >
-            <span>{t("products.addToCart")}</span>
+            <span>
+              {isUpdated
+                ? t("products.cartUpdated")
+                : isEditMode
+                  ? t("products.updateCart")
+                  : t("products.addToCart")}
+            </span>
             <ChevronUp className="w-4 h-4" />
           </button>
         </div>
@@ -529,7 +560,11 @@ export default function ProductDetailClient(): React.JSX.Element {
                 }`}
               >
                 {product.inStock
-                  ? t("products.addToCart")
+                  ? isUpdated
+                    ? t("products.cartUpdated")
+                    : isEditMode
+                      ? t("products.updateCart")
+                      : t("products.addToCart")
                   : t("products.outOfStock")}
               </button>
 

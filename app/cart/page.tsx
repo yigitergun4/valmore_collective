@@ -55,7 +55,9 @@ export default function CartPage(): React.JSX.Element {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
           {/* Cart Items */}
           <div className="lg:col-span-8 space-y-6">
-            {items.map((item, index) => (
+            {[...items]
+              .sort((a, b) => b.updatedAt - a.updatedAt) // Most recent first
+              .map((item, index) => (
               <div
                 key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`}
                 className="border-b border-gray-100 pb-6 flex gap-4 lg:gap-6"

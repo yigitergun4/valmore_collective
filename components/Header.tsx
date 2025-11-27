@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname} from "next/navigation";
 import { ShoppingBag, Menu, X, User, LogOut, Search, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useShop } from "@/contexts/ShopContext";
@@ -14,17 +14,17 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const { favorites, cartCount } = useShop();
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const router = useRouter();
+  const router= useRouter();
 
-  const pathname = usePathname();
+  const pathname: string = usePathname();
 
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkAdmin: () => void = async () => {
       if (user) {
         try {
           const token = await auth.currentUser?.getIdTokenResult();
@@ -40,7 +40,7 @@ export default function Header() {
   }, [user]);
 
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll: () => void = () => {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll);
@@ -48,7 +48,7 @@ export default function Header() {
   }, []);
 
   // Hide header on admin pages
-  if (pathname?.startsWith("/admin")) {
+  if (pathname.startsWith("/admin")) {
     return null;
   }
 

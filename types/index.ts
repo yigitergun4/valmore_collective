@@ -24,8 +24,11 @@ export interface ShopContextType {
   addToCart: (product: Product, size: string, color: string) => Promise<boolean>;
   removeFromCart: (productId: string, size: string, color: string) => Promise<void>;
   updateQuantity: (productId: string, size: string, color: string, quantity: number) => Promise<void>;
+  updateCartItem: (productId: string, oldSize: string, oldColor: string, newSize: string, newColor: string) => Promise<void>;
   toggleFavorite: (productId: string) => Promise<void>;
   setIsCartOpen: (isOpen: boolean) => void;
+  openCart: () => void;
+  closeCart: () => void;
   clearCart: () => void;
 }
 
@@ -38,6 +41,7 @@ export interface CartItem {
   selectedSize: string;
   selectedColor: string;
   quantity: number;
+  updatedAt: number; // Timestamp for sorting
 }
 
 export interface AdminStats {
