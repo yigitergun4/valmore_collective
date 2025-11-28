@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useAlert } from "@/contexts/AlertContext";
+import { seedProducts } from "@/lib/firestore";
 import { Loader2, Database } from "lucide-react";
 
 // --- GERÇEKÇİ VERİ HAVUZU ---
@@ -56,59 +56,18 @@ const generateSlug = (text: string) => {
 
 export default function SeedButton() {
   const [loading, setLoading] = useState(false);
+  const { showSuccess, showError } = useAlert();
 
   const handleSeed = async () => {
     if (!confirm("Dikkat! Veritabanına 50 adet rastgele ürün eklenecek. Onaylıyor musun?")) return;
     
     setLoading(true);
     try {
-      const promises = [];
-
-      for (let i = 0; i < 50; i++) {
-        const category = getRandom(CATEGORIES);
-        const brand = getRandom(BRANDS);
-        const adjective = getRandom(ADJECTIVES);
-        const noun = getRandom(NOUNS);
-        const name = `${brand} ${adjective} ${noun}`;
-        
-        // Fiyat mantığı
-        const price = Math.floor(Math.random() * (2000 - 300) + 300); // 300 - 2000 arası
-        const originalPrice = Math.floor(price * 1.3); // %30 daha pahalı
-
-        // Kategoriye göre beden seçimi
-        let sizes = CLOTHING_SIZES;
-        if (category.type === "shoes") sizes = SHOE_SIZES;
-        if (category.type === "accessory") sizes = ACCESSORY_SIZES;
-
-        // Ürün Objesi (Senin veritabanı yapına birebir uygun)
-        const product = {
-          name: name,
-          slug: generateSlug(`${name}-${i}`), // Benzersiz slug
-          brand: brand,
-          category: category.name,
-          description: "Modern bireyler için tasarlanmış, gün boyu konfor sağlayan, premium malzemelerden üretilmiş zamansız bir parça. Valmoré koleksiyonunun en gözde ürünlerinden biri.",
-          price: price,
-          originalPrice: originalPrice,
-          inStock: Math.random() > 0.2, // %80 stokta
-          featured: Math.random() > 0.8, // %20 öne çıkan
-          colors: getRandomSubset(COLORS, 3), // 3 rastgele renk
-          sizes: sizes, // Kategoriye uygun bedenler
-          images: getRandomSubset(IMAGES, 2), // 2 rastgele resim
-          createdAt: new Date().toISOString(),
-          // Yeni eklediğimiz alanlar (Opsiyonel, hata vermez)
-          gender: getRandom(["Erkek", "Kadın", "Unisex"]),
-          material: "%100 Pamuk",
-          fit: "Regular Fit"
-        };
-
-        promises.push(addDoc(collection(db, "products"), product));
-      }
-
-      await Promise.all(promises);
-      alert("Başarılı! 50 Ürün veritabanına eklendi. Sayfayı yenileyin.");
+      await seedProducts();
+      showSuccess("Başarılı! 50 Ürün veritabanına eklendi. Sayfayı yenileyin.");
     } catch (error) {
-      console.error("Hata:", error);
-      alert("Bir hata oluştu.");
+      console.error("Seed error:", error);
+      showError("Bir hata oluştu.");
     } finally {
       setLoading(false);
     }

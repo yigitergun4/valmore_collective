@@ -1,11 +1,18 @@
 import { ReactNode } from "react";
 
+export interface ProductVariant {
+  color: string;
+  inStock: boolean;
+  sizes: string[];
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
   originalPrice?: number;
+  isDiscounted: boolean;
   images: string[];
   category: string;
   brand: string;
@@ -13,7 +20,9 @@ export interface Product {
   colors: string[];
   inStock: boolean;
   featured: boolean;
-  createdAt: string; // Made required as per new spec
+  hasVariants: boolean;
+  variants: ProductVariant[];
+  createdAt: string;
   slug?: string;
 }
 export interface ShopContextType {

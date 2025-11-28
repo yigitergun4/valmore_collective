@@ -6,10 +6,72 @@ import Image from "next/image";
 import { Plus, Pencil, Trash2, Search, Package } from "lucide-react";
 import { Product } from "@/types";
 import { getAdminProducts, deleteProduct } from "@/lib/firestore/products";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { useAlert } from "@/contexts/AlertContext";
+
+function DeleteProductButton({ id, onDelete }: { id: string; onDelete: (id: string) => Promise<void> }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(id);
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to delete", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-600 hover:bg-red-50">
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Ürünü silmek istediğinize emin misiniz?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Bu işlem geri alınamaz. Ürün veritabanından kalıcı olarak silinecektir.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Vazgeç</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e: any) => {
+              e.preventDefault();
+              handleDelete();
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Siliniyor..." : "Sil"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { showError } = useAlert();
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
@@ -28,14 +90,13 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete: (id: string) => Promise<void> = async (id: string) => {
-    if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
-
     try {
       await deleteProduct(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      // Toast success here if we had toast
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Failed to delete product");
+      showError("Failed to delete product");
     }
   };
 
@@ -141,12 +202,7 @@ export default function AdminProductsPage() {
                       >
                         <Pencil className="w-4 h-4" />
                       </Link>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <DeleteProductButton id={product.id} onDelete={handleDelete} />
                     </div>
                   </td>
                 </tr>

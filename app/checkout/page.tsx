@@ -9,6 +9,8 @@ import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
 import { CheckoutFormData } from "@/types";
 import { CartItem } from "@/types";
+import { createOrder } from "@/lib/firestore"; // New import
+import { useAlert } from "@/contexts/AlertContext"; // New import
 
 
 export default function CheckoutPage(): React.JSX.Element | null {
@@ -21,6 +23,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
   const { user } = useAuth(); 
   const { t, language } = useLanguage();
   const router = useRouter();
+  const { showError, showSuccess } = useAlert(); // New initialization
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [orderPlaced, setOrderPlaced] = useState<boolean>(false);
 
@@ -186,16 +189,19 @@ export default function CheckoutPage(): React.JSX.Element | null {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Create order in Firestore
-      const { createOrder } = await import("@/lib/orderService");
-      const orderId: string = await createOrder(orderData);
+      const orderId: string = await createOrder(orderData); // Changed import method
 
       setIsProcessing(false);
       setOrderPlaced(true);
+      // Clear cart and redirect
       clearCart();
+      showSuccess("Siparişiniz başarıyla alındı!"); // New line
+      router.push("/checkout/success"); // New line
     } catch (error) {
-      console.error("Error creating order:", error);
-      setIsProcessing(false);
-      alert("Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+      console.error("Order error:", error); // Changed console log
+      showError("Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin."); // Replaced alert
+    } finally {
+      setIsProcessing(false); // Added finally block
     }
   };
 

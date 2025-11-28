@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Package, Calendar, DollarSign, User, Loader2 } from "lucide-react";
 import { Order } from "@/types/admin/orders";
-import { fetchAllOrders } from "@/lib/orderService";
+import { fetchAllOrders } from "@/lib/firestore";
 
 export default function AdminOrdersPage(): React.JSX.Element {
   const [orders, setOrders] = useState<Order[]>([]);

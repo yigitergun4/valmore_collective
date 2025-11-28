@@ -147,7 +147,7 @@ export default function CartDrawer() {
 
                       <div className="flex items-baseline gap-2">
                         <p className="text-sm font-bold text-black">
-                          ₺{item.price.toFixed(2)}
+                          {item.price.toFixed(2)} {t("products.currency")}
                         </p>
                         <span className="text-[10px] text-gray-400">
                           × {item.quantity}
@@ -213,7 +213,7 @@ export default function CartDrawer() {
                 {t("cart.subtotal")}
               </span>
               <span className="text-lg font-bold text-black">
-                ₺{subtotal.toFixed(2)}
+                {subtotal.toFixed(2)} {t("products.currency")}
               </span>
             </div>
 

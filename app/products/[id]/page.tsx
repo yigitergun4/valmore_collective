@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Product } from "@/types";
 
 export async function generateStaticParams(): Promise<{ id: string }[]> {
-  const products = await getAllProducts();
+  const products: Product[] = await getAllProducts();
   return products.map((product) => ({
     id: product.id,
   }));
@@ -15,15 +15,15 @@ interface PageProps {
 }
 
 export default async function ProductDetailPage({ params }: PageProps): Promise<React.JSX.Element> {
-  const resolvedParams = await params;
-  const product = await getProductById(resolvedParams.id);
+  const resolvedParams: { id: string } = await params;
+  const product: Product | null = await getProductById(resolvedParams.id);
   
   if (!product) {
     return <div>Product not found</div>;
   }
 
-  const allProducts = await getAllProducts();
-  const relatedProducts = await getRelatedProducts(resolvedParams.id, product.category, 4);
+  const allProducts: Product[] = await getAllProducts();
+  const relatedProducts: Product[] = await getRelatedProducts(resolvedParams.id, product.category, 4);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

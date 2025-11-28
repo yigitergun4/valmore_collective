@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
@@ -13,6 +14,7 @@ export default function RegisterPage(): React.JSX.Element {
   const router = useRouter();
   const { register, sendVerificationEmail } = useAuth();
   const { t } = useLanguage();
+  const { showSuccess, showError } = useAlert();
   
   // Form States
   const [name, setName] = useState<string>("");
@@ -55,19 +57,21 @@ export default function RegisterPage(): React.JSX.Element {
       setIsLoading(false);
       setStep('verify');
     } else {
-      setIsLoading(false);
-      setError(t("auth.register.emailExists"));
+      setError("Registration failed. Please try again.");
+      showError("Registration failed. Please try again.");
     }
   };
 
   const handleResendEmail = async (): Promise<void> => {
     setIsLoading(true);
-    const success = await sendVerificationEmail();
-    setIsLoading(false);
-    if (success) {
-      alert("Verification email resent!");
-    } else {
-      setError("Failed to resend email. Please try again.");
+    try {
+      await sendVerificationEmail();
+      showSuccess("Verification email resent!");
+    } catch (err: any) {
+      setError(err.message);
+      showError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 

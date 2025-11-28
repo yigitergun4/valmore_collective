@@ -11,6 +11,7 @@ import {
     QueryDocumentSnapshot,
     Timestamp,
     Query,
+    QuerySnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Product } from "@/types";
@@ -30,6 +31,7 @@ function mapDocToProduct(doc: QueryDocumentSnapshot<DocumentData>): Product {
         description: data.description,
         price: Number(data.price),
         originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+        isDiscounted: data.isDiscounted ?? false,
         images: data.images || [],
         category: data.category,
         brand: data.brand,
@@ -37,14 +39,10 @@ function mapDocToProduct(doc: QueryDocumentSnapshot<DocumentData>): Product {
         colors: data.colors || [],
         inStock: data.inStock ?? true,
         featured: data.featured ?? false,
-        // Convert Firestore Timestamp to ISO string
-        createdAt:
-            data.createdAt instanceof Timestamp
-                ? data.createdAt.toDate().toISOString()
-                : typeof data.createdAt === "string"
-                    ? data.createdAt
-                    : new Date().toISOString(),
-        slug: data.slug,
+        hasVariants: data.hasVariants ?? false,
+        variants: data.variants || [],
+        createdAt: data.createdAt ? (typeof data.createdAt === 'string' ? data.createdAt : data.createdAt.toDate().toISOString()) : new Date().toISOString(),
+        slug: data.slug || "",
     };
 }
 
@@ -54,15 +52,12 @@ function mapDocToProduct(doc: QueryDocumentSnapshot<DocumentData>): Product {
  */
 export async function getAllProducts(): Promise<Product[]> {
     try {
-        console.log("Fetching all products from Firestore...");
         const q: Query<DocumentData> = query(
             collection(db, COLLECTION_NAME),
             orderBy("createdAt", "desc")
         );
-        const querySnapshot = await getDocs(q);
-        console.log(`Fetched ${querySnapshot.size} products`);
-        const products = querySnapshot.docs.map(mapDocToProduct);
-        console.log("Mapped products:", products);
+        const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+        const products: Product[] = querySnapshot.docs.map(mapDocToProduct);
         return products;
     } catch (error) {
         console.error("Error fetching all products:", error);

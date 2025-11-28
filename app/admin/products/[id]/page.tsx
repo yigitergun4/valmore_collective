@@ -3,12 +3,14 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import ProductForm from "@/components/admin/ProductForm";
-import { getProduct, updateProduct } from "@/lib/firestore/products";
+import { getProduct, updateProduct } from "@/lib/firestore";
+import { useAlert } from "@/contexts/AlertContext";
 import { Product } from "@/types";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { showError, showSuccess } = useAlert();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -18,14 +20,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       try {
         const data = await getProduct(id);
         if (!data) {
-          alert("Ürün bulunamadı");
+          showError("Ürün bulunamadı");
           router.push("/admin/products");
           return;
         }
         setProduct(data);
       } catch (error) {
         console.error("Error fetching product:", error);
-        alert("Ürün getirilirken hata oluştu");
+        showError("Ürün getirilirken hata oluştu");
       } finally {
         setLoading(false);
       }
@@ -38,10 +40,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     setIsSubmitting(true);
     try {
       await updateProduct(id, data);
+      showSuccess("Ürün başarıyla güncellendi");
       router.push("/admin/products");
     } catch (error) {
       console.error("Failed to update product:", error);
-      alert("Ürün güncellenemedi");
+      showError("Ürün güncellenemedi");
     } finally {
       setIsSubmitting(false);
     }

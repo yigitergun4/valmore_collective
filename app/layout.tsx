@@ -4,6 +4,7 @@ import "./globals.css";
 import { ShopProvider } from "@/contexts/ShopContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AlertProvider } from "@/contexts/AlertContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
@@ -36,10 +37,12 @@ export default function RootLayout({
         <LanguageProvider>
           <AuthProvider>
             <ShopProvider>
-              <Header />
-              <CartDrawer />
-              <main className="flex-grow">{children}</main>
-              <Footer />
+              <AlertProvider>
+                <Header />
+                <CartDrawer />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+              </AlertProvider>
             </ShopProvider>
           </AuthProvider>
         </LanguageProvider>

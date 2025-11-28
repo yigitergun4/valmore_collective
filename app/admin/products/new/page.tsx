@@ -3,21 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductForm from "@/components/admin/ProductForm";
-import { addProduct } from "@/lib/firestore/products";
+import { addProduct } from "@/lib/firestore";
+import { useAlert } from "@/contexts/AlertContext";
 import { Product } from "@/types";
 
 export default function NewProductPage() {
   const router = useRouter();
+  const { showError, showSuccess } = useAlert();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const handleSubmit: (data: Omit<Product, "id">) => Promise<void> = async (data: Omit<Product, "id">) => {
     setIsSubmitting(true);
     try {
       await addProduct(data);
+      showSuccess("Ürün başarıyla oluşturuldu");
       router.push("/admin/products");
     } catch (error) {
-      console.error("Failed to create product:", error);
-      alert("Ürün oluşturulamadı");
+      showError("Ürün oluşturulamadı");
     } finally {
       setIsSubmitting(false);
     }

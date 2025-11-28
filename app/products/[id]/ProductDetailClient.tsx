@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Product } from "@/types";
+import { Product, ProductVariant } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
+import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -36,6 +37,7 @@ export default function ProductDetailClient({
   // const product = getProductById(params.id as string); // Passed as prop
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
+  const { showError, showSuccess } = useAlert();
   const { user } = useAuth();
 
   const searchParams: ReturnType<typeof useSearchParams> = useSearchParams();
@@ -56,95 +58,37 @@ export default function ProductDetailClient({
     setIsUpdated(false);
   }, [selectedSize, selectedColor]);
 
-  // Refs for mobile interactions
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
-  const touchStartY = useRef<number>(0);
-  const isHorizontalSwipe = useRef<boolean>(false);
+  // Variant Logic
+  const hasVariants = product.hasVariants;
+  const variants = product.variants || [];
 
-  const currentProductIndex = allProducts.findIndex((p) => p.id === product.id);
-  // const relatedProducts = getRelatedProducts(params.id as string, 4); // Passed as prop
+  // Derived state for variants
+  const availableSizes = hasVariants && selectedColor
+    ? variants.find(v => v.color === selectedColor)?.sizes || []
+    : product.sizes;
 
+  const isVariantInStock = hasVariants && selectedColor
+    ? variants.find(v => v.color === selectedColor)?.inStock ?? false
+    : product.inStock;
 
-  // Mobile Scroll Handler
-  useEffect(() => {
-    const container: HTMLDivElement | null = imageContainerRef.current;
-    if (!container || !product) return;
+  const currentProductIndex: number = allProducts.findIndex((p: Product) => p.id === product.id);
 
-    const isMobile: boolean = window.innerWidth < 1024;
-    if (!isMobile) return;
+  // Discount Logic
+  const originalPrice: number = product.originalPrice || 0;
+  const finalPrice: number = product.price;
+  const hasDiscount: boolean = originalPrice > finalPrice;
+  const discountPercentage: number = hasDiscount 
+    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
+    : 0;
+    
 
-    const handleScroll: () => void = () => {
-      const scrollTop = container.scrollTop;
-      const itemHeight = container.clientHeight;
-      const index = Math.round(scrollTop / itemHeight);
-      setCurrentImageIndex(Math.min(index, product.images.length - 1));
-    };
-
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [product]);
-
-  // Mobile Drawer Scroll Lock
-  useEffect(() => {
-    const container: HTMLDivElement | null = imageContainerRef.current;
-    if (!container || window.innerWidth >= 1024) return;
-
-    if (isDrawerOpen) {
-      container.style.overflow = "hidden";
-    } else {
-      container.style.overflow = "scroll";
-    }
-  }, [isDrawerOpen]);
-
-  // Mobile Swipe Logic
-  const handleTouchStart: (e: React.TouchEvent) => void = (e: React.TouchEvent): void => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    isHorizontalSwipe.current = false;
-  };
-
-  const handleTouchMove: (e: React.TouchEvent) => void = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-    const touchEndY = e.touches[0].clientY;
-    const deltaX = Math.abs(touchStartX.current - touchEndX.current);
-    const deltaY = Math.abs(touchStartY.current - touchEndY);
-
-    if (deltaX > deltaY && deltaX > 10) {
-      isHorizontalSwipe.current = true;
-      if (imageContainerRef.current) {
-        imageContainerRef.current.style.overflowY = "hidden";
-      }
-    }
-  };
-
-  const handleTouchEnd: () => void = () => {
-    if (!product || !isHorizontalSwipe.current) {
-      if (imageContainerRef.current) {
-        imageContainerRef.current.style.overflowY = "scroll";
-      }
-      return;
-    }
-
-    const swipeThreshold: number = 50;
-    const diff: number = touchStartX.current - touchEndX.current;
-
-    if (Math.abs(diff) > swipeThreshold) {
-      if (diff > 0) {
-        const nextIndex = (currentProductIndex + 1) % allProducts.length;
-        router.push(`/products/${allProducts[nextIndex].id}`);
-      } else {
-        const prevIndex =
-          (currentProductIndex - 1 + allProducts.length) % allProducts.length;
-        router.push(`/products/${allProducts[prevIndex].id}`);
-      }
-    }
-
-    if (imageContainerRef.current) {
-      imageContainerRef.current.style.overflowY = "scroll";
-    }
-    isHorizontalSwipe.current = false;
+  // Mobile Swipe Logic (Horizontal)
+  const handleScroll: (e: React.UIEvent<HTMLDivElement>) => void = (e: React.UIEvent<HTMLDivElement>) => {
+    const container: HTMLDivElement = e.currentTarget;
+    const scrollLeft: number = container.scrollLeft;
+    const width: number = container.offsetWidth;
+    const index: number = Math.round(scrollLeft / width);
+    setCurrentImageIndex(index);
   };
 
   if (!product) {
@@ -165,27 +109,7 @@ export default function ProductDetailClient({
     );
   }
 
-  // Early validation for required product data
-  if (!product.colors || product.colors.length === 0 || !product.sizes || product.sizes.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold uppercase mb-4">
-            Product Data Incomplete
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            This product is missing required information.
-          </p>
-          <Link
-            href="/products"
-            className="text-sm underline font-bold uppercase hover:opacity-60 transition-opacity"
-          >
-            {t("products.backToProducts")}
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Early validation removed to support accessories/one-size items
 
   // Check if we're in edit mode
   const originalSize: string | null = searchParams.get("size");
@@ -193,23 +117,43 @@ export default function ProductDetailClient({
   const isEditMode: boolean = !!(originalSize && originalColor);
 
   const handleAddToCart: () => void = async () => {
-    if (!selectedSize || !selectedColor || !product) {
+    if (!selectedSize && product.sizes.length > 0) {
+      showError("Lütfen bir beden seçiniz.");
       return;
     }
+    
+    // Variant Stock Check
+    if (hasVariants && selectedColor) {
+      const variant: ProductVariant | undefined = variants.find(v => v.color === selectedColor);
+      if (variant && !variant.inStock) {
+        showError("Seçilen varyasyon stokta yok.");
+        return;
+      }
+    }
+
+    // Determine effective values (use "Standard" if options are empty)
+    const effectiveSize: string = product.sizes?.length > 0 ? selectedSize : "Standard";
+    const effectiveColor: string = product.colors?.length > 0 ? selectedColor : "Standard";
+
+    // Validate only if options exist
+    if (product.sizes?.length > 0 && !selectedSize) return;
+    if (product.colors?.length > 0 && !selectedColor) return;
 
     if (isEditMode && (originalSize !== selectedSize || originalColor !== selectedColor)) {
       // Update existing cart item
-      await updateCartItem(product.id, originalSize!, originalColor!, selectedSize, selectedColor);
+      await updateCartItem(product.id, originalSize!, originalColor!, effectiveSize, effectiveColor);
       setIsUpdated(true);
-      // Keep URL params so button stays as "Update Cart"
     } else if (!isEditMode) {
-      // Normal add to cart flow (only open drawer when adding new items)
-      await addToCart(product, selectedSize, selectedColor);
+      // Normal add to cart flow
+      await addToCart(product, effectiveSize, effectiveColor);
     }
-    // If in edit mode but nothing changed, do nothing
     
     setIsDrawerOpen(false);
   };
+
+  const isSizeValid: boolean = product.sizes?.length > 0 ? !!selectedSize : true;
+  const isColorValid: boolean = product.colors?.length > 0 ? !!selectedColor : true;
+  const canAddToCart: boolean = product.inStock && isSizeValid && isColorValid && (!hasVariants || (hasVariants && isVariantInStock));
 
   const handleToggleFavorite: () => void = () => {
     if (product) {
@@ -217,56 +161,39 @@ export default function ProductDetailClient({
     }
   };
 
-  const toggleColorSelection: (value: string) => void = (value: string) => {
-    if (value === selectedColor) {
-      setSelectedColor("");
-    } else {
-      setSelectedColor(value);
-    }
-  };
-
-  const toggleSizeSelection: (value: string) => void = (value: string) => {
-    if (value === selectedSize) {
-      setSelectedSize("");
-    } else {
-      setSelectedSize(value);
-    }
-  };
-
   return (
     <div className="bg-white min-h-screen">
       {/* DESKTOP LAYOUT */}
-      <div className="hidden lg:grid lg:grid-cols-12 min-h-screen max-w-[1600px] mx-auto">
+      <div className="hidden lg:grid lg:grid-cols-12 min-h-screen max-w-[1920px] mx-auto gap-8">
         {/* Left Column: Scrollable Images */}
-        <div className="col-span-7 relative">
-          <div className="max-w-3xl mx-auto px-8 py-20">
-            <div className="space-y-2">
-              {product.images.map((img, index) => (
-                <div
-                  key={index}
-                  className="relative w-full aspect-[3/4] overflow-hidden"
-                >
-                  <Image
-                    src={img}
-                    alt={`${product.name} - ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(min-width: 1024px) 40vw, 100vw"
-                    priority={index === 0}
-                  />
-                </div>
-              ))}
-            </div>
+        <div className="col-span-8 relative">
+          <div className="flex flex-col gap-4 px-4 py-8">
+            {product.images.map((img, index) => (
+              <div
+                key={index}
+                className="relative w-full"
+              >
+                <Image
+                  src={img}
+                  alt={`${product.name} - ${index + 1}`}
+                  width={1200}
+                  height={1600}
+                  className="w-full h-auto object-cover"
+                  priority={index === 0}
+                  sizes="66vw"
+                />
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Right Column: Sticky Product Details */}
-        <div className="col-span-5 relative bg-gray-50/50">
+        <div className="col-span-4 relative">
           <div className="sticky top-0 h-screen overflow-y-auto hide-scrollbar px-8 xl:px-12 py-24 flex flex-col">
             {/* Header Info */}
             <div className="mb-8">
               <div className="flex justify-between items-start mb-2">
-                <h1 className="text-4xl font-bold uppercase tracking-tight leading-none text-black">
+                <h1 className="text-3xl font-bold uppercase tracking-tight leading-none text-black">
                   {product.name}
                 </h1>
                 <button
@@ -282,10 +209,28 @@ export default function ProductDetailClient({
                   />
                 </button>
               </div>
-              <p className="text-2xl font-bold text-primary-700 mt-2">
-                {product.price.toFixed(2)} {t("products.currency")}
-              </p>
-              <p className="text-xs text-gray-400 mt-1 font-medium uppercase tracking-wider">
+              
+              <div className="flex items-baseline gap-3 mt-2">
+                {hasDiscount ? (
+                  <>
+                    <span className="text-gray-400 line-through text-lg">
+                      {originalPrice.toFixed(2)} {t("products.currency")}
+                    </span>
+                    <span className="text-2xl font-bold text-black">
+                      {finalPrice.toFixed(2)} {t("products.currency")}
+                    </span>
+                    <span className="text-xs font-bold text-white bg-red-600 px-2 py-1 uppercase">
+                      -{discountPercentage}%
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-2xl font-bold text-black">
+                    {finalPrice.toFixed(2)} {t("products.currency")}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-400 mt-2 font-medium uppercase tracking-wider">
                 REF. {product.id.substring(0, 8).toUpperCase()}
               </p>
             </div>
@@ -295,70 +240,68 @@ export default function ProductDetailClient({
               {product.description}
             </p>
 
-            {/* Color Selection */}
-            <div className="mb-8">
-              <p className="text-xs font-bold uppercase tracking-widest mb-4 text-gray-500">
-                {t("products.color")}:{" "}
-                <span className="text-primary-700">
-                  {selectedColor || "Select"}
-                </span>
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {product.colors.map((color) => (
-                  <SelectionButton
-                    key={color}
-                    value={color}
-                    isSelected={selectedColor === color}
-                    onClick={toggleColorSelection}
-                    variant="compact"
-                  />
-                ))}
+            {/* Colors */}
+            {product.colors.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Renk</h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => {
+                        setSelectedColor(color);
+                        if (hasVariants) {
+                          const variant = variants.find(v => v.color === color);
+                          if (variant && selectedSize && !variant.sizes.includes(selectedSize)) {
+                            setSelectedSize("");
+                          }
+                        }
+                      }}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedColor === color
+                          ? "bg-primary-600 text-white shadow-lg scale-105"
+                          : "bg-white text-gray-900 border border-gray-200 hover:border-primary-600"
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Size Selection */}
-            <div className="mb-10">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
-                  {t("products.size")}:{" "}
-                  <span className="text-primary-700">
-                    {selectedSize || "Select"}
-                  </span>
-                </p>
-                <button className="flex items-center text-xs font-bold uppercase underline hover:text-primary-600 transition-colors text-gray-700">
-                  <Ruler className="w-3 h-3 mr-1" /> {t("products.sizeGuide")}
-                </button>
+            {/* Sizes - Only show if color is selected (if colors exist) */}
+            {availableSizes.length > 0 && (!product.colors.length || selectedColor) && (
+              <div className="mb-8">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Beden</h3>
+                <div className="grid grid-cols-4 gap-3">
+                  {availableSizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        selectedSize === size
+                          ? "bg-primary-600 text-white shadow-md transform scale-[1.02]"
+                          : "bg-white text-gray-900 border border-gray-200 hover:border-primary-600"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {product.sizes.map((size) => (
-                  <SelectionButton
-                    key={size}
-                    value={size}
-                    isSelected={selectedSize === size}
-                    onClick={toggleSizeSelection}
-                  />
-                ))}
-              </div>
-            </div>
+            )}
 
             {/* Actions */}
             <div className="mt-auto space-y-4">
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock || !selectedSize || !selectedColor}
-                className={`w-full py-5 text-sm font-bold uppercase tracking-widest transition-all duration-300 ${
-                  product.inStock && selectedSize && selectedColor
-                    ? "bg-primary-600 text-white hover:bg-primary-700"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
+                disabled={!product.inStock || (hasVariants && !!selectedColor && !isVariantInStock)}
+                className="w-full bg-primary-600 text-white py-4 rounded-full font-bold text-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {product.inStock
-                  ? isUpdated
-                    ? t("products.cartUpdated")
-                    : isEditMode
-                      ? t("products.updateCart")
-                      : t("products.addToCart")
-                  : t("products.outOfStock")}
+                {product.inStock 
+                  ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : t("products.addToCart"))
+                  : "Tükendi"}
               </button>
 
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
@@ -387,92 +330,91 @@ export default function ProductDetailClient({
       </div>
 
       {/* MOBILE LAYOUT */}
-      <div className="lg:hidden h-screen w-full overflow-hidden bg-black">
+      <div className="lg:hidden min-h-screen w-full bg-white pb-24">
         {/* Top Bar */}
-        <div className="fixed top-0 left-0 right-0 z-30 p-4 flex justify-between items-start bg-gradient-to-b from-black/40 to-transparent pointer-events-none">
+        <div className="fixed top-0 left-0 right-0 z-30 p-4 flex justify-between items-start pointer-events-none">
           <button
             onClick={() => router.back()}
-            className="pointer-events-auto p-2 bg-white/20 backdrop-blur-md rounded-full text-white"
+            className="pointer-events-auto p-2 bg-white/80 backdrop-blur-md rounded-full text-black shadow-sm"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <div className="flex gap-3 pointer-events-auto">
             <button
               onClick={handleToggleFavorite}
-              className={`p-2 backdrop-blur-md rounded-full transition-colors ${
-                isFavorited ? "bg-primary-600" : "bg-white/20"
-              } text-white`}
+              className={`p-2 backdrop-blur-md rounded-full transition-colors shadow-sm ${
+                isFavorited ? "bg-primary-600 text-white" : "bg-white/80 text-black"
+              }`}
             >
               <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
             </button>
-            <button className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors">
+            <button className="p-2 bg-white/80 backdrop-blur-md rounded-full text-black hover:bg-white transition-colors shadow-sm">
               <Share2 className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        {/* Full Screen Images */}
-        <div
-          ref={imageContainerRef}
-          className="h-full w-full snap-y snap-mandatory overflow-y-scroll scroll-smooth"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {product.images.map((image, index) => (
-            <div key={index} className="h-screen w-full snap-start relative">
-              <Image
-                src={image}
-                alt={`${product.name} - ${index + 1}`}
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority={index === 0}
-              />
-              {/* Gradient Overlay at bottom for text readability */}
-              <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
-            </div>
-          ))}
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
-          {product.images.map((_, index) => (
-            <div
-              key={index}
-              className={`w-1 transition-all duration-300 rounded-full bg-white shadow-sm ${
-                index === currentImageIndex
-                  ? "h-8 opacity-100"
-                  : "h-1.5 opacity-50"
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Bottom Info Bar (Always Visible) */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 p-6 pb-8 text-white pointer-events-none">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold uppercase tracking-tight shadow-black drop-shadow-md">
-                {product.name}
-              </h2>
-              <p className="text-xl font-medium mt-1 drop-shadow-md">
-                {product.price.toFixed(2)} {t("products.currency")}
-              </p>
-            </div>
-            <button
-              onClick={handleToggleFavorite}
-              className={`pointer-events-auto p-2.5 backdrop-blur-md rounded-full transition-all ml-3 ${
-                isFavorited ? "bg-primary-600" : "bg-white/20"
-              }`}
-            >
-              <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
-            </button>
+        {/* Horizontal Image Slider */}
+        <div className="relative w-full aspect-[3/4]">
+          <div
+            className="flex overflow-x-auto snap-x snap-mandatory w-full h-full hide-scrollbar"
+            onScroll={handleScroll}
+          >
+            {product.images.map((image, index) => (
+              <div key={index} className="w-full flex-shrink-0 snap-center relative h-full">
+                <Image
+                  src={image}
+                  alt={`${product.name} - ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority={index === 0}
+                />
+              </div>
+            ))}
           </div>
+          
+          {/* Image Counter */}
+          <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full">
+            {currentImageIndex + 1} / {product.images.length}
+          </div>
+        </div>
+
+        {/* Mobile Product Info */}
+        <div className="px-5 py-6">
+          <div className="flex justify-between items-start mb-2">
+            <h1 className="text-2xl font-bold uppercase tracking-tight text-black">
+              {product.name}
+            </h1>
+          </div>
+          
+          <div className="flex items-baseline gap-3 mb-6">
+            {hasDiscount ? (
+              <>
+                <span className="text-gray-400 line-through text-sm">
+                  {originalPrice.toFixed(2)} {t("products.currency")}
+                </span>
+                <span className="text-xl font-bold text-black">
+                  {finalPrice.toFixed(2)} {t("products.currency")}
+                </span>
+                <span className="text-[10px] font-bold text-white bg-red-600 px-2 py-0.5 uppercase">
+                  -{discountPercentage}%
+                </span>
+              </>
+            ) : (
+              <span className="text-xl font-bold text-black">
+                {finalPrice.toFixed(2)} {t("products.currency")}
+              </span>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed mb-8">
+            {product.description}
+          </p>
 
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="w-full py-4 bg-primary-600 text-white font-bold uppercase tracking-widest rounded-none pointer-events-auto hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-primary-600 text-white font-bold uppercase tracking-widest hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
           >
             <span>
               {isUpdated
@@ -504,72 +446,93 @@ export default function ProductDetailClient({
 
             <div className="p-6 space-y-8 pb-12">
               {/* Header in Drawer */}
-              <div>
-                <h3 className="text-2xl font-bold uppercase mb-2 text-black">
-                  {product.name}
-                </h3>
-                <p className="text-xl font-bold text-primary-700">
-                  {product.price.toFixed(2)} {t("products.currency")}
-                </p>
-              </div>
+              <div className="flex-1">
+              <h2 className="text-2xl font-bold uppercase tracking-tight shadow-black drop-shadow-md">
+                {product.name}
+              </h2>
+              <p className="text-xl font-medium mt-1 drop-shadow-md">
+                {finalPrice.toFixed(2)} {t("products.currency")}
+              </p>
+            </div>
 
               {/* Color Selection */}
-              <div>
-                <p className="text-xs font-bold uppercase text-gray-500 mb-3">
-                  {t("products.color")}
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  {product.colors.map((color) => (
-                    <MobileSelectionButton
+              {product.colors && product.colors.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase text-gray-500 mb-3">
+                    {t("products.color")}
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    {product.colors.map((color) => (
+                    <button
                       key={color}
-                      value={color}
-                      isSelected={selectedColor === color}
-                      onClick={toggleColorSelection}
-                      type="color"
-                    />
+                      onClick={() => {
+                        setSelectedColor(color);
+                        // Reset size if the new color doesn't have the selected size
+                        if (hasVariants) {
+                          const variant = variants.find(v => v.color === color);
+                          if (variant && selectedSize && !variant.sizes.includes(selectedSize)) {
+                            setSelectedSize("");
+                          }
+                        }
+                      }}
+                      className={`h-8 px-4 rounded-full border text-sm transition-all ${
+                        selectedColor === color
+                          ? "border-primary-600 bg-primary-600 text-white"
+                          : "border-gray-300 hover:border-primary-600"
+                      }`}
+                    >
+                      {color}
+                    </button>
                   ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Size Selection */}
-              <div>
-                <div className="flex justify-between mb-3">
-                  <p className="text-xs font-bold uppercase text-gray-500">
-                    {t("products.size")}
-                  </p>
-                  <button className="text-xs font-bold uppercase underline hover:text-primary-600 transition-colors text-gray-700">
-                    {t("products.sizeGuide")}
-                  </button>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {product.sizes.map((size) => (
-                    <MobileSelectionButton
+              {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
+                <div>
+                  <div className="flex justify-between mb-3">
+                    <p className="text-xs font-bold uppercase text-gray-500">
+                      {t("products.size")}
+                    </p>
+                    <button className="text-xs font-bold uppercase underline hover:text-primary-600 transition-colors text-gray-700">
+                      {t("products.sizeGuide")}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {availableSizes.map((size) => (
+                    <button
                       key={size}
-                      value={size}
-                      isSelected={selectedSize === size}
-                      onClick={toggleSizeSelection}
-                      type="size"
-                    />
+                      onClick={() => setSelectedSize(size)}
+                      className={`h-10 w-full rounded-md border text-sm font-medium transition-all ${
+                        selectedSize === size
+                          ? "border-primary-600 bg-primary-600 text-white"
+                          : "border-gray-200 hover:border-primary-600"
+                      }`}
+                    >
+                      {size}
+                    </button>
                   ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Add Button */}
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock || !selectedSize || !selectedColor}
+                disabled={!canAddToCart}
                 className={`w-full py-4 text-sm font-bold uppercase tracking-widest ${
-                  product.inStock && selectedSize && selectedColor
+                  canAddToCart
                     ? "bg-primary-600 text-white hover:bg-primary-700 transition-colors"
                     : "bg-gray-200 text-gray-400"
                 }`}
               >
                 {product.inStock
-                  ? isUpdated
+                  ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : (isUpdated
                     ? t("products.cartUpdated")
                     : isEditMode
                       ? t("products.updateCart")
-                      : t("products.addToCart")
+                      : t("products.addToCart")))
                   : t("products.outOfStock")}
               </button>
 

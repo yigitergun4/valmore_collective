@@ -27,11 +27,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   const hasMultipleImages: boolean = images.length > 1;
   const imagesLength: number = images.length;
 
-  const originalPrice: number = product.originalPrice || product.price * 1.3;
-  const discountPercentage: number = Math.round(
-    ((originalPrice - product.price) / originalPrice) * 100
-  );
-  const hasDiscount: boolean = discountPercentage > 0;
+  const originalPrice: number = product.originalPrice || 0;
+  const discountedPrice: number | undefined = product.price;
+  const hasDiscount: boolean = !!discountedPrice && discountedPrice < originalPrice;
+  const discountPercentage: number = hasDiscount
+    ? Math.round(((originalPrice - discountedPrice!) / originalPrice) * 100)
+    : 0;
 
   const handleMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -182,7 +183,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     hasDiscount ? "text-primary-600" : "text-black"
                   }`}
                 >
-                  {product.price.toFixed(2)} {t("products.currency")}
+                  {(discountedPrice || originalPrice).toFixed(2)} {t("products.currency")}
                 </span>
               </div>
             </div>

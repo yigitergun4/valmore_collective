@@ -12,12 +12,12 @@ export default function FavoritesPage() {
   const { favorites } = useShop();
   const { t } = useLanguage();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProducts: () => Promise<void> = async () => {
       try {
-        const products = await getAllProducts();
+        const products: Product[] = await getAllProducts();
         setAllProducts(products);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -30,7 +30,7 @@ export default function FavoritesPage() {
   }, []);
 
   // Filter products that are in the favorites list
-  const favoriteProducts = allProducts.filter(product => 
+  const favoriteProducts: Product[] = allProducts.filter((product: Product) => 
     favorites.includes(product.id)
   );
 

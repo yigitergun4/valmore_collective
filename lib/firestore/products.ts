@@ -8,18 +8,16 @@ import {
   deleteDoc,
   query,
   orderBy,
-  Timestamp,
 } from "firebase/firestore";
 import {
   ref,
   uploadBytes,
   getDownloadURL,
-  deleteObject,
 } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Product } from "@/types";
 
-const COLLECTION_NAME = "products";
+const COLLECTION_NAME: string = "products";
 
 export async function getAdminProducts(): Promise<Product[]> {
   try {
