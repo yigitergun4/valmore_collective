@@ -3,11 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {
-  getProductById,
-  getRelatedProducts,
-  getAllProducts,
-} from "@/lib/products";
+import { Product } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,10 +20,20 @@ import {
 import Link from "next/link";
 import SelectionButton from "@/components/SelectionButton";
 import MobileSelectionButton from "@/components/MobileSelectionButton";
-export default function ProductDetailClient(): React.JSX.Element {
+interface ProductDetailClientProps {
+  product: Product;
+  allProducts: Product[];
+  relatedProducts: Product[];
+}
+
+export default function ProductDetailClient({ 
+  product, 
+  allProducts, 
+  relatedProducts 
+}: ProductDetailClientProps): React.JSX.Element {
   const params: { id: string } = useParams();
   const router: ReturnType<typeof useRouter> = useRouter();
-  const product= getProductById(params.id as string);
+  // const product = getProductById(params.id as string); // Passed as prop
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -57,9 +63,8 @@ export default function ProductDetailClient(): React.JSX.Element {
   const touchStartY = useRef<number>(0);
   const isHorizontalSwipe = useRef<boolean>(false);
 
-  const allProducts: ReturnType<typeof getAllProducts> = getAllProducts();
-  const currentProductIndex = allProducts.findIndex((p) => p.id === params.id);
-  const relatedProducts: ReturnType<typeof getRelatedProducts> = getRelatedProducts(params.id as string, 4);
+  const currentProductIndex = allProducts.findIndex((p) => p.id === product.id);
+  // const relatedProducts = getRelatedProducts(params.id as string, 4); // Passed as prop
 
 
   // Mobile Scroll Handler

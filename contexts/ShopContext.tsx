@@ -178,7 +178,6 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
       // Open cart immediately for better UX
       setIsCartOpen(true);
-      console.log('🛒 addToCart - Opening cart drawer, isCartOpen set to true');
 
       if (user) {
         const userRef = doc(db, 'users', user.id);

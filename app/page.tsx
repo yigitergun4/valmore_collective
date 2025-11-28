@@ -1,15 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getFeaturedProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Image from "next/image";
+import { getFeaturedProducts } from "@/lib/productService";
+import { Product } from "@/types";
 
 export default function Home(): React.JSX.Element {
-  const featuredProducts = getFeaturedProducts();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const fetchProducts: () => Promise<void> = async () => {
+      const products: Product[] = await getFeaturedProducts();
+      setFeaturedProducts(products);
+    };
+    fetchProducts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">

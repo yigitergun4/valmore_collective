@@ -118,7 +118,6 @@ const register: AuthContextType['register'] = async (name: string, email: string
       await signOut(auth);
       setUser(null);
 
-      console.log("Kullanıcı oluşturuldu, doğrulama maili gönderildi ve çıkış yapıldı.");
       return true;
     } catch (error: any) {
       console.error("Registration error:", error);

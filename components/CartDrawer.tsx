@@ -26,12 +26,6 @@ export default function CartDrawer() {
     setIsMounted(true);
   }, []);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('CartDrawer - isCartOpen:', isCartOpen);
-    console.log('CartDrawer - cart length:', cart.length);
-  }, [isCartOpen, cart]);
-
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (isCartOpen) {

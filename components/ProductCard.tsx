@@ -76,8 +76,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleTouchEnd: () => void = useCallback(() => {
     if (!hasMultipleImages) return;
 
-    const swipeThreshold = 50;
-    const diff = touchStartX.current - touchEndX.current;
+    const swipeThreshold: number = 50;
+    const diff: number = touchStartX.current - touchEndX.current;
 
     if (Math.abs(diff) > swipeThreshold) {
       if (diff > 0) {

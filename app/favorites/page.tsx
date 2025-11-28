@@ -1,21 +1,46 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useShop } from '@/contexts/ShopContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getAllProducts } from '@/lib/products';
+import { getAllProducts } from '@/lib/productService';
 import ProductCard from '@/components/ProductCard';
+import { Product } from '@/types';
 
 export default function FavoritesPage() {
   const { favorites } = useShop();
   const { t } = useLanguage();
-  const allProducts = getAllProducts();
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const products = await getAllProducts();
+        setAllProducts(products);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Filter products that are in the favorites list
   const favoriteProducts = allProducts.filter(product => 
     favorites.includes(product.id)
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 lg:px-8 max-w-[1920px] mx-auto">

@@ -189,8 +189,6 @@ export default function CheckoutPage(): React.JSX.Element | null {
       const { createOrder } = await import("@/lib/orderService");
       const orderId: string = await createOrder(orderData);
 
-      console.log("Order created successfully with ID:", orderId);
-
       setIsProcessing(false);
       setOrderPlaced(true);
       clearCart();

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { products } from "@/lib/products";
+import { useState, useMemo, useEffect } from "react";
+import { getAllProducts } from "@/lib/productService";
 import ProductCard from "@/components/ProductCard";
 import { Search, X, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -11,6 +11,8 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 export default function ProductsPage(): React.JSX.Element {
   const { t } = useLanguage();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "price-low" | "price-high">(
@@ -24,7 +26,7 @@ export default function ProductsPage(): React.JSX.Element {
       const mapping: { [key: string]: string } = {};
       PRODUCT_CATEGORIES.forEach((cat) => {
         // Map Turkish category name to English key for translations
-        const key = cat.value
+        const key: string = cat.value
           .toLowerCase()
           .replace(/ş/g, 's')
           .replace(/ı/g, 'i')
@@ -55,25 +57,41 @@ export default function ProductsPage(): React.JSX.Element {
   );
 
   // Get category keys from centralized PRODUCT_CATEGORIES
-  const categoryKeys = useMemo(() => {
+  const categoryKeys: string[] = useMemo(() => {
     return ["all", ...PRODUCT_CATEGORIES.map((cat) => categoryMapping[cat.value])];
   }, [categoryMapping]);
 
-  const filteredAndSortedProducts = useMemo(() => {
-    let filtered: Product[] = products.filter((product) => {
-      const matchesSearch =
+  useEffect(() => {
+    const fetchProducts: () => Promise<void> = async () => {
+      try {
+        const data: Product[] = await getAllProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const filteredAndSortedProducts: Product[] = useMemo(() => {
+    
+    let filtered: Product[] = products.filter((product: Product) => {
+      const matchesSearch: boolean =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Convert product category to key and match with selected category
-      const productCategoryKey = categoryMapping[product.category];
-      const matchesCategory =
+      const productCategoryKey: string = categoryMapping[product.category];
+      const matchesCategory: boolean =
         selectedCategory === "all" || productCategoryKey === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
+    
 
-    filtered.sort((a, b) => {
+    filtered.sort((a: Product, b: Product) => {
       switch (sortBy) {
         case "name":
           return a.name.localeCompare(b.name);
@@ -87,7 +105,7 @@ export default function ProductsPage(): React.JSX.Element {
     });
 
     return filtered;
-  }, [searchQuery, selectedCategory, sortBy, categoryMapping]);
+  }, [searchQuery, selectedCategory, sortBy, categoryMapping, products]);
 
   const hasActiveFilters = searchQuery || selectedCategory !== "all";
 
@@ -99,6 +117,12 @@ export default function ProductsPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-white pt-16 lg:pt-20">
       <div className="max-w-[1920px] mx-auto">
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+          </div>
+        ) : (
+          <>
         {/* Top Bar - Mobile Filter Button & Sort */}
         <div className="sticky top-16 lg:top-20 z-30 bg-white border-b border-gray-200">
           <div className="px-4 lg:px-8 py-4 flex items-center justify-between">
@@ -327,6 +351,8 @@ export default function ProductsPage(): React.JSX.Element {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
