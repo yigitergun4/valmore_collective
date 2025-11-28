@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.gstatic.com",
       },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        port: "",
+        pathname: "/**", // Tüm alt klasörlere izin ver
+      },
     ],
     dangerouslyAllowSVG: true,
   },

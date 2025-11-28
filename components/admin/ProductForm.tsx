@@ -6,6 +6,13 @@ import { Product } from "@/types";
 import { uploadProductImage } from "@/lib/firestore/products";
 import { X, Upload, Plus } from "lucide-react";
 import Image from "next/image";
+import imageCompression from "browser-image-compression";
+import { 
+  PRODUCT_CATEGORIES, 
+  getCategoryType, 
+  getSizePlaceholder,
+  isSizeRequired 
+} from "@/lib/constants";
 
 interface ProductFormProps {
   initialData?: Product;
@@ -20,6 +27,8 @@ export default function ProductForm({
 }: ProductFormProps): React.JSX.Element {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sizeInputRef = useRef<HTMLInputElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Omit<Product, "id" | "createdAt">>({
     name: initialData?.name || "",
@@ -39,8 +48,11 @@ export default function ProductForm({
   const [newSize, setNewSize] = useState<string>("");
   const [newColor, setNewColor] = useState<string>("");
   const [uploading, setUploading] = useState<boolean>(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [compressionStatus, setCompressionStatus] = useState<string>("");
 
-  const handleChange = (
+  const handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
@@ -50,43 +62,63 @@ export default function ProductForm({
     }));
   };
 
-  const handleToggle = (name: keyof typeof formData) => {
+  const handleToggle: (name: keyof typeof formData) => void = (name: keyof typeof formData) => {
     setFormData((prev) => ({
       ...prev,
       [name]: !prev[name],
     }));
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const files: FileList | null = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setUploading(true);
-    try {
-      const url = await uploadProductImage(file);
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, url],
-      }));
-    } catch (error) {
-      console.error("Upload failed", error);
-      alert("Görsel yükleme başarısız oldu");
-    } finally {
-      setUploading(false);
+    // Convert FileList to Array
+    const fileArray: File[] = Array.from(files);
+    
+    // Create preview URLs for selected files
+    const newPreviewUrls: string[] = fileArray.map((file: File) => {
+      return URL.createObjectURL(file);
+    });
+    
+    // Add files to selected files array
+    setSelectedFiles((prev: File[]) => [...prev, ...fileArray]);
+    setPreviewUrls((prev: string[]) => [...prev, ...newPreviewUrls]);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
+    
   };
 
   const removeImage: (index: number) => void = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    // Check if this is a preview (not yet uploaded) or an existing image
+    const totalExisting: number = formData.images.length;
+    
+    if (index < totalExisting) {
+      // Remove from existing uploaded images
+      setFormData((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, i: number) => i !== index),
+      }));
+    } else {
+      // Remove from previews
+      const previewIndex: number = index - totalExisting;
+      
+      // Revoke the object URL to prevent memory leak
+      URL.revokeObjectURL(previewUrls[previewIndex]);
+      
+      setSelectedFiles((prev: File[]) => prev.filter((_, i: number) => i !== previewIndex));
+      setPreviewUrls((prev: string[]) => prev.filter((_, i: number) => i !== previewIndex));
+    }
   };
 
-  const addArrayItem: (field: "sizes" | "colors", value: string, setter: (val: string) => void) => void = (
+  const addArrayItem: (field: "sizes" | "colors", value: string, setter: (val: string) => void, inputRef?: React.RefObject<HTMLInputElement | null>) => void = (
     field: "sizes" | "colors",
     value: string,
-    setter: (val: string) => void
+    setter: (val: string) => void,
+    inputRef?: React.RefObject<HTMLInputElement | null>
   ) => {
     if (!value.trim()) return;
     setFormData((prev) => ({
@@ -94,6 +126,11 @@ export default function ProductForm({
       [field]: [...prev[field], value.trim()],
     }));
     setter("");
+    
+    // Auto-focus input after adding item
+    if (inputRef?.current) {
+      inputRef.current.focus();
+    }
   };
 
   const removeArrayItem: (field: "sizes" | "colors", index: number) => void = (field: "sizes" | "colors", index: number) => {
@@ -122,13 +159,81 @@ export default function ProductForm({
   const handleSubmit: (e: React.FormEvent) => Promise<void> = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const slug: string = slugify(formData.name);
+    // Validate sizes based on category
+    if (isSizeRequired(formData.category) && formData.sizes.length === 0) {
+      alert("Lütfen en az bir beden ekleyin!");
+      sizeInputRef.current?.focus();
+      return;
+    }
+    
+    setUploading(true);
+    setCompressionStatus("Preparing to upload images...");
+    
+    try {
+      let uploadedUrls: string[] = [];
+      
+      // Upload selected files if any
+      if (selectedFiles.length > 0) {
+        
+        // Compression options
+        const compressionOptions = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: false,
+          fileType: "image/webp" as const,
+        };
+        
+        // Compress and upload all files
+        const uploadPromises: Promise<string>[] = selectedFiles.map(async (file: File, index: number): Promise<string> => {
+          try {
+            setCompressionStatus(`Compressing image ${index + 1} of ${selectedFiles.length}...`);
+            
+            // Compress
+            const compressedFile: File = await imageCompression(file, compressionOptions);
+            
+            const originalSizeKB: number = parseFloat((file.size / 1024).toFixed(2));
+            const compressedSizeKB: number = parseFloat((compressedFile.size / 1024).toFixed(2));
+            const reductionPercent: number = parseFloat((((file.size - compressedFile.size) / file.size) * 100).toFixed(1));
+            
+            setCompressionStatus(`Uploading image ${index + 1} of ${selectedFiles.length}...`);
+            
+            // Upload
+            const url: string = await uploadProductImage(compressedFile);
+            
+            return url;
+          } catch (error) {
+            console.error(`❌ Error processing image ${index + 1}:`, error);
+            // Fallback to original
+            return await uploadProductImage(file);
+          }
+        });
+        
+        uploadedUrls = await Promise.all(uploadPromises);
+        
+        // Cleanup preview URLs
+        previewUrls.forEach((url: string) => URL.revokeObjectURL(url));
+        setPreviewUrls([]);
+        setSelectedFiles([]);
+      }
+      
+      setCompressionStatus("");
+      
+      const slug: string = slugify(formData.name);
 
-    await onSubmit({
-      ...formData,
-      slug,
-      createdAt: initialData?.createdAt || new Date().toISOString(),
-    });
+      await onSubmit({
+        ...formData,
+        images: [...formData.images, ...uploadedUrls],
+        slug,
+        createdAt: initialData?.createdAt || new Date().toISOString(),
+      });
+      
+    } catch (error) {
+      console.error("❌ Form submission failed:", error);
+      alert("Ürün kaydedilemedi");
+    } finally {
+      setUploading(false);
+      setCompressionStatus("");
+    }
   };
 
   return (
@@ -162,7 +267,7 @@ export default function ProductForm({
               rows={4}
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none"
             />
           </div>
 
@@ -211,16 +316,11 @@ export default function ProductForm({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
                 <option value="">Kategori Seçin</option>
-                <option value="Gömlekler">Gömlekler</option>
-                <option value="Pantolonlar">Pantolonlar</option>
-                <option value="Dış Giyim">Dış Giyim</option>
-                <option value="Üst Giyim">Üst Giyim</option>
-                <option value="Tişörtler">Tişörtler</option>
-                <option value="Sweatshirt">Sweatshirt</option>
-                <option value="Aksesuar">Aksesuar</option>
-                <option value="Ayakkabı">Ayakkabı</option>
-                <option value="Elbise">Elbise</option>
-                <option value="Şort">Şort</option>
+                {PRODUCT_CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -245,7 +345,7 @@ export default function ProductForm({
             <h3 className="text-lg font-medium mb-4">Görseller</h3>
             <div className="grid grid-cols-3 gap-4 mb-4">
               {formData.images.map((url, index) => (
-                <div key={index} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
+                <div key={`image-${index}`} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
                   <Image
                     src={url}
                     alt={`Product ${index + 1}`}
@@ -259,6 +359,26 @@ export default function ProductForm({
                   >
                     <X className="w-4 h-4 text-red-500" />
                   </button>
+                </div>
+              ))}
+              {previewUrls.map((url: string, index: number) => (
+                <div key={`preview-${index}`} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group border-2 border-dashed border-blue-300">
+                  <Image
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    fill
+                    className="object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(formData.images.length + index)}
+                    className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4 text-red-500" />
+                  </button>
+                  <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded">
+                    Önizleme
+                  </div>
                 </div>
               ))}
               <button
@@ -277,11 +397,18 @@ export default function ProductForm({
                 )}
               </button>
             </div>
+            {compressionStatus && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-blue-700 font-medium">{compressionStatus}</span>
+              </div>
+            )}
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
             />
           </div>
@@ -291,7 +418,9 @@ export default function ProductForm({
             
             {/* Sizes */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Bedenler</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Bedenler {getCategoryType(formData.category) === "accessories" && <span className="text-gray-400 font-normal">(Opsiyonel)</span>}
+              </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.sizes.map((size, index) => (
                   <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -308,21 +437,22 @@ export default function ProductForm({
               </div>
               <div className="flex gap-2">
                 <input
+                  ref={sizeInputRef}
                   type="text"
                   value={newSize}
                   onChange={(e) => setNewSize(e.target.value)}
-                  placeholder="Beden ekle (örn. S, M, L)"
+                  placeholder={getSizePlaceholder(formData.category)}
                   className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      addArrayItem("sizes", newSize, setNewSize);
+                      addArrayItem("sizes", newSize, setNewSize, sizeInputRef);
                     }
                   }}
                 />
                 <button
                   type="button"
-                  onClick={() => addArrayItem("sizes", newSize, setNewSize)}
+                  onClick={() => addArrayItem("sizes", newSize, setNewSize, sizeInputRef)}
                   className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200"
                 >
                   <Plus className="w-4 h-4" />
@@ -349,6 +479,7 @@ export default function ProductForm({
               </div>
               <div className="flex gap-2">
                 <input
+                  ref={colorInputRef}
                   type="text"
                   value={newColor}
                   onChange={(e) => setNewColor(e.target.value)}
@@ -357,13 +488,13 @@ export default function ProductForm({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      addArrayItem("colors", newColor, setNewColor);
+                      addArrayItem("colors", newColor, setNewColor, colorInputRef);
                     }
                   }}
                 />
                 <button
                   type="button"
-                  onClick={() => addArrayItem("colors", newColor, setNewColor)}
+                  onClick={() => addArrayItem("colors", newColor, setNewColor, colorInputRef)}
                   className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200"
                 >
                   <Plus className="w-4 h-4" />

@@ -86,12 +86,49 @@ export async function deleteProduct(id: string): Promise<void> {
 
 export async function uploadProductImage(file: File): Promise<string> {
   try {
-    const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Sadece resim dosyaları yüklenebilir');
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize: number = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      throw new Error('Dosya boyutu maksimum 5MB olabilir');
+    }
+
+    // Create unique filename with timestamp
+    const timestamp: number = Date.now();
+    const sanitizedFileName: string = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+    const fileName: string = `${timestamp}_${sanitizedFileName}`;
+
+    // Create storage reference
+    const storageRef = ref(storage, `products/${fileName}`);
+
+    // Upload file with metadata
+    const metadata = {
+      contentType: file.type,
+      customMetadata: {
+        uploadedAt: new Date().toISOString(),
+      },
+    };
+
+    const snapshot = await uploadBytes(storageRef, file, metadata);
+    const downloadURL: string = await getDownloadURL(snapshot.ref);
+
     return downloadURL;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error uploading image:", error);
+
+    // Provide more specific error messages
+    if (error.code === 'storage/unauthorized') {
+      throw new Error('Yetkilendirme hatası. Lütfen giriş yapın.');
+    } else if (error.code === 'storage/canceled') {
+      throw new Error('Yükleme iptal edildi.');
+    } else if (error.code === 'storage/unknown') {
+      throw new Error('Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+    }
+
     throw error;
   }
 }

@@ -7,6 +7,7 @@ import { Search, X, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Product } from "@/types";
 import FilterTag from "@/components/FilterTag";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 export default function ProductsPage(): React.JSX.Element {
   const { t } = useLanguage();
@@ -19,27 +20,43 @@ export default function ProductsPage(): React.JSX.Element {
 
   // Category mapping from Turkish product categories to translation keys
   const categoryMapping: { [key: string]: string } = useMemo(
-    () => ({
-      Gömlekler: "shirts",
-      Pantolonlar: "pants",
-      "Dış Giyim": "outerwear",
-      "Üst Giyim": "tops",
-      Tişörtler: "tshirts",
-      Sweatshirt: "sweatshirts",
-      Aksesuar: "accessories",
-      Ayakkabı: "shoes",
-      Elbise: "dresses",
-      Şort: "shorts",
-    }),
+    () => {
+      const mapping: { [key: string]: string } = {};
+      PRODUCT_CATEGORIES.forEach((cat) => {
+        // Map Turkish category name to English key for translations
+        const key = cat.value
+          .toLowerCase()
+          .replace(/ş/g, 's')
+          .replace(/ı/g, 'i')
+          .replace(/ğ/g, 'g')
+          .replace(/ü/g, 'u')
+          .replace(/ö/g, 'o')
+          .replace(/ç/g, 'c')
+          .replace(/\s+/g, '');
+        
+        // Create translation key mappings
+        if (cat.value === "Gömlekler") mapping[cat.value] = "shirts";
+        else if (cat.value === "Pantolonlar") mapping[cat.value] = "pants";
+        else if (cat.value === "Dış Giyim") mapping[cat.value] = "outerwear";
+        else if (cat.value === "Üst Giyim") mapping[cat.value] = "tops";
+        else if (cat.value === "Tişörtler") mapping[cat.value] = "tshirts";
+        else if (cat.value === "Sweatshirt") mapping[cat.value] = "sweatshirts";
+        else if (cat.value === "Aksesuar") mapping[cat.value] = "accessories";
+        else if (cat.value === "Ayakkabı") mapping[cat.value] = "shoes";
+        else if (cat.value === "Elbise") mapping[cat.value] = "dresses";
+        else if (cat.value === "Şort") mapping[cat.value] = "shorts";
+        else if (cat.value === "Çanta") mapping[cat.value] = "bags";
+        else if (cat.value === "Çorap") mapping[cat.value] = "socks";
+        else mapping[cat.value] = key;
+      });
+      return mapping;
+    },
     []
   );
 
-  // Get unique categories from products and convert to translation keys
+  // Get category keys from centralized PRODUCT_CATEGORIES
   const categoryKeys = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(products.map((p) => p.category))
-    );
-    return ["all", ...uniqueCategories.map((cat) => categoryMapping[cat])];
+    return ["all", ...PRODUCT_CATEGORIES.map((cat) => categoryMapping[cat.value])];
   }, [categoryMapping]);
 
   const filteredAndSortedProducts = useMemo(() => {
@@ -162,7 +179,7 @@ export default function ProductsPage(): React.JSX.Element {
               {/* Search */}
               <div className="mb-8">
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">
-                  Search
+                  {t("products.searchLabel")}
                 </h3>
                 <div className="relative">
                   <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -179,7 +196,7 @@ export default function ProductsPage(): React.JSX.Element {
               {/* Categories */}
               <div>
                 <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">
-                  Categories
+                  {t("products.categoriesLabel")}
                 </h3>
                 <ul className="space-y-2">
                   {categoryKeys.map((categoryKey) => (
@@ -267,7 +284,7 @@ export default function ProductsPage(): React.JSX.Element {
                 {/* Search */}
                 <div className="mb-8">
                   <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">
-                    Search
+                    {t("products.searchLabel")}
                   </h3>
                   <div className="relative">
                     <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -284,7 +301,7 @@ export default function ProductsPage(): React.JSX.Element {
                 {/* Categories */}
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">
-                    Categories
+                    {t("products.categoriesLabel")}
                   </h3>
                   <ul className="space-y-3">
                     {categoryKeys.map((categoryKey) => (

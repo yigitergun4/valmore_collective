@@ -20,7 +20,6 @@ export async function createOrder(
             updatedAt: serverTimestamp(),
         });
 
-        console.log("Order created successfully with ID:", docRef.id);
         return docRef.id;
     } catch (error) {
         console.error("Error creating order:", error);
