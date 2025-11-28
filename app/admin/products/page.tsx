@@ -158,7 +158,7 @@ export default function AdminProductsPage() {
                       <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {product.images[0] ? (
                           <Image
-                            src={product.images[0]}
+                            src={product.images[0]?.url || ""}
                             alt={product.name}
                             fill
                             className="object-cover"

@@ -73,7 +73,7 @@ export async function seedProducts() {
             featured: Math.random() > 0.8, // %20 öne çıkan
             colors: getRandomSubset(COLORS, 3), // 3 rastgele renk
             sizes: sizes, // Kategoriye uygun bedenler
-            images: getRandomSubset(IMAGES, 2), // 2 rastgele resim
+            images: getRandomSubset(IMAGES, 2).map((url: string) => ({ url, color: "Genel" })), // 2 rastgele resim
             createdAt: new Date().toISOString(),
             // Yeni eklediğimiz alanlar (Opsiyonel, hata vermez)
             gender: getRandom(["Erkek", "Kadın", "Unisex"]),

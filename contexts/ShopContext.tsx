@@ -155,7 +155,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         productId: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: product.images.find(img => img.color === color)?.url || product.images[0]?.url || "",
         selectedSize: size,
         selectedColor: color,
         quantity: 1,

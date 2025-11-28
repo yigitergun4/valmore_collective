@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Product, ProductVariant } from "@/types";
+import { Product, ProductVariant, ProductImage } from "@/types";
 import { uploadProductImage } from "@/lib/firestore/products";
-import { X, Upload, Plus } from "lucide-react";
+import { X, Upload, Plus, Info } from "lucide-react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { 
@@ -15,6 +15,8 @@ import {
 } from "@/lib/constants";
 import { CompressionOptions } from "@/types/admin";
 import { useAlert } from "@/contexts/AlertContext";
+
+type LocalImage = ProductImage & { isUploading?: boolean; file?: File };
 
 interface ProductFormProps {
   initialData?: Product;
@@ -42,7 +44,7 @@ export default function ProductForm({
     isDiscounted: initialData?.isDiscounted || false,
     category: initialData?.category || "",
     brand: initialData?.brand || "",
-    images: initialData?.images || [],
+    images: (initialData?.images?.map(img => typeof img === 'string' ? { url: img, color: "Genel" } : img) || []) as LocalImage[],
     sizes: initialData?.sizes || [],
     colors: initialData?.colors || [],
     inStock: initialData?.inStock ?? true,
@@ -66,9 +68,16 @@ export default function ProductForm({
   const [newVariantStock, setNewVariantStock] = useState<boolean>(true);
 
   const [uploading, setUploading] = useState<boolean>(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  // Removed selectedFiles and previewUrls as they are now integrated into formData.images
   const [compressionStatus, setCompressionStatus] = useState<string>("");
+
+  // Derive available colors based on mode
+  const availableColors: string[] = useMemo(() => {
+    if (formData.hasVariants) {
+      return Array.from(new Set(variants.map(v => v.color))).filter(Boolean);
+    }
+    return formData.colors;
+  }, [formData.hasVariants, variants, formData.colors]);
 
   const handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -87,49 +96,97 @@ export default function ProductForm({
     }));
   };
 
-  const handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const files: FileList | null = e.target.files;
+  const handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void> = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
     if (!files || files.length === 0) return;
 
     // Convert FileList to Array
-    const fileArray: File[] = Array.from(files);
+    const fileArray = Array.from(files);
     
-    // Create preview URLs for selected files
-    const newPreviewUrls: string[] = fileArray.map((file: File) => {
-      return URL.createObjectURL(file);
-    });
+    // Create optimistic images
+    const newImages: LocalImage[] = fileArray.map(file => ({
+      url: URL.createObjectURL(file),
+      color: "Genel",
+      isUploading: true,
+      file: file
+    }));
     
-    // Add files to selected files array
-    setSelectedFiles((prev: File[]) => [...prev, ...fileArray]);
-    setPreviewUrls((prev: string[]) => [...prev, ...newPreviewUrls]);
+    // Add to state immediately
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...newImages]
+    }));
     
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    
+
+    // Process uploads in background
+    const compressionOptions: CompressionOptions = {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1920,
+      useWebWorker: false,
+      fileType: "image/webp" as const,
+    };
+
+    // Process each image
+    for (const localImg of newImages) {
+      try {
+        setCompressionStatus("Compressing & Uploading...");
+        
+        // Compress
+        const compressedFile = await imageCompression(localImg.file!, compressionOptions);
+        
+        // Upload
+        const url = await uploadProductImage(compressedFile);
+        
+        // Update state with real URL
+        setFormData(prev => ({
+          ...prev,
+          images: prev.images.map(img => 
+            img.url === localImg.url 
+              ? { ...img, url, isUploading: false, file: undefined } 
+              : img
+          )
+        }));
+        
+        // Cleanup blob URL
+        URL.revokeObjectURL(localImg.url);
+        
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        showError("Resim yüklenemedi");
+        // Remove failed image
+        setFormData(prev => ({
+          ...prev,
+          images: prev.images.filter(img => img.url !== localImg.url)
+        }));
+      }
+    }
+    setCompressionStatus("");
+  };
+
+  const handleImageColorChange = (index: number, color: string) => {
+    setFormData((prev) => {
+      const newImages = [...prev.images];
+      newImages[index] = { ...newImages[index], color };
+      return { ...prev, images: newImages };
+    });
   };
 
   const removeImage: (index: number) => void = (index: number) => {
-    // Check if this is a preview (not yet uploaded) or an existing image
-    const totalExisting: number = formData.images.length;
-    
-    if (index < totalExisting) {
-      // Remove from existing uploaded images
-      setFormData((prev) => ({
+    setFormData((prev) => {
+      const imageToRemove = prev.images[index] as LocalImage;
+      // If it was a blob URL, revoke it
+      if (imageToRemove.isUploading && imageToRemove.url.startsWith('blob:')) {
+        URL.revokeObjectURL(imageToRemove.url);
+      }
+      return {
         ...prev,
         images: prev.images.filter((_, i: number) => i !== index),
-      }));
-    } else {
-      // Remove from previews
-      const previewIndex: number = index - totalExisting;
-      
-      // Revoke the object URL to prevent memory leak
-      URL.revokeObjectURL(previewUrls[previewIndex]);
-      
-      setSelectedFiles((prev: File[]) => prev.filter((_, i: number) => i !== previewIndex));
-      setPreviewUrls((prev: string[]) => prev.filter((_, i: number) => i !== previewIndex));
-    }
+      };
+    });
   };
 
   const addArrayItem: (field: "sizes" | "colors", value: string, setter: (val: string) => void, inputRef?: React.RefObject<HTMLInputElement | null>) => void = (
@@ -176,87 +233,18 @@ export default function ProductForm({
 
   const handleSubmit: (e: React.FormEvent) => Promise<void> = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate sizes based on category
-    // Validate sizes based on category and variants
-    if (formData.hasVariants) {
-      if (variants.length === 0) {
-        showError("En az bir varyasyon ekleyin.");
-        return;
-      }
-      if (isSizeRequired(formData.category)) {
-        const hasSizes = variants.some(v => v.sizes && v.sizes.length > 0);
-        if (!hasSizes) {
-          showError("Lütfen varyasyonlar için beden giriniz.");
-          return;
-        }
-      }
-    } else {
-      if (isSizeRequired(formData.category) && formData.sizes.length === 0) {
-        showError("Lütfen en az bir beden ekleyin!");
-        sizeInputRef.current?.focus();
-        return;
-      }
+
+    // Check for uploading images
+    if ((formData.images as LocalImage[]).some(img => img.isUploading)) {
+      showError("Lütfen resimlerin yüklenmesini bekleyin.");
+      return;
     }
-    
+
     setUploading(true);
-    setCompressionStatus("Preparing to upload images...");
-    
+    setCompressionStatus("Saving product...");
+
     try {
-      let uploadedUrls: string[] = [];
-      
-      // Upload selected files if any
-      if (selectedFiles.length > 0) {
-        
-        // Compression options
-        const compressionOptions: CompressionOptions= {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 1920,
-          useWebWorker: false,
-          fileType: "image/webp" as const,
-        };
-        
-        // Compress and upload all files
-        const uploadPromises: Promise<string>[] = selectedFiles.map(async (file: File, index: number): Promise<string> => {
-          try {
-            setCompressionStatus(`Compressing image ${index + 1} of ${selectedFiles.length}...`);
-            
-            // Compress
-            const compressedFile: File = await imageCompression(file, compressionOptions);
-            
-            const originalSizeKB: number = parseFloat((file.size / 1024).toFixed(2));
-            const compressedSizeKB: number = parseFloat((compressedFile.size / 1024).toFixed(2));
-            const reductionPercent: number = parseFloat((((file.size - compressedFile.size) / file.size) * 100).toFixed(1));
-            
-            setCompressionStatus(`Uploading image ${index + 1} of ${selectedFiles.length}...`);
-            
-            // Upload
-            const url: string = await uploadProductImage(compressedFile);
-            
-            return url;
-          } catch (error) {
-            console.error(`❌ Error processing image ${index + 1}:`, error);
-            // Fallback to original
-            return await uploadProductImage(file);
-          }
-        });
-        
-        uploadedUrls = await Promise.all(uploadPromises);
-        
-        // Cleanup preview URLs
-        previewUrls.forEach((url: string) => URL.revokeObjectURL(url));
-        setPreviewUrls([]);
-        setSelectedFiles([]);
-      }
-      
-      setCompressionStatus("");
-      
-      const slug: string = slugify(formData.name);
-
-      // Calculate final prices based on discount state
-      const finalPrice = hasDiscount ? discountedPrice : formData.price;
-
-      // Aggregate colors and sizes from variants if enabled
+      // 1. Aggregation (Prepare data for validation and submission)
       let finalColors: string[] = formData.colors;
       let finalSizes: string[] = formData.sizes;
       let finalInStock: boolean = formData.inStock;
@@ -266,12 +254,41 @@ export default function ProductForm({
         finalSizes = Array.from(new Set(variants.flatMap(v => v.sizes)));
         finalInStock = variants.some(v => v.inStock);
       }
+      
+      // 2. Validation
+      if (formData.hasVariants) {
+        // Check if at least one variant exists
+        if (variants.length === 0) throw new Error("Lütfen en az bir varyasyon ekleyin.");
+        
+        // Check if sizes are required for this category (e.g. Shoes/Clothes)
+        if (isSizeRequired(formData.category)) {
+          const hasSizes = variants.some(v => v.sizes && v.sizes.length > 0);
+          if (!hasSizes) throw new Error("Lütfen varyasyonlar için beden giriniz.");
+        }
+      } else {
+        // Legacy check (Existing logic for Simple Mode)
+        if (isSizeRequired(formData.category) && formData.sizes.length === 0) {
+          sizeInputRef.current?.focus();
+          throw new Error("Lütfen en az bir beden ekleyin!");
+        }
+      }
+      
+      const slug: string = slugify(formData.name);
+
+      // Calculate final prices based on discount state
+      const finalPrice = hasDiscount ? discountedPrice : formData.price;
+
+      // Sanitize images (remove LocalImage props)
+      const cleanImages: ProductImage[] = formData.images.map(img => ({
+        url: img.url,
+        color: img.color
+      }));
 
       const submitData = {
         ...formData,
         price: finalPrice,
         isDiscounted: hasDiscount,
-        images: [...formData.images, ...uploadedUrls],
+        images: cleanImages,
         colors: finalColors,
         sizes: finalSizes,
         inStock: finalInStock,
@@ -289,7 +306,12 @@ export default function ProductForm({
       await onSubmit(submitData);
       
     } catch (error) {
-      showError("Ürün kaydedilemedi");
+      console.error("Submit Error:", error);
+      if (error instanceof Error) {
+        showError(error.message);
+      } else {
+        showError("Ürün kaydedilemedi");
+      }
     } finally {
       setUploading(false);
       setCompressionStatus("");
@@ -441,40 +463,61 @@ export default function ProductForm({
           <div>
             <h3 className="text-lg font-medium mb-4">Görseller</h3>
             <div className="grid grid-cols-3 gap-4 mb-4">
-              {formData.images.map((url, index) => (
-                <div key={`image-${index}`} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
-                  <Image
-                    src={url}
-                    alt={`Product ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4 text-red-500" />
-                  </button>
+              {formData.images.map((img, index) => {
+                const localImg = img as LocalImage;
+                return (
+                <div key={`image-${index}`} className="relative group border rounded-lg p-2 bg-gray-50 flex flex-col">
+                  <div className="relative aspect-square mb-2 w-full">
+                    <Image
+                      src={img.url}
+                      alt={`Product ${index + 1}`}
+                      fill
+                      className={`object-cover rounded-md ${localImg.isUploading ? 'opacity-50' : ''}`}
+                    />
+                    {localImg.isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-4 h-4 text-red-500" />
+                    </button>
+                  </div>
+                  
+                  {/* Color Selection for Image */}
+                  <div className="mt-auto">
+                    {availableColors.length > 0 ? (
+                      <>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                          BU FOTO HANGİ RENK?
+                        </label>
+                        <select
+                          value={img.color || "Genel"}
+                          onChange={(e) => handleImageColorChange(index, e.target.value)}
+                          className="w-full text-xs border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 py-1"
+                        >
+                          <option value="Genel">Genel (Hepsi)</option>
+                          {availableColors.map(color => (
+                            <option key={color} value={color}>{color}</option>
+                          ))}
+                        </select>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-1.5 p-2 bg-orange-50 border border-orange-100 rounded-md">
+                        <Info className="w-3 h-3 text-orange-500 flex-shrink-0" />
+                        <span className="text-[10px] text-orange-600 font-medium leading-tight">
+                          Renk seçmek için varyasyon ekleyin.
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ))}
-              {previewUrls.map((url: string, index: number) => (
-                <div key={`preview-${index}`} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group border-2 border-dashed border-blue-300">
-                  <Image
-                    src={url}
-                    alt={`Preview ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(formData.images.length + index)}
-                    className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -708,11 +751,9 @@ export default function ProductForm({
 
           {/* Toggles */}
           <div className="space-y-3 pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Stok Durumu</span>
-              {formData.hasVariants ? (
-                <span className="text-sm text-gray-500 italic">Varyasyonlardan hesaplanır</span>
-              ) : (
+            {!formData.hasVariants && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Stok Durumu</span>
                 <button
                   type="button"
                   onClick={() => handleToggle("inStock")}
@@ -726,8 +767,8 @@ export default function ProductForm({
                     }`}
                   />
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700">Öne Çıkan</span>

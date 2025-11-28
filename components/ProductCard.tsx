@@ -21,7 +21,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const images: string[] = useMemo(
-    () => product.images.filter((img) => img && img.trim() !== ""),
+    () => product.images.map(img => img.url).filter((url) => url && url.trim() !== ""),
     [product.images]
   );
   const hasMultipleImages: boolean = images.length > 1;

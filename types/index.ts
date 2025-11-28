@@ -5,7 +5,16 @@ export interface ProductVariant {
   inStock: boolean;
   sizes: string[];
 }
+export interface ProductImage {
+  url: string;
+  color: string; // "Genel" veya renk adı ("Kırmızı")
+}
 
+export interface ProductDetailClientProps {
+  product: Product;
+  allProducts: Product[];
+  relatedProducts: Product[];
+}
 export interface Product {
   id: string;
   name: string;
@@ -13,7 +22,7 @@ export interface Product {
   price: number;
   originalPrice?: number;
   isDiscounted: boolean;
-  images: string[];
+  images: ProductImage[];
   category: string;
   brand: string;
   sizes: string[];

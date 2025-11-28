@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Product, ProductVariant } from "@/types";
+import { Product, ProductImage, ProductVariant, ProductDetailClientProps } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,25 +19,15 @@ import {
   Ruler,
 } from "lucide-react";
 import Link from "next/link";
-import SelectionButton from "@/components/SelectionButton";
-import MobileSelectionButton from "@/components/MobileSelectionButton";
-interface ProductDetailClientProps {
-  product: Product;
-  allProducts: Product[];
-  relatedProducts: Product[];
-}
 
 export default function ProductDetailClient({ 
   product, 
   allProducts, 
-  relatedProducts 
 }: ProductDetailClientProps): React.JSX.Element {
-  const params: { id: string } = useParams();
   const router: ReturnType<typeof useRouter> = useRouter();
-  // const product = getProductById(params.id as string); // Passed as prop
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
-  const { showError, showSuccess } = useAlert();
+  const { showError } = useAlert();
   const { user } = useAuth();
 
   const searchParams: ReturnType<typeof useSearchParams> = useSearchParams();
@@ -56,22 +46,28 @@ export default function ProductDetailClient({
   // Reset success state when user changes size or color
   useEffect(() => {
     setIsUpdated(false);
+    setCurrentImageIndex(0);
   }, [selectedSize, selectedColor]);
 
+  // Filter images based on selected color
+  const filteredImages: ProductImage[] = product.images.filter(img => 
+    img.color === "Genel" || (selectedColor && img.color === selectedColor)
+  );
+
+  const displayImages: ProductImage[] = filteredImages.length > 0 ? filteredImages : product.images;
+
   // Variant Logic
-  const hasVariants = product.hasVariants;
-  const variants = product.variants || [];
+  const hasVariants: boolean = product.hasVariants;
+  const variants: ProductVariant[] = product.variants || [];
 
   // Derived state for variants
-  const availableSizes = hasVariants && selectedColor
+  const availableSizes: string[] = hasVariants && selectedColor
     ? variants.find(v => v.color === selectedColor)?.sizes || []
     : product.sizes;
 
-  const isVariantInStock = hasVariants && selectedColor
+  const isVariantInStock: boolean = hasVariants && selectedColor
     ? variants.find(v => v.color === selectedColor)?.inStock ?? false
     : product.inStock;
-
-  const currentProductIndex: number = allProducts.findIndex((p: Product) => p.id === product.id);
 
   // Discount Logic
   const originalPrice: number = product.originalPrice || 0;
@@ -108,8 +104,6 @@ export default function ProductDetailClient({
       </div>
     );
   }
-
-  // Early validation removed to support accessories/one-size items
 
   // Check if we're in edit mode
   const originalSize: string | null = searchParams.get("size");
@@ -164,32 +158,38 @@ export default function ProductDetailClient({
   return (
     <div className="bg-white min-h-screen">
       {/* DESKTOP LAYOUT */}
-      <div className="hidden lg:grid lg:grid-cols-12 min-h-screen max-w-[1920px] mx-auto gap-8">
-        {/* Left Column: Scrollable Images */}
+      <div className="hidden lg:grid lg:grid-cols-12 min-h-screen max-w-[1920px] mx-auto gap-8 px-8 py-8">
+        {/* Left Column: Vertical Grid / Masonry */}
         <div className="col-span-8 relative">
-          <div className="flex flex-col gap-4 px-4 py-8">
-            {product.images.map((img, index) => (
-              <div
-                key={index}
-                className="relative w-full"
-              >
-                <Image
-                  src={img}
-                  alt={`${product.name} - ${index + 1}`}
-                  width={1200}
-                  height={1600}
-                  className="w-full h-auto object-cover"
-                  priority={index === 0}
-                  sizes="66vw"
-                />
-              </div>
-            ))}
+          <div className="grid grid-cols-2 gap-2">
+            {displayImages.map((img, index) => {
+              // Logic for odd number of images: make the last one span full width
+              const isLast = index === displayImages.length - 1;
+              const isOddTotal = displayImages.length % 2 !== 0;
+              const spanClass = (isLast && isOddTotal) ? "col-span-2" : "col-span-1";
+
+              return (
+                <div
+                  key={index}
+                  className={`relative w-full aspect-[3/4] ${spanClass}`}
+                >
+                  <Image
+                    src={img.url}
+                    alt={`${product.name} - ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index < 2}
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Right Column: Sticky Product Details */}
-        <div className="col-span-4 relative">
-          <div className="sticky top-0 h-screen overflow-y-auto hide-scrollbar px-8 xl:px-12 py-24 flex flex-col">
+        <div className="col-span-4 relative h-full">
+          <div className="sticky top-8 h-fit flex flex-col pl-8">
             {/* Header Info */}
             <div className="mb-8">
               <div className="flex justify-between items-start mb-2">
@@ -360,10 +360,10 @@ export default function ProductDetailClient({
             className="flex overflow-x-auto snap-x snap-mandatory w-full h-full hide-scrollbar"
             onScroll={handleScroll}
           >
-            {product.images.map((image, index) => (
+            {displayImages.map((image, index) => (
               <div key={index} className="w-full flex-shrink-0 snap-center relative h-full">
                 <Image
-                  src={image}
+                  src={image.url}
                   alt={`${product.name} - ${index + 1}`}
                   fill
                   className="object-cover"
@@ -375,8 +375,8 @@ export default function ProductDetailClient({
           </div>
           
           {/* Image Counter */}
-          <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full">
-            {currentImageIndex + 1} / {product.images.length}
+          <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full">
+            {currentImageIndex + 1} / {displayImages.length}
           </div>
         </div>
 
