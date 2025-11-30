@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { getAllProducts } from "@/lib/productService";
 import ProductCard from "@/components/ProductCard";
 import FilterDrawer from "@/components/FilterDrawer";
@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Product, ProductGender } from "@/types";
 import { PRODUCT_CATEGORIES, ProductCategory } from "@/lib/constants";
 
-export default function ProductsPage(): React.JSX.Element {
+function ProductsContent(): React.JSX.Element {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [products, setProducts]: [Product[], (products: Product[]) => void] = useState<Product[]>([]);
@@ -49,7 +49,7 @@ export default function ProductsPage(): React.JSX.Element {
   }, []);
 
   const filteredAndSortedProducts: Product[] = useMemo(() => {
-    let filtered: Product[] = products.filter((product: Product) => {
+    const filtered: Product[] = products.filter((product: Product) => {
       // 1. Gender Filter
       const matchesGender: boolean = 
         activeGender === "ALL" || 
@@ -133,7 +133,7 @@ export default function ProductsPage(): React.JSX.Element {
               </span>
 
               <div className="relative group">
-                <button className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest hover:opacity-60 transition-opacity">
+                <button className="flex items-center gap-1 text-xs px-2 py-1 font-bold uppercase tracking-widest hover:opacity-60 transition-opacity">
                   {sortBy === "newest" ? t("products.sort.newest") : sortBy === "price-low" ? t("products.sort.priceLow") : t("products.sort.priceHigh")}
                   <ChevronDown className="w-3 h-3" />
                 </button>
@@ -215,5 +215,17 @@ export default function ProductsPage(): React.JSX.Element {
         onClear={clearFilters}
       />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }
