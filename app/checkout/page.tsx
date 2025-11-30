@@ -11,8 +11,9 @@ import Image from "next/image";
 import { CheckoutFormData } from "@/types";
 import { CartItem } from "@/types";
 import { createOrder } from "@/lib/firestore"; // New import
-import { useAlert } from "@/contexts/AlertContext"; // New import
+import { useAlert } from "@/contexts/AlertContext";
 import { TURKISH_CITIES } from "@/lib/turkish-data";
+import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 
 
 export default function CheckoutPage(): React.JSX.Element | null {
@@ -152,7 +153,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
     try {
       // Calculate totals
       const subtotal: number = getTotalPrice();
-      const shippingCost: number = subtotal >= 500 ? 0 : 49.99; // Free shipping over 500 TL
+      const shippingCost: number = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
       const total: number = subtotal + shippingCost;
 
       // Prepare order data
@@ -617,12 +618,20 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>{t("cart.shipping")}</span>
-                  <span>₺10.00</span>
+                  <span>
+                    {getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? (
+                      <span className="text-green-600 font-medium">{t("products.freeShipping")}</span>
+                    ) : (
+                      `₺${SHIPPING_COST.toFixed(2)}`
+                    )}
+                  </span>
                 </div>
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-bold text-primary-800">
                     <span>{t("cart.total")}</span>
-                    <span>₺{(getTotalPrice() + 10).toFixed(2)}</span>
+                    <span>
+                      ₺{(getTotalPrice() + (getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)).toFixed(2)}
+                    </span>
                   </div>
                 </div>
                 </div>

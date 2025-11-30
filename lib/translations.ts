@@ -43,6 +43,7 @@ export const translations: Record<Language, any> = {
       search: "Ürün ara...",
       filter: "Filtrele",
       discountFilter: "İndirimli Ürünler",
+      featured: "Seçkin",
       sort: {
         name: "İsme Göre Sırala",
         newest: "YENİLER",
@@ -92,7 +93,7 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Beden Rehberi",
       productDescription: "Açıklama",
       shippingReturns: "Kargo & İade",
-      freeShippingFrom: "30€ üzeri ücretsiz kargo",
+      freeShippingFrom: "1000 TL üzeri ücretsiz kargo",
       returnPolicy: "30 gün iade hakkı",
       share: "Paylaş",
       categoryLabel: "Kategori:",
@@ -310,6 +311,7 @@ export const translations: Record<Language, any> = {
       search: "Search products...",
       filter: "Filter",
       discountFilter: "Discounted Products",
+      featured: "Featured",
       sort: {
         name: "Sort by Name",
         newest: "NEWEST",
@@ -359,7 +361,7 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Size Guide",
       productDescription: "Description",
       shippingReturns: "Shipping & Returns",
-      freeShippingFrom: "Free shipping over 30€",
+      freeShippingFrom: "Free shipping over 1000 TL",
       returnPolicy: "30 day return policy",
       share: "Share",
       categoryLabel: "Category:",

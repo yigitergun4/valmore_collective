@@ -18,6 +18,9 @@ export interface ProductCategory {
 export const clothingSizes: string[] = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 export const shoeSizes: string[] = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49"];
 
+export const SHIPPING_COST = 100;
+export const FREE_SHIPPING_THRESHOLD = 1000;
+
 export const PRODUCT_CATEGORIES: readonly ProductCategory[] = [
     // Clothing
     { value: "Tişörtler", label: "Tişörtler", type: "clothing", translationKey: "tshirts" },

@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit, doc, getDoc, updateDoc } from "firebase/firestore";
 import { Order } from "@/types/admin/orders";
 
 /**
@@ -141,4 +141,73 @@ export async function generateOrderNumber(): Promise<string> {
     const count: number = querySnapshot.size + 1;
 
     return `ORD-${dateStr}-${count.toString().padStart(3, '0')}`;
+}
+/**
+ * Fetches a single order by ID
+ * @param orderId - The ID of the order to fetch
+ * @returns The order object or null if not found
+ */
+export async function fetchOrderById(orderId: string): Promise<Order | null> {
+    try {
+        const docRef = doc(db, "orders", orderId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            return {
+                id: docSnap.id,
+                userId: data.userId || null,
+                customer: data.customer,
+                items: data.items,
+                subtotal: data.subtotal,
+                shippingCost: data.shippingCost,
+                discountTotal: data.discountTotal,
+                total: data.total,
+                currency: data.currency,
+                paymentMethod: data.paymentMethod,
+                paymentId: data.paymentId,
+                status: data.status,
+                shippingAddress: data.shippingAddress,
+                trackingNumber: data.trackingNumber,
+                carrier: data.carrier,
+                createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+                updatedAt: data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+            };
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching order:", error);
+        throw new Error("Failed to fetch order.");
+    }
+}
+
+/**
+ * Updates the status of an order
+ * @param orderId - The ID of the order to update
+ * @param status - The new status
+ * @param shippingData - Optional shipping data (carrier, trackingNumber)
+ */
+export async function updateOrderStatus(
+    orderId: string,
+    status: Order["status"],
+    shippingData?: { carrier: string; trackingNumber: string }
+): Promise<void> {
+    try {
+        const orderRef = doc(db, "orders", orderId);
+        const updateData: any = {
+            status,
+            updatedAt: serverTimestamp(),
+        };
+
+        if (shippingData) {
+            updateData.carrier = shippingData.carrier;
+            updateData.trackingNumber = shippingData.trackingNumber;
+        }
+
+        await updateDoc(orderRef, updateData);
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw new Error("Failed to update order status.");
+    }
 }

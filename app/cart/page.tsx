@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CartItem } from "@/types";
+import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 
 export default function CartPage(): React.JSX.Element {
   const {
@@ -182,14 +183,20 @@ export default function CartPage(): React.JSX.Element {
                 <div className="flex justify-between text-sm uppercase tracking-wider">
                   <span className="text-gray-600">{t("cart.shipping")}</span>
                   <span className="text-xs font-bold text-primary-600">
-                    {t("cart.shippingNote")}
+                    {getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? (
+                      <span className="text-green-600">{t("products.freeShipping")}</span>
+                    ) : (
+                      `₺${SHIPPING_COST.toFixed(2)}`
+                    )}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between text-base lg:text-lg font-bold uppercase tracking-wider mb-8">
                 <span>{t("cart.total")}</span>
-                <span>₺{getTotalPrice().toFixed(2)}</span>
+                <span>
+                  ₺{(getTotalPrice() + (getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)).toFixed(2)}
+                </span>
               </div>
 
               <button

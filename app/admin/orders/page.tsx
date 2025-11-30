@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Package, Calendar, DollarSign, User, Loader2 } from "lucide-react";
+import { Package, Calendar, User, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { Order } from "@/types/admin/orders";
 import { fetchAllOrders } from "@/lib/firestore";
 
@@ -160,9 +161,10 @@ export default function AdminOrdersPage(): React.JSX.Element {
       {/* Orders List */}
       <div className="space-y-4">
         {filteredOrders.map((order) => (
-          <div
+          <Link
+            href={`/admin/orders/${order.id}`}
             key={order.id}
-            className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+            className="block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
           >
             {/* Order Header */}
             <div className="p-6 border-b border-gray-200 bg-gray-50">
@@ -308,8 +310,10 @@ export default function AdminOrdersPage(): React.JSX.Element {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+              </div>
+
+            </Link>
+
         ))}
 
         {filteredOrders.length === 0 && (

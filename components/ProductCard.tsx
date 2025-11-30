@@ -87,14 +87,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-            {hasDiscount && (
-              <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm">
-                -{discountPercentage}%
+            {product.featured && (
+              <span className="bg-white text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm min-w-[50px] text-center flex justify-center items-center h-6">
+                {t("products.featured")}
               </span>
             )}
-            {product.featured && (
-              <span className="bg-white text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm">
-                NEW
+          </div>
+          <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
+            {hasDiscount && (
+              <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-sm max-w-[40px] text-center flex justify-center items-center h-6">
+                -{discountPercentage}%
               </span>
             )}
           </div>
