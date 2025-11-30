@@ -2,27 +2,26 @@
 
 import React, { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Product, ProductVariant, ProductImage } from "@/types";
+import { Product, ProductVariant, ProductImage, ProductGender } from "@/types";
 import { uploadProductImage } from "@/lib/firestore/products";
-import { X, Upload, Plus, Info } from "lucide-react";
+import { X, Upload, Plus, Info, Edit2, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { 
-  PRODUCT_CATEGORIES, 
-  getCategoryType, 
+  PRODUCT_CATEGORIES,
+  getCategoryType,
   getSizePlaceholder,
-  isSizeRequired 
+  isSizeRequired,
+  clothingSizes,
+  shoeSizes
 } from "@/lib/constants";
 import { CompressionOptions } from "@/types/admin";
 import { useAlert } from "@/contexts/AlertContext";
+import { ProductFormProps } from "@/types";
+import { Button } from "@/components/ui/button";
 
 type LocalImage = ProductImage & { isUploading?: boolean; file?: File };
 
-interface ProductFormProps {
-  initialData?: Product;
-  onSubmit: (data: Omit<Product, "id">) => Promise<void>;
-  isSubmitting: boolean;
-}
 
 
 export default function ProductForm({
@@ -31,7 +30,7 @@ export default function ProductForm({
   isSubmitting,
 }: ProductFormProps): React.JSX.Element {
   const router = useRouter();
-  const { showError, showSuccess } = useAlert();
+  const { showError } = useAlert();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sizeInputRef = useRef<HTMLInputElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
@@ -39,11 +38,12 @@ export default function ProductForm({
   const [formData, setFormData] = useState<Omit<Product, "id" | "createdAt">>({
     name: initialData?.name || "",
     description: initialData?.description || "",
-    price: initialData?.price || 0,
+    price: initialData?.isDiscounted ? (initialData.originalPrice || 0) : (initialData?.price || 0),
     originalPrice: initialData?.originalPrice || 0,
     isDiscounted: initialData?.isDiscounted || false,
     category: initialData?.category || "",
     brand: initialData?.brand || "",
+    gender: initialData?.gender || "Female",
     images: (initialData?.images?.map(img => typeof img === 'string' ? { url: img, color: "Genel" } : img) || []) as LocalImage[],
     sizes: initialData?.sizes || [],
     colors: initialData?.colors || [],
@@ -65,7 +65,9 @@ export default function ProductForm({
   const [variants, setVariants] = useState<ProductVariant[]>(initialData?.variants || []);
   const [newVariantColor, setNewVariantColor] = useState<string>("");
   const [newVariantSizes, setNewVariantSizes] = useState<string>(""); // Comma separated
+  const [selectedPredefinedSizes, setSelectedPredefinedSizes] = useState<string[]>([]);
   const [newVariantStock, setNewVariantStock] = useState<boolean>(true);
+  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null);
 
   const [uploading, setUploading] = useState<boolean>(false);
   // Removed selectedFiles and previewUrls as they are now integrated into formData.images
@@ -167,7 +169,7 @@ export default function ProductForm({
     setCompressionStatus("");
   };
 
-  const handleImageColorChange = (index: number, color: string) => {
+  const handleImageColorChange: (index: number, color: string) => void = (index: number, color: string) => {
     setFormData((prev) => {
       const newImages = [...prev.images];
       newImages[index] = { ...newImages[index], color };
@@ -287,6 +289,7 @@ export default function ProductForm({
       const submitData = {
         ...formData,
         price: finalPrice,
+        originalPrice: hasDiscount ? formData.price : undefined,
         isDiscounted: hasDiscount,
         images: cleanImages,
         colors: finalColors,
@@ -366,8 +369,8 @@ export default function ProductForm({
                 name="basePrice" // Temporary field for form handling
                 required
                 min="0"
-                step="0.01"
-                value={formData.price} // This represents the Base Price in the form UI
+                step="10"
+                value={formData.price === 0 ? "" : formData.price} // This represents the Base Price in the form UI
                 onChange={(e) => {
                   const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                   setFormData(prev => ({ ...prev, price: val }));
@@ -406,7 +409,7 @@ export default function ProductForm({
                   required={hasDiscount}
                   min="0"
                   step="0.01"
-                  value={discountedPrice}
+                  value={discountedPrice === 0 ? "" : discountedPrice}
                   onChange={(e) => {
                     const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                     setDiscountedPrice(val);
@@ -422,7 +425,7 @@ export default function ProductForm({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Kategori
@@ -454,6 +457,22 @@ export default function ProductForm({
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cinsiyet
+              </label>
+              <select
+                name="gender"
+                required
+                value={formData.gender}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500"
+              >
+                <option value="Male">Erkek</option>
+                <option value="Female">Kadın</option>
+                <option value="Unisex">Unisex</option>
+              </select>
             </div>
           </div>
         </div>
@@ -574,8 +593,8 @@ export default function ProductForm({
 
             {formData.hasVariants && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 items-end">
+                  <div className="col-span-1 md:col-span-3">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Renk</label>
                     <input
                       type="text"
@@ -585,17 +604,57 @@ export default function ProductForm({
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
                     />
                   </div>
-                  <div className="col-span-5">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Bedenler (Virgülle ayırın)</label>
-                    <input
-                      type="text"
-                      placeholder="Örn: S, M, L"
-                      value={newVariantSizes}
-                      onChange={(e) => setNewVariantSizes(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
-                    />
+                  <div className="col-span-1 md:col-span-4">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Bedenler {getCategoryType(formData.category) === "accessories" && <span className="text-gray-400 font-normal">(Opsiyonel)</span>}
+                    </label>
+                    
+                    {(() => {
+                      const categoryType: string = getCategoryType(formData.category);
+                      const predefinedSizes: string[] = categoryType === 'shoes' ? shoeSizes : categoryType === 'clothing' ? clothingSizes : [];
+                      
+                      if (predefinedSizes.length > 0) {
+                        return (
+                          <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-md bg-white">
+                            {predefinedSizes.map((size) => (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPredefinedSizes(prev => 
+                                    prev.includes(size) 
+                                      ? prev.filter(s => s !== size)
+                                      : [...prev, size]
+                                  );
+                                }}
+                                className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                  selectedPredefinedSizes.includes(size)
+                                    ? "bg-primary-600 text-white border-primary-600"
+                                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                                }`}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                            {selectedPredefinedSizes.length === 0 && (
+                              <span className="text-xs text-gray-400 italic">Beden seçiniz</span>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <input
+                          type="text"
+                          placeholder={getSizePlaceholder(formData.category)}
+                          value={newVariantSizes}
+                          onChange={(e) => setNewVariantSizes(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                        />
+                      );
+                    })()}
                   </div>
-                  <div className="col-span-2 flex items-center justify-center pb-2">
+                  <div className="col-span-1 md:col-span-2 flex items-center md:justify-center pb-2">
                      <label className="flex items-center space-x-2 cursor-pointer">
                         <input 
                           type="checkbox" 
@@ -606,21 +665,79 @@ export default function ProductForm({
                         <span className="text-xs text-gray-700">Stokta</span>
                      </label>
                   </div>
-                  <div className="col-span-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!newVariantColor) return;
-                        const sizes = newVariantSizes.split(",").map(s => s.trim()).filter(Boolean);
-                        setVariants([...variants, { color: newVariantColor, sizes, inStock: newVariantStock }]);
-                        setNewVariantColor("");
-                        setNewVariantSizes("");
-                        setNewVariantStock(true);
-                      }}
-                      className="w-full py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 flex items-center justify-center"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+                  <div className="col-span-1 md:col-span-3 flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          if (!newVariantColor) return;
+                          
+                          let sizes: string[] = [];
+                          const categoryType: string = getCategoryType(formData.category);
+                          const hasPredefined: boolean = categoryType === 'shoes' || categoryType === 'clothing';
+
+                          if (hasPredefined) {
+                            if (selectedPredefinedSizes.length === 0) {
+                              showError("Lütfen en az bir beden seçiniz");
+                              return;
+                            }
+                            sizes = [...selectedPredefinedSizes];
+                          } else {
+                            sizes = newVariantSizes.split(",").map(s => s.trim()).filter(Boolean);
+                          }
+
+                          const newVariant = { color: newVariantColor, sizes, inStock: newVariantStock };
+
+                          if (editingVariantIndex !== null) {
+                            // Update existing variant
+                            setVariants(prev => prev.map((v, i) => i === editingVariantIndex ? newVariant : v));
+                            setEditingVariantIndex(null);
+                          } else {
+                            // Add new variant
+                            setVariants([...variants, newVariant]);
+                          }
+
+                          // Reset form
+                          setNewVariantColor("");
+                          setNewVariantSizes("");
+                          setSelectedPredefinedSizes([]);
+                          setNewVariantStock(true);
+                        }}
+                        className={`w-full gap-2 ${
+                          editingVariantIndex !== null 
+                            ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                            : ""
+                        }`}
+                      >
+                        {editingVariantIndex !== null ? (
+                          <>
+                            <Edit2 className="w-4 h-4" />
+                            <span>Güncelle</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" />
+                            <span>Ekle</span>
+                          </>
+                        )}
+                      </Button>
+                      
+                      {editingVariantIndex !== null && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => {
+                            setEditingVariantIndex(null);
+                            setNewVariantColor("");
+                            setNewVariantSizes("");
+                            setSelectedPredefinedSizes([]);
+                            setNewVariantStock(true);
+                          }}
+                          className="w-full gap-2"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span>İptal</span>
+                        </Button>
+                      )}
                   </div>
                 </div>
 
@@ -643,7 +760,36 @@ export default function ProductForm({
                         </span>
                         <button
                           type="button"
-                          onClick={() => setVariants(variants.filter((_, i) => i !== index))}
+                          onClick={() => {
+                            setEditingVariantIndex(index);
+                            setNewVariantColor(variant.color);
+                            setNewVariantStock(variant.inStock);
+                            
+                            const categoryType = getCategoryType(formData.category);
+                            if (categoryType === 'shoes' || categoryType === 'clothing') {
+                              setSelectedPredefinedSizes(variant.sizes);
+                              setNewVariantSizes("");
+                            } else {
+                              setNewVariantSizes(variant.sizes.join(", "));
+                              setSelectedPredefinedSizes([]);
+                            }
+                          }}
+                          className="text-gray-400 hover:text-blue-500"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editingVariantIndex === index) {
+                              setEditingVariantIndex(null);
+                              setNewVariantColor("");
+                              setNewVariantSizes("");
+                              setSelectedPredefinedSizes([]);
+                              setNewVariantStock(true);
+                            }
+                            setVariants(variants.filter((_, i) => i !== index));
+                          }}
                           className="text-gray-400 hover:text-red-500"
                         >
                           <X className="w-4 h-4" />

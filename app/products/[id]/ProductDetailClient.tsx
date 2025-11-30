@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import {useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Product, ProductImage, ProductVariant, ProductDetailClientProps } from "@/types";
+import {ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,21 +16,18 @@ import {
   ChevronRight,
   Truck,
   ShieldCheck,
-  Ruler,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function ProductDetailClient({ 
   product, 
-  allProducts, 
 }: ProductDetailClientProps): React.JSX.Element {
-  const router: ReturnType<typeof useRouter> = useRouter();
+  const router = useRouter();
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
   const { showError } = useAlert();
-  const { user } = useAuth();
 
-  const searchParams: ReturnType<typeof useSearchParams> = useSearchParams();
+  const searchParams = useSearchParams();
   const [selectedSize, setSelectedSize] = useState<string>(
     searchParams.get("size") || ""
   );
@@ -38,7 +35,7 @@ export default function ProductDetailClient({
     searchParams.get("color") || ""
   );
   
-  const isFavorited: boolean = favorites.includes(product?.id || "");
+  const isFavorited:boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
@@ -49,41 +46,47 @@ export default function ProductDetailClient({
     setCurrentImageIndex(0);
   }, [selectedSize, selectedColor]);
 
-  // Filter images based on selected color
-  const filteredImages: ProductImage[] = product.images.filter(img => 
-    img.color === "Genel" || (selectedColor && img.color === selectedColor)
-  );
-
-  const displayImages: ProductImage[] = filteredImages.length > 0 ? filteredImages : product.images;
+  // Filter images based on selected color using useMemo
+  const displayImages:ProductImage[] = useMemo(() => {
+    const filtered = product.images.filter(img => 
+      img.color === "Genel" || (selectedColor && img.color === selectedColor)
+    );
+    return filtered.length > 0 ? filtered : product.images;
+  }, [product.images, selectedColor]);
 
   // Variant Logic
-  const hasVariants: boolean = product.hasVariants;
-  const variants: ProductVariant[] = product.variants || [];
+  const hasVariants:boolean = product.hasVariants;
+  const variants:ProductVariant[] = product.variants || [];
 
   // Derived state for variants
-  const availableSizes: string[] = hasVariants && selectedColor
-    ? variants.find(v => v.color === selectedColor)?.sizes || []
-    : product.sizes;
+  const availableSizes:string[] = useMemo(() => {
+    if (hasVariants && selectedColor) {
+      return variants.find(v => v.color === selectedColor)?.sizes || [];
+    }
+    return product.sizes;
+  }, [hasVariants, selectedColor, variants, product.sizes]);
 
-  const isVariantInStock: boolean = hasVariants && selectedColor
-    ? variants.find(v => v.color === selectedColor)?.inStock ?? false
-    : product.inStock;
+  const isVariantInStock:boolean = useMemo(() => {
+    if (hasVariants && selectedColor) {
+      return variants.find(v => v.color === selectedColor)?.inStock ?? false;
+    }
+    return product.inStock;
+  }, [hasVariants, selectedColor, variants, product.inStock]);
 
   // Discount Logic
-  const originalPrice: number = product.originalPrice || 0;
-  const finalPrice: number = product.price;
-  const hasDiscount: boolean = originalPrice > finalPrice;
-  const discountPercentage: number = hasDiscount 
+  const originalPrice:number = product.originalPrice || 0;
+  const finalPrice:number = product.price;
+  const hasDiscount:boolean = originalPrice > finalPrice;
+  const discountPercentage:number = hasDiscount 
     ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
     : 0;
-    
 
   // Mobile Swipe Logic (Horizontal)
-  const handleScroll: (e: React.UIEvent<HTMLDivElement>) => void = (e: React.UIEvent<HTMLDivElement>) => {
-    const container: HTMLDivElement = e.currentTarget;
-    const scrollLeft: number = container.scrollLeft;
-    const width: number = container.offsetWidth;
-    const index: number = Math.round(scrollLeft / width);
+  const handleScroll:React.UIEventHandler<HTMLDivElement>  = (e: React.UIEvent<HTMLDivElement>) => {
+    const container:HTMLDivElement = e.currentTarget;
+    const scrollLeft:number = container.scrollLeft;
+    const width:number = container.offsetWidth;
+    const index:number = Math.round(scrollLeft / width);
     setCurrentImageIndex(index);
   };
 
@@ -106,11 +109,11 @@ export default function ProductDetailClient({
   }
 
   // Check if we're in edit mode
-  const originalSize: string | null = searchParams.get("size");
-  const originalColor: string | null = searchParams.get("color");
-  const isEditMode: boolean = !!(originalSize && originalColor);
+  const originalSize = searchParams.get("size");
+  const originalColor = searchParams.get("color");
+  const isEditMode = !!(originalSize && originalColor);
 
-  const handleAddToCart: () => void = async () => {
+  const handleAddToCart:React.MouseEventHandler<HTMLButtonElement> = async () => {
     if (!selectedSize && product.sizes.length > 0) {
       showError("Lütfen bir beden seçiniz.");
       return;
@@ -118,7 +121,7 @@ export default function ProductDetailClient({
     
     // Variant Stock Check
     if (hasVariants && selectedColor) {
-      const variant: ProductVariant | undefined = variants.find(v => v.color === selectedColor);
+      const variant = variants.find(v => v.color === selectedColor);
       if (variant && !variant.inStock) {
         showError("Seçilen varyasyon stokta yok.");
         return;
@@ -126,8 +129,8 @@ export default function ProductDetailClient({
     }
 
     // Determine effective values (use "Standard" if options are empty)
-    const effectiveSize: string = product.sizes?.length > 0 ? selectedSize : "Standard";
-    const effectiveColor: string = product.colors?.length > 0 ? selectedColor : "Standard";
+    const effectiveSize:string = product.sizes?.length > 0 ? selectedSize : "Standard";
+    const effectiveColor:string = product.colors?.length > 0 ? selectedColor : "Standard";
 
     // Validate only if options exist
     if (product.sizes?.length > 0 && !selectedSize) return;
@@ -145,11 +148,11 @@ export default function ProductDetailClient({
     setIsDrawerOpen(false);
   };
 
-  const isSizeValid: boolean = product.sizes?.length > 0 ? !!selectedSize : true;
-  const isColorValid: boolean = product.colors?.length > 0 ? !!selectedColor : true;
-  const canAddToCart: boolean = product.inStock && isSizeValid && isColorValid && (!hasVariants || (hasVariants && isVariantInStock));
+  const isSizeValid:boolean = product.sizes?.length > 0 ? !!selectedSize : true;
+  const isColorValid:boolean = product.colors?.length > 0 ? !!selectedColor : true;
+  const canAddToCart:boolean = product.inStock && isSizeValid && isColorValid && (!hasVariants || (hasVariants && isVariantInStock));
 
-  const handleToggleFavorite: () => void = () => {
+  const handleToggleFavorite:React.MouseEventHandler<HTMLButtonElement> = () => {
     if (product) {
       toggleFavorite(product.id);
     }
@@ -158,7 +161,7 @@ export default function ProductDetailClient({
   return (
     <div className="bg-white min-h-screen">
       {/* DESKTOP LAYOUT */}
-      <div className="hidden lg:grid lg:grid-cols-12 min-h-screen max-w-[1920px] mx-auto gap-8 px-8 py-8">
+      <div className="hidden lg:grid lg:grid-cols-12 min-h-screen max-w-[1920px] mx-auto gap-8 px-8 pt-28 pb-8">
         {/* Left Column: Vertical Grid / Masonry */}
         <div className="col-span-8 relative">
           <div className="grid grid-cols-2 gap-2">
@@ -179,7 +182,7 @@ export default function ProductDetailClient({
                     fill
                     className="object-cover"
                     priority={index < 2}
-                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    sizes="(min-width: 1024px) 25vw, 100vw"
                   />
                 </div>
               );
@@ -189,7 +192,7 @@ export default function ProductDetailClient({
 
         {/* Right Column: Sticky Product Details */}
         <div className="col-span-4 relative h-full">
-          <div className="sticky top-8 h-fit flex flex-col pl-8">
+          <div className="sticky top-24 h-fit flex flex-col pl-8">
             {/* Header Info */}
             <div className="mb-8">
               <div className="flex justify-between items-start mb-2">
@@ -219,9 +222,9 @@ export default function ProductDetailClient({
                     <span className="text-2xl font-bold text-black">
                       {finalPrice.toFixed(2)} {t("products.currency")}
                     </span>
-                    <span className="text-xs font-bold text-white bg-red-600 px-2 py-1 uppercase">
-                      -{discountPercentage}%
-                    </span>
+<span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
+  -%{discountPercentage}
+</span>
                   </>
                 ) : (
                   <span className="text-2xl font-bold text-black">

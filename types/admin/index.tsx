@@ -11,3 +11,8 @@ export interface CompressionOptions {
   useWebWorker: boolean;  
   fileType: string;
 }
+
+export interface DeleteProductButtonProps {
+  id: string;
+  onDelete: (id: string) => Promise<void>;
+}

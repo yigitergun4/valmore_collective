@@ -10,11 +10,33 @@ export interface ProductImage {
   color: string; // "Genel" veya renk adı ("Kırmızı")
 }
 
+export interface FilterDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  selectedSizes: string[];
+  setSelectedSizes: (sizes: string[]) => void;
+  priceRange: [number, number];
+  setPriceRange: (range: [number, number]) => void;
+  onApply: () => void;
+  onClear: () => void;
+}
+
 export interface ProductDetailClientProps {
   product: Product;
   allProducts: Product[];
   relatedProducts: Product[];
 }
+export type ProductGender = 'Male' | 'Female' | 'Unisex';
+
+export interface ProductFormProps {
+  initialData?: Product;
+  onSubmit: (data: Omit<Product, "id">) => Promise<void>;
+  isSubmitting: boolean;
+}
+
+
 export interface Product {
   id: string;
   name: string;
@@ -25,6 +47,7 @@ export interface Product {
   images: ProductImage[];
   category: string;
   brand: string;
+  gender: ProductGender;
   sizes: string[];
   colors: string[];
   inStock: boolean;

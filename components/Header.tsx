@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname} from "next/navigation";
 import { ShoppingBag, Menu, X, User, LogOut, Search, Heart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useShop } from "@/contexts/ShopContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,6 +22,9 @@ export default function Header() {
   const router= useRouter();
 
   const pathname: string = usePathname();
+
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkAdmin: () => void = async () => {
@@ -45,6 +48,23 @@ export default function Header() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Handle outside clicks
+  useEffect(() => {
+    const handleClickOutside: (event: MouseEvent) => void = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // Hide header on admin pages
@@ -83,12 +103,32 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-10 absolute left-1/2 -translate-x-1/2">
-              <Link
-                href="/products"
-                className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600"
-              >
-                {t("nav.products")}
-              </Link>
+              <div className="relative group">
+                <Link
+                  href="/products"
+                  className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600 py-4"
+                >
+                  {t("nav.products")}
+                </Link>
+                
+                {/* Dropdown Menu */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                  <div className="bg-white border border-gray-100 shadow-lg py-2 min-w-[160px] flex flex-col items-center">
+                    <Link
+                      href="/products?gender=Female"
+                      className="w-full text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest hover:bg-gray-50 hover:text-primary-600 transition-colors"
+                    >
+                      {t("products.genders.female")}
+                    </Link>
+                    <Link
+                      href="/products?gender=Male"
+                      className="w-full text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest hover:bg-gray-50 hover:text-primary-600 transition-colors"
+                    >
+                      {t("products.genders.male")}
+                    </Link>
+                  </div>
+                </div>
+              </div>
               <Link
                 href="/about"
                 className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600"
@@ -107,7 +147,7 @@ export default function Header() {
             <div className="flex items-center space-x-4 lg:space-x-6">
               
               {/* Language Selector - Desktop Only */}
-              <div className="relative hidden lg:block">
+              <div className="relative hidden lg:block" ref={langMenuRef}>
                 <button
                   onClick={() => setIsLangOpen(!isLangOpen)}
                   className="text-[11px] font-bold uppercase tracking-wider hover:opacity-60 transition-opacity text-primary-600 "
@@ -148,7 +188,7 @@ export default function Header() {
               </button>
 
               {/* User Menu */}
-              <div className="relative">
+              <div className="relative" ref={profileMenuRef}>
                 {user ? (
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}

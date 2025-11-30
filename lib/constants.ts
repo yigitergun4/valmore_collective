@@ -11,26 +11,31 @@ export interface ProductCategory {
     value: string;
     label: string;
     type: CategoryType;
+    translationKey: string;
 }
+
+// filterdrawer constants
+export const clothingSizes: string[] = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+export const shoeSizes: string[] = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49"];
 
 export const PRODUCT_CATEGORIES: readonly ProductCategory[] = [
     // Clothing
-    { value: "Tişörtler", label: "Tişörtler", type: "clothing" },
-    { value: "Gömlekler", label: "Gömlekler", type: "clothing" },
-    { value: "Pantolonlar", label: "Pantolonlar", type: "clothing" },
-    { value: "Dış Giyim", label: "Dış Giyim", type: "clothing" },
-    { value: "Üst Giyim", label: "Üst Giyim", type: "clothing" },
-    { value: "Sweatshirt", label: "Sweatshirt", type: "clothing" },
-    { value: "Elbise", label: "Elbise", type: "clothing" },
-    { value: "Şort", label: "Şort", type: "clothing" },
+    { value: "Tişörtler", label: "Tişörtler", type: "clothing", translationKey: "tshirts" },
+    { value: "Gömlekler", label: "Gömlekler", type: "clothing", translationKey: "shirts" },
+    { value: "Pantolonlar", label: "Pantolonlar", type: "clothing", translationKey: "pants" },
+    { value: "Dış Giyim", label: "Dış Giyim", type: "clothing", translationKey: "outerwear" },
+    { value: "Üst Giyim", label: "Üst Giyim", type: "clothing", translationKey: "tops" },
+    { value: "Sweatshirt", label: "Sweatshirt", type: "clothing", translationKey: "sweatshirts" },
+    { value: "Elbise", label: "Elbise", type: "clothing", translationKey: "dresses" },
+    { value: "Şort", label: "Şort", type: "clothing", translationKey: "shorts" },
 
     // Shoes
-    { value: "Ayakkabı", label: "Ayakkabı", type: "shoes" },
+    { value: "Ayakkabı", label: "Ayakkabı", type: "shoes", translationKey: "shoes" },
 
     // Accessories
-    { value: "Aksesuar", label: "Aksesuar", type: "accessories" },
-    { value: "Çanta", label: "Çanta", type: "accessories" },
-    { value: "Çorap", label: "Çorap", type: "accessories" },
+    { value: "Aksesuar", label: "Aksesuar", type: "accessories", translationKey: "accessories" },
+    { value: "Çanta", label: "Çanta", type: "accessories", translationKey: "bags" },
+    { value: "Çorap", label: "Çorap", type: "accessories", translationKey: "socks" },
 ] as const;
 
 /**
