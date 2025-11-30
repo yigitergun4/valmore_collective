@@ -147,10 +147,7 @@ export const translations: Record<Language, any> = {
       title: "Ödeme",
       backToCart: "Sepete Dön",
       guestMessageBefore: "",
-      guestMessageAfter:
-        " ve bilgilerinizin otomatik doldurulmasını sağla veya misafir olarak devam et",
-      loggedInMessage:
-        "olarak giriş yaptınız. Bilgileriniz otomatik dolduruldu, isterseniz değiştirebilirsiniz",
+      loggedInMessage: "olarak giriş yaptınız.",
       shipping: "Teslimat Bilgileri",
       payment: "Ödeme Bilgileri",
       orderSummary: "Sipariş Özeti",
@@ -417,10 +414,7 @@ export const translations: Record<Language, any> = {
       title: "Checkout",
       backToCart: "Back to Cart",
       guestMessageBefore: "",
-      guestMessageAfter:
-        " to have your information automatically filled in. Or continue as a guest",
-      loggedInMessage:
-        "logged in. Your information has been automatically filled in, you can change it if you wish",
+      loggedInMessage: "logged in.",
       shipping: "Shipping Information",
       payment: "Payment Information",
       orderSummary: "Order Summary",

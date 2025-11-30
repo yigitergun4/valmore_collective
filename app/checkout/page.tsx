@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { CheckoutFormData } from "@/types";
 import { CartItem } from "@/types";
 import { createOrder } from "@/lib/firestore"; // New import
@@ -231,7 +232,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-15 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/cart"
@@ -245,28 +246,6 @@ export default function CheckoutPage(): React.JSX.Element | null {
           <h1 className="text-4xl font-serif font-bold text-primary-800 mb-4">
             {t("checkout.title")}
           </h1>
-          {!user && (
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                {t("checkout.guestMessageBefore")}
-                <Link
-                  href="/login"
-                  className="text-primary-600 hover:text-primary-700 font-medium underline"
-                >
-                  {t("nav.login")}
-                </Link>
-                {t("checkout.guestMessageAfter")}
-              </p>
-            </div>
-          )}
-          {user && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-green-700">{user.name}</span>{" "}
-                {t("checkout.loggedInMessage")}
-              </p>
-            </div>
-          )}
         </div>
 
         <form
@@ -456,7 +435,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                     name="zipCode"
                     value={formData.zipCode}
                     onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        const value: string = e.target.value.replace(/[^0-9]/g, '');
                         setFormData(prev => ({ ...prev, zipCode: value }));
                     }}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
@@ -585,6 +564,51 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 {t("checkout.orderSummary")}
               </h2>
               <div className="space-y-2 mb-6">
+                {/* Items List */}
+                <div className="space-y-4 mb-6 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                  {items.map((item, index) => (
+                    <div key={`${item.productId}-${index}`} className="flex gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <div className="relative w-16 h-20 flex-shrink-0 rounded-md overflow-hidden border border-gray-200">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute bottom-0 right-0 bg-black text-white text-[10px] px-1.5 py-0.5 rounded-tl-md font-medium">
+                          x{item.quantity}
+                        </div>
+                      </div>
+                      <div className="flex-1 flex flex-col justify-between py-0.5">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-1">
+                            {item.name}
+                          </h4>
+                          <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                            {item.selectedColor && (
+                              <span className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                {t("products.color")}: {item.selectedColor}
+                              </span>
+                            )}
+                            {item.selectedSize && (
+                              <span className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                {t("products.size")}: {item.selectedSize}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-end flex-col items-end">
+                          <span className="text-[10px] text-gray-400 mb-0.5">{t("products.price")}</span>
+                          <p className="text-sm font-semibold text-primary-700">
+                            ₺{(item.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-gray-600">
                   <span>
                     {t("cart.items")} ({getTotalItems})
@@ -600,6 +624,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                     <span>{t("cart.total")}</span>
                     <span>₺{(getTotalPrice() + 10).toFixed(2)}</span>
                   </div>
+                </div>
                 </div>
               </div>
 
