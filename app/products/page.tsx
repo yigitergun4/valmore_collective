@@ -23,6 +23,7 @@ export default function ProductsPage(): React.JSX.Element {
   const [selectedCategory, setSelectedCategory]: [string, (selectedCategory: string) => void] = useState<string>("all");
   const [selectedSizes, setSelectedSizes]: [string[], (selectedSizes: string[]) => void] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [showDiscountedOnly, setShowDiscountedOnly] = useState<boolean>(false);
   const [sortBy, setSortBy]: ["newest" | "price-low" | "price-high", (sortBy: "newest" | "price-low" | "price-high") => void] = useState<"newest" | "price-low" | "price-high">("newest");
   
   // Handle URL params
@@ -77,7 +78,10 @@ export default function ProductsPage(): React.JSX.Element {
       const price = product.price;
       const matchesPrice: boolean = price >= priceRange[0] && price <= priceRange[1];
 
-      return matchesGender && matchesSearch && matchesCategory && matchesSize && matchesPrice;
+      // 6. Discount Filter
+      const matchesDiscount: boolean = !showDiscountedOnly || product.isDiscounted;
+
+      return matchesGender && matchesSearch && matchesCategory && matchesSize && matchesPrice && matchesDiscount;
     });
 
     // Sorting
@@ -95,12 +99,13 @@ export default function ProductsPage(): React.JSX.Element {
     });
 
     return filtered;
-  }, [products, activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, sortBy]);
+  }, [products, activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
 
   const clearFilters: () => void = () => {
     setSelectedCategory("all");
     setSelectedSizes([]);
     setPriceRange([0, 10000]);
+    setShowDiscountedOnly(false);
     setSearchQuery("");
   };
 
@@ -204,6 +209,8 @@ export default function ProductsPage(): React.JSX.Element {
         setSelectedSizes={setSelectedSizes}
         priceRange={priceRange}
         setPriceRange={setPriceRange}
+        showDiscountedOnly={showDiscountedOnly}
+        setShowDiscountedOnly={setShowDiscountedOnly}
         onApply={() => setIsFilterOpen(false)}
         onClear={clearFilters}
       />

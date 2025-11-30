@@ -7,7 +7,6 @@ import {ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   ChevronLeft,
   Heart,
@@ -17,6 +16,7 @@ import {
   Truck,
   ShieldCheck,
 } from "lucide-react";
+import OptionSelector from "@/components/OptionSelector";
 import Link from "next/link";
 
 export default function ProductDetailClient({ 
@@ -222,9 +222,9 @@ export default function ProductDetailClient({
                     <span className="text-2xl font-bold text-black">
                       {finalPrice.toFixed(2)} {t("products.currency")}
                     </span>
-<span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
-  -%{discountPercentage}
-</span>
+                  <span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
+                    -{discountPercentage}%
+                  </span>
                   </>
                 ) : (
                   <span className="text-2xl font-bold text-black">
@@ -246,52 +246,27 @@ export default function ProductDetailClient({
             {/* Colors */}
             {product.colors.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Renk</h3>
-                <div className="flex flex-wrap gap-3">
-                  {product.colors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => {
-                        setSelectedColor(color);
-                        if (hasVariants) {
-                          const variant = variants.find(v => v.color === color);
-                          if (variant && selectedSize && !variant.sizes.includes(selectedSize)) {
-                            setSelectedSize("");
-                          }
-                        }
-                      }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedColor === color
-                          ? "bg-primary-600 text-white shadow-lg scale-105"
-                          : "bg-white text-gray-900 border border-gray-200 hover:border-primary-600"
-                      }`}
-                    >
-                      {color}
-                    </button>
-                  ))}
-                </div>
+                <OptionSelector
+                  label="Renk"
+                  options={product.colors}
+                  selectedOption={selectedColor}
+                  onSelect={(color) => {
+                    setSelectedColor(color);
+                    setSelectedSize(""); // Reset size when color changes
+                  }}
+                />
               </div>
             )}
 
             {/* Sizes - Only show if color is selected (if colors exist) */}
             {availableSizes.length > 0 && (!product.colors.length || selectedColor) && (
               <div className="mb-8">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Beden</h3>
-                <div className="grid grid-cols-4 gap-3">
-                  {availableSizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        selectedSize === size
-                          ? "bg-primary-600 text-white shadow-md transform scale-[1.02]"
-                          : "bg-white text-gray-900 border border-gray-200 hover:border-primary-600"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
+                <OptionSelector
+                  label="Beden"
+                  options={availableSizes.sort((a, b) => a.localeCompare(b))}
+                  selectedOption={selectedSize}
+                  onSelect={setSelectedSize}
+                />
               </div>
             )}
 
@@ -299,12 +274,22 @@ export default function ProductDetailClient({
             <div className="mt-auto space-y-4">
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock || (hasVariants && !!selectedColor && !isVariantInStock)}
-                className="w-full bg-primary-600 text-white py-4 rounded-full font-bold text-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!canAddToCart}
+                className={`w-full py-4 rounded-full font-bold text-lg transition-all ${
+                  canAddToCart
+                    ? "bg-primary-600 text-white hover:bg-primary-700"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                }`}
               >
-                {product.inStock 
-                  ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : t("products.addToCart"))
-                  : "Tükendi"}
+                {!isSizeValid || !isColorValid
+                  ? (!isSizeValid && !isColorValid
+                      ? "Lütfen Renk ve Beden Seçin"
+                      : !isSizeValid
+                      ? "Lütfen Beden Seçin"
+                      : "Lütfen Renk Seçin")
+                  : (product.inStock 
+                      ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : t("products.addToCart"))
+                      : "Tükendi")}
               </button>
 
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
@@ -459,64 +444,29 @@ export default function ProductDetailClient({
             </div>
 
               {/* Color Selection */}
-              {product.colors && product.colors.length > 0 && (
+              {product.colors.length > 0 && (
                 <div>
-                  <p className="text-xs font-bold uppercase text-gray-500 mb-3">
-                    {t("products.color")}
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    {product.colors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => {
-                        setSelectedColor(color);
-                        // Reset size if the new color doesn't have the selected size
-                        if (hasVariants) {
-                          const variant = variants.find(v => v.color === color);
-                          if (variant && selectedSize && !variant.sizes.includes(selectedSize)) {
-                            setSelectedSize("");
-                          }
-                        }
-                      }}
-                      className={`h-8 px-4 rounded-full border text-sm transition-all ${
-                        selectedColor === color
-                          ? "border-primary-600 bg-primary-600 text-white"
-                          : "border-gray-300 hover:border-primary-600"
-                      }`}
-                    >
-                      {color}
-                    </button>
-                  ))}
-                  </div>
+                  <OptionSelector
+                    label={t("products.color")}
+                    options={product.colors}
+                    selectedOption={selectedColor}
+                    onSelect={(color) => {
+                      setSelectedColor(color);
+                      setSelectedSize(""); // Reset size when color changes
+                    }}
+                  />
                 </div>
               )}
 
               {/* Size Selection */}
               {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
                 <div>
-                  <div className="flex justify-between mb-3">
-                    <p className="text-xs font-bold uppercase text-gray-500">
-                      {t("products.size")}
-                    </p>
-                    <button className="text-xs font-bold uppercase underline hover:text-primary-600 transition-colors text-gray-700">
-                      {t("products.sizeGuide")}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {availableSizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`h-10 w-full rounded-md border text-sm font-medium transition-all ${
-                        selectedSize === size
-                          ? "border-primary-600 bg-primary-600 text-white"
-                          : "border-gray-200 hover:border-primary-600"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                  </div>
+                  <OptionSelector
+                    label={t("products.size")}
+                    options={availableSizes}
+                    selectedOption={selectedSize}
+                    onSelect={setSelectedSize}
+                  />
                 </div>
               )}
 
@@ -530,13 +480,19 @@ export default function ProductDetailClient({
                     : "bg-gray-200 text-gray-400"
                 }`}
               >
-                {product.inStock
-                  ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : (isUpdated
-                    ? t("products.cartUpdated")
-                    : isEditMode
-                      ? t("products.updateCart")
-                      : t("products.addToCart")))
-                  : t("products.outOfStock")}
+                {!isSizeValid || !isColorValid
+                  ? (!isSizeValid && !isColorValid
+                      ? "Lütfen Renk ve Beden Seçin"
+                      : !isSizeValid
+                      ? "Lütfen Beden Seçin"
+                      : "Lütfen Renk Seçin")
+                  : (product.inStock
+                      ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : (isUpdated
+                        ? t("products.cartUpdated")
+                        : isEditMode
+                          ? t("products.updateCart")
+                          : t("products.addToCart")))
+                      : t("products.outOfStock"))}
               </button>
 
               {/* Details Accordion */}

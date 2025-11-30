@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { PRODUCT_CATEGORIES, getCategoryType } from "@/lib/constants";
 import { clothingSizes, shoeSizes } from "@/lib/constants";
 import { FilterDrawerProps } from "@/types";
+import DiscountFilter from "./DiscountFilter";
 
 export default function FilterDrawer({
   isOpen,
@@ -16,15 +17,17 @@ export default function FilterDrawer({
   setSelectedSizes,
   priceRange,
   setPriceRange,
+  showDiscountedOnly,
+  setShowDiscountedOnly,
   onApply,
   onClear,
 }: FilterDrawerProps) {
   const { t } = useLanguage();
-  const [activeSection, setActiveSection] = useState<string | null>("category");
-  const [minPriceInput, setMinPriceInput] = useState<string>(priceRange[0].toString());
-  const [maxPriceInput, setMaxPriceInput] = useState<string>(priceRange[1].toString());
+  const [activeSection, setActiveSection]: [string | null, (activeSection: string | null) => void] = useState<string | null>("category");
+  const [minPriceInput, setMinPriceInput]: [string, (minPriceInput: string) => void] = useState<string>(priceRange[0].toString());
+  const [maxPriceInput, setMaxPriceInput]: [string, (maxPriceInput: string) => void] = useState<string>(priceRange[1].toString());
 
-  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMinPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (val == "") {
       setMinPriceInput("0");
@@ -37,7 +40,7 @@ export default function FilterDrawer({
     }
   };
 
-  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMaxPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (val == "") {
       setMaxPriceInput("10000");
@@ -129,7 +132,7 @@ export default function FilterDrawer({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 pb-24">
+        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-6 pb-24">
           {/* Category Section */}
           <div className="border-b border-gray-100 pb-6">
             <button
@@ -217,7 +220,7 @@ export default function FilterDrawer({
           )}
 
           {/* Price Range Section */}
-          <div className="pb-6">
+          <div className="border-b border-gray-100 pb-6">
             <button
               onClick={() => toggleSection("price")}
               className="flex items-center justify-between w-full text-left mb-4"
@@ -250,7 +253,6 @@ export default function FilterDrawer({
                       right: `${100 - (priceRange[1] / 10000) * 100}%`
                     }}
                   />
-
                   {/* Min Slider */}
                   <input
                     type="range"
@@ -310,6 +312,11 @@ export default function FilterDrawer({
               </div>
             </div>
           </div>
+          {/* Discount Filter Section */}
+          <DiscountFilter
+            showDiscountedOnly={showDiscountedOnly}
+            setShowDiscountedOnly={setShowDiscountedOnly}
+          />
         </div>
 
         {/* Sticky Footer */}

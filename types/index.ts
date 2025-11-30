@@ -19,8 +19,15 @@ export interface FilterDrawerProps {
   setSelectedSizes: (sizes: string[]) => void;
   priceRange: [number, number];
   setPriceRange: (range: [number, number]) => void;
+  showDiscountedOnly: boolean;
+  setShowDiscountedOnly: (show: boolean) => void;
   onApply: () => void;
   onClear: () => void;
+}
+
+export interface DiscountFilterProps {
+  showDiscountedOnly: boolean;
+  setShowDiscountedOnly: (show: boolean) => void;
 }
 
 export interface ProductDetailClientProps {

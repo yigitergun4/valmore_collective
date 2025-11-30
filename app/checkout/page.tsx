@@ -11,6 +11,7 @@ import { CheckoutFormData } from "@/types";
 import { CartItem } from "@/types";
 import { createOrder } from "@/lib/firestore"; // New import
 import { useAlert } from "@/contexts/AlertContext"; // New import
+import { TURKISH_CITIES } from "@/lib/turkish-data";
 
 
 export default function CheckoutPage(): React.JSX.Element | null {
@@ -23,7 +24,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
   const { user } = useAuth(); 
   const { t, language } = useLanguage();
   const router = useRouter();
-  const { showError, showSuccess } = useAlert(); // New initialization
+  const { showError } = useAlert(); // New initialization
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [orderPlaced, setOrderPlaced] = useState<boolean>(false);
 
@@ -97,8 +98,11 @@ export default function CheckoutPage(): React.JSX.Element | null {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = t("checkout.invalidEmail");
     }
-    if (!formData.phone.trim())
+    if (!formData.phone.trim()) {
       newErrors.phone = `${t("checkout.phone")} ${t("checkout.required")}`;
+    } else if (!/^5\d{9}$/.test(formData.phone)) {
+      newErrors.phone = "Geçerli bir cep telefonu numarası giriniz (5xx xxx xx xx)";
+    }
     if (!formData.address.trim())
       newErrors.address = `${t("checkout.address")} ${t("checkout.required")}`;
     if (!formData.city.trim())
@@ -157,7 +161,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
           id: user?.id || null,
           fullName: `${formData.firstName} ${formData.lastName}`.trim(),
           email: formData.email,
-          phone: formData.phone,
+          phone: '0' + formData.phone,
         },
         items: items.map((item) => ({
           productId: item.productId,
@@ -195,7 +199,6 @@ export default function CheckoutPage(): React.JSX.Element | null {
       setOrderPlaced(true);
       // Clear cart and redirect
       clearCart();
-      showSuccess("Siparişiniz başarıyla alındı!"); // New line
       router.push("/checkout/success"); // New line
     } catch (error) {
       console.error("Order error:", error); // Changed console log
@@ -280,7 +283,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.firstName")} *
+                    {t("checkout.firstName")}
                   </label>
                   <input
                     type="text"
@@ -299,7 +302,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.lastName")} *
+                    {t("checkout.lastName")}
                   </label>
                   <input
                     type="text"
@@ -318,7 +321,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.email")} *
+                    {t("checkout.email")}
                   </label>
                   <input
                     type="email"
@@ -335,24 +338,49 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.phone")} *
+                    {t("checkout.phone")}
                   </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                      errors.phone ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
+                  <div className="relative">
+                    <div className="absolute left-0 top-0 bottom-0 flex items-center pl-4 pr-3 border border-r border-gray-300 rounded-l-lg">
+                      <span className="text-gray-700">+90</span>
+                    </div>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={
+                        // Format: 5xx xxx xx xx
+                        formData.phone
+                          .replace(/(\d{3})(\d{0,3})(\d{0,2})(\d{0,2})/, (match, p1, p2, p3, p4) => {
+                            let result = p1;
+                            if (p2) result += ' ' + p2;
+                            if (p3) result += ' ' + p3;
+                            if (p4) result += ' ' + p4;
+                            return result;
+                          })
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // Only numbers
+                        if (value.length <= 10) {
+                          setFormData((prev) => ({ ...prev, phone: value }));
+                          if (errors.phone) {
+                            setErrors((prev) => ({ ...prev, phone: "" }));
+                          }
+                        }
+                      }}
+                      placeholder="5xx xxx xx xx"
+                      maxLength={13}
+                      className={`w-full pl-16 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 tracking-wider ${
+                        errors.phone ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                  </div>
                   {errors.phone && (
                     <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                   )}
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.address")} *
+                    {t("checkout.address")}
                   </label>
                   <input
                     type="text"
@@ -371,50 +399,70 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.city")} *
+                    {t("checkout.city")}
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="city"
                     value={formData.city}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                      handleInputChange(e);
+                      setFormData(prev => ({ ...prev, state: "" })); // Reset district when city changes
+                    }}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                       errors.city ? "border-red-500" : "border-gray-300"
                     }`}
-                  />
+                  >
+                    <option value="">İl Seçiniz</option>
+                    {TURKISH_CITIES.map((city) => (
+                      <option key={city.name} value={city.name}>
+                        {city.name}
+                      </option>
+                    ))}
+                  </select>
                   {errors.city && (
                     <p className="mt-1 text-sm text-red-600">{errors.city}</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.state")} *
+                    İlçe
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
+                    disabled={!formData.city}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                       errors.state ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
+                    } ${!formData.city ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  >
+                    <option value="">İlçe Seçiniz</option>
+                    {formData.city && TURKISH_CITIES.find(c => c.name === formData.city)?.districts.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </select>
                   {errors.state && (
                     <p className="mt-1 text-sm text-red-600">{errors.state}</p>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.zipCode")} *
+                    {t("checkout.zipCode")}
                   </label>
                   <input
                     type="text"
                     name="zipCode"
                     value={formData.zipCode}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData(prev => ({ ...prev, zipCode: value }));
+                    }}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                       errors.zipCode ? "border-red-500" : "border-gray-300"
                     }`}
+                    maxLength={5}
                   />
                   {errors.zipCode && (
                     <p className="mt-1 text-sm text-red-600">
@@ -424,21 +472,16 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.country")} *
+                    {t("checkout.country")}
                   </label>
-                  <select
+                  <input
+                    type="text"
                     name="country"
                     value={formData.country}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="Türkiye">Türkiye</option>
-                    <option value="Almanya">Almanya</option>
-                    <option value="Fransa">Fransa</option>
-                    <option value="İngiltere">İngiltere</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                  </select>
+                    disabled
+                    className="w-full px-4 py-2 border rounded-lg border-gray-300 bg-gray-100"
+                  />
                 </div>
               </div>
             </div>
@@ -449,7 +492,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.cardNumber")} *
+                    {t("checkout.cardNumber")}
                   </label>
                   <input
                     type="text"
@@ -470,7 +513,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("checkout.cardName")} *
+                    {t("checkout.cardName")}
                   </label>
                   <input
                     type="text"
@@ -490,7 +533,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("checkout.expiryDate")} *
+                      {t("checkout.expiryDate")}
                     </label>
                     <input
                       type="text"
@@ -511,7 +554,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("checkout.cvc")} *
+                      {t("checkout.cvc")}
                     </label>
                     <input
                       type="text"

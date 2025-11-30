@@ -223,7 +223,7 @@ export default function Header() {
                       onClick={() => {
                         logout();
                         setIsProfileOpen(false);
-                        router.push("/");
+                        router.push("/login");
                       }}
                       className="w-full flex items-center px-4 py-3 text-[11px] font-bold uppercase tracking-wider hover:bg-primary-600 hover:text-white transition-all"
                     >

@@ -42,6 +42,7 @@ export const translations: Record<Language, any> = {
       description: "Premium moda küratörlü koleksiyonumuzu keşfedin",
       search: "Ürün ara...",
       filter: "Filtrele",
+      discountFilter: "İndirimli Ürünler",
       sort: {
         name: "İsme Göre Sırala",
         newest: "YENİLER",
@@ -311,6 +312,7 @@ export const translations: Record<Language, any> = {
       description: "Discover our curated collection of premium fashion",
       search: "Search products...",
       filter: "Filter",
+      discountFilter: "Discounted Products",
       sort: {
         name: "Sort by Name",
         newest: "NEWEST",
