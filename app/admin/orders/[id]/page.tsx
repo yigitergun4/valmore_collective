@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 // Status Badge Component
 const StatusBadge: React.FC<{ status: Order["status"] }> = ({ status }) => {
@@ -109,9 +110,10 @@ export default function OrderDetailPage() {
       setUpdating(true);
       await updateOrderStatus(order.id, selectedStatus);
       setOrder({ ...order, status: selectedStatus });
+      toast.success("Sipariş durumu güncellendi.");
     } catch (err) {
       console.error(err);
-      alert("Durum güncellenirken bir hata oluştu.");
+      toast.error("Durum güncellenirken bir hata oluştu.");
     } finally {
       setUpdating(false);
     }
@@ -119,7 +121,7 @@ export default function OrderDetailPage() {
 
   const handleShippedConfirm: () => Promise<void> = async () => {
     if (!order || !shippingData.carrier || !shippingData.trackingNumber) {
-      alert("Lütfen kargo firması ve takip numarasını giriniz.");
+      toast.error("Lütfen kargo firması ve takip numarasını giriniz.");
       return;
     }
 
@@ -133,9 +135,10 @@ export default function OrderDetailPage() {
         trackingNumber: shippingData.trackingNumber
       });
       setShowShippedModal(false);
+      toast.success("Sipariş kargolandı olarak işaretlendi.");
     } catch (err) {
       console.error(err);
-      alert("Durum güncellenirken bir hata oluştu.");
+      toast.error("Durum güncellenirken bir hata oluştu.");
     } finally {
       setUpdating(false);
     }

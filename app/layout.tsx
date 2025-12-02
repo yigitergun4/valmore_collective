@@ -8,6 +8,7 @@ import { AlertProvider } from "@/contexts/AlertContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
                 <CartDrawer />
                 <main className="flex-grow">{children}</main>
                 <Footer />
+                <Toaster position="top-right" />
               </AlertProvider>
             </ShopProvider>
           </AuthProvider>

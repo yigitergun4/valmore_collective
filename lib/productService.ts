@@ -14,7 +14,7 @@ import {
     QuerySnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Product, ProductGender } from "@/types";
+import { Product, ProductGender, GENDER_OPTIONS } from "@/types";
 
 const COLLECTION_NAME: string = "products";
 
@@ -43,7 +43,7 @@ function mapDocToProduct(doc: QueryDocumentSnapshot<DocumentData>): Product {
         variants: data.variants || [],
         createdAt: data.createdAt ? (typeof data.createdAt === 'string' ? data.createdAt : data.createdAt.toDate().toISOString()) : new Date().toISOString(),
         slug: data.slug || "",
-        gender: (data.gender as ProductGender) || "Female", // Default to Female if missing
+        gender: (data.gender as ProductGender) || GENDER_OPTIONS[1].value, // Default to Female if missing
     };
 }
 

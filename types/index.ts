@@ -2,8 +2,10 @@ import { ReactNode } from "react";
 
 export interface ProductVariant {
   color: string;
-  inStock: boolean;
   sizes: string[];
+  inStock: boolean;
+  sku?: string;
+  barcode?: string;
 }
 export interface ProductImage {
   url: string;
@@ -35,7 +37,13 @@ export interface ProductDetailClientProps {
   allProducts: Product[];
   relatedProducts: Product[];
 }
-export type ProductGender = 'Male' | 'Female' | 'Unisex';
+export const GENDER_OPTIONS = [
+  { value: 'Male', label: 'Erkek' },
+  { value: 'Female', label: 'Kadın' },
+  { value: 'Unisex', label: 'Unisex' },
+] as const;
+
+export type ProductGender = typeof GENDER_OPTIONS[number]['value'];
 
 export interface ProductFormProps {
   initialData?: Product;
@@ -43,6 +51,7 @@ export interface ProductFormProps {
   isSubmitting: boolean;
 }
 
+export type LocalImage = ProductImage & { isUploading?: boolean; file?: File };
 
 export interface Product {
   id: string;
@@ -55,6 +64,11 @@ export interface Product {
   category: string;
   brand: string;
   gender: ProductGender;
+  material?: string;
+  fit?: string;
+  careInstructions?: string;
+  sku?: string;
+  barcode?: string;
   sizes: string[];
   colors: string[];
   inStock: boolean;

@@ -19,7 +19,6 @@ export const translations: Record<Language, any> = {
         title: "Valmoré Collective",
         subtitle:
           "Modern bireyler için küratörlü moda. Stilini tanımlayan zamansız parçaları keşfet.",
-        cta: "Alışverişe Başla",
       },
       featured: {
         title: "Öne Çıkan Koleksiyon",
@@ -287,7 +286,6 @@ export const translations: Record<Language, any> = {
         title: "Valmoré Collective",
         subtitle:
           "Curated fashion for the modern individual. Discover timeless pieces that define your style",
-        cta: "Shop Now",
       },
       featured: {
         title: "Featured Collection",

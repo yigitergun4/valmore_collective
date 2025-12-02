@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Product } from "@/types";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getColorHex } from "@/lib/colorUtils";
 
 interface ProductCardProps {
   product: Product;
@@ -104,27 +105,27 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Product Info */}
         <div className="flex flex-col gap-1">
-          <div className="flex justify-between items-start">
-            <div className="flex flex-col gap-0.5">
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 {product.brand || "VALMORÉ"}
               </span>
-              <h3 className="text-xs font-medium text-black uppercase tracking-wide truncate pr-2">
+              <h3 className="text-xs font-medium text-black uppercase tracking-wide line-clamp-2">
                 {product.name}
               </h3>
             </div>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
               {hasDiscount ? (
                 <>
-                  <span className="text-[10px] text-gray-400 line-through decoration-primary-600/50">
+                  <span className="text-[10px] text-gray-400 line-through decoration-primary-600/50 whitespace-nowrap">
                     {originalPrice.toFixed(2)} {t("products.currency")}
                   </span>
-                  <span className="text-sm font-bold text-primary-600">
+                  <span className="text-sm font-bold text-primary-600 whitespace-nowrap">
                     {discountedPrice?.toFixed(2)} {t("products.currency")}
                   </span>
                 </>
               ) : (
-                <span className="text-xs font-bold text-black">
+                <span className="text-xs font-bold text-black whitespace-nowrap">
                   {discountedPrice?.toFixed(2)} {t("products.currency")}
                 </span>
               )}
@@ -134,22 +135,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Color Swatches */}
           {product.colors && product.colors.length > 0 && (
             <div className="flex gap-1 mt-1">
-              {product.colors.slice(0, 4).map((color, index) => (
-                <div
-                  key={index}
-                  className="w-2 h-2 rounded-full border border-gray-300"
-                  style={{ 
-                    backgroundColor: 
-                      color === "Siyah" ? "#000" : 
-                      color === "Beyaz" ? "#fff" : 
-                      color === "Kırmızı" ? "#ef4444" : 
-                      color === "Mavi" ? "#3b82f6" : 
-                      color === "Yeşil" ? "#22c55e" : 
-                      "#d1d5db" 
-                  }}
-                  title={color}
-                />
-              ))}
+              {product.colors.slice(0, 4).map((color, index) => {
+                if(getColorHex(color) == "#D1D5DB") {
+                  return;
+                }
+                return <div
+                key={index}
+                className="w-2 h-2 rounded-full border border-gray-300"
+                style={{ backgroundColor: getColorHex(color) }}
+                title={color}
+              />
+              })}
               {product.colors.length > 4 && (
                 <span className="text-[9px] text-gray-400 leading-none flex items-center">
                   +{product.colors.length - 4}

@@ -1,14 +1,16 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense, useRef, useCallback } from "react";
 import { getAllProducts } from "@/lib/productService";
 import ProductCard from "@/components/ProductCard";
 import FilterDrawer from "@/components/FilterDrawer";
-import { SlidersHorizontal, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, ChevronDown, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Product, ProductGender } from "@/types";
+import { Product, ProductGender, GENDER_OPTIONS } from "@/types";
 import { PRODUCT_CATEGORIES, ProductCategory } from "@/lib/constants";
+
+const ITEMS_PER_PAGE = 12;
 
 function ProductsContent(): React.JSX.Element {
   const { t } = useLanguage();
@@ -16,6 +18,11 @@ function ProductsContent(): React.JSX.Element {
   const [products, setProducts]: [Product[], (products: Product[]) => void] = useState<Product[]>([]);
   const [loading, setLoading]: [boolean, (loading: boolean) => void] = useState<boolean>(true);
   const [isFilterOpen, setIsFilterOpen]: [boolean, (isFilterOpen: boolean) => void] = useState<boolean>(false);
+
+  // Pagination State
+  const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   // Filter States
   const [activeGender, setActiveGender]: [ProductGender | "ALL", (activeGender: ProductGender | "ALL") => void] = useState<ProductGender | "ALL">("Female");
@@ -25,14 +32,15 @@ function ProductsContent(): React.JSX.Element {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [showDiscountedOnly, setShowDiscountedOnly] = useState<boolean>(false);
   const [sortBy, setSortBy]: ["newest" | "price-low" | "price-high", (sortBy: "newest" | "price-low" | "price-high") => void] = useState<"newest" | "price-low" | "price-high">("newest");
-  
   const [isSortOpen, setIsSortOpen] = useState<boolean>(false);
   
   // Handle URL params
   useEffect(() => {
-    const genderParam = searchParams.get("gender");
-    if (genderParam === "Male" || genderParam === "Female") {
-      setActiveGender(genderParam);
+    const genderParam: string | null = searchParams.get("gender");
+    const isValidGender: boolean = GENDER_OPTIONS.some(option => option.value === genderParam);
+    
+    if (isValidGender && genderParam) {
+      setActiveGender(genderParam as ProductGender);
     }
   }, [searchParams]);
 
@@ -103,6 +111,57 @@ function ProductsContent(): React.JSX.Element {
     return filtered;
   }, [products, activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
 
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
+
+  // Derived pagination data
+  const currentProducts = useMemo(() => {
+    return filteredAndSortedProducts.slice(0, visibleCount);
+  }, [filteredAndSortedProducts, visibleCount]);
+
+  const hasMore = visibleCount < filteredAndSortedProducts.length;
+
+  // Load More Handler
+  const handleLoadMore = useCallback(() => {
+    if (!hasMore || isLoadingMore) return;
+    
+    setIsLoadingMore(true);
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      setVisibleCount(prev => Math.min(prev + ITEMS_PER_PAGE, filteredAndSortedProducts.length));
+      setIsLoadingMore(false);
+    }, 300);
+  }, [hasMore, isLoadingMore, filteredAndSortedProducts.length]);
+
+  // Infinite Scroll for Mobile (IntersectionObserver)
+  useEffect(() => {
+    if (!loadMoreTriggerRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        // Only trigger on mobile (viewport width < 1024px)
+        if (entry.isIntersecting && hasMore && window.innerWidth < 1024) {
+          handleLoadMore();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "100px",
+      }
+    );
+
+    observer.observe(loadMoreTriggerRef.current);
+
+    return () => {
+      if (loadMoreTriggerRef.current) {
+        observer.unobserve(loadMoreTriggerRef.current);
+      }
+    };
+  }, [hasMore, handleLoadMore]);
+
   const clearFilters: () => void = () => {
     setSelectedCategory("all");
     setSelectedSizes([]);
@@ -129,11 +188,6 @@ function ProductsContent(): React.JSX.Element {
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-600" />
                 )}
               </button>
-
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                {filteredAndSortedProducts.length} {t("products.count")}
-              </span>
-
               <div className="relative">
                 <button 
                   onClick={() => setIsSortOpen(!isSortOpen)}
@@ -201,11 +255,44 @@ function ProductsContent(): React.JSX.Element {
             <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredAndSortedProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 gap-y-8 lg:gap-x-4 lg:gap-y-12">
-            {filteredAndSortedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 gap-y-8 lg:gap-x-4 lg:gap-y-12">
+              {currentProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {/* Load More Section */}
+            {hasMore && (
+              <div className="mt-12 lg:mt-16">
+                {/* Desktop: Load More Button */}
+                <button
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="hidden lg:flex w-full items-center justify-center px-8 py-4 border-2 border-black text-black font-bold uppercase tracking-widest text-xs hover:bg-black hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t("products.loading") || "YÜKLENIYOR..."}
+                    </>
+                  ) : (
+                    t("products.loadMore") || "DAHA FAZLA ÜRÜN GÖSTER"
+                  )}
+                </button>
+
+                {/* Mobile: Infinite Scroll Trigger + Loading Indicator */}
+                <div 
+                  ref={loadMoreTriggerRef} 
+                  className="lg:hidden flex items-center justify-center py-8"
+                >
+                  {isLoadingMore && (
+                    <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
             <p className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4">
