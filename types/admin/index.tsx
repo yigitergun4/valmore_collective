@@ -16,3 +16,11 @@ export interface DeleteProductButtonProps {
   id: string;
   onDelete: (id: string) => Promise<void>;
 }
+
+export interface StatusFilterButtonProps {
+  label: string;
+  count: number;
+  status: string;
+  selectedStatus: string;
+  onClick: (status: string) => void;
+}

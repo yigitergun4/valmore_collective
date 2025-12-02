@@ -1,16 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Package, Calendar, User, Loader2 } from "lucide-react";
+import { Package, Calendar, User, Loader2, ChevronDown, MapPin } from "lucide-react";
 import Link from "next/link";
-import { Order } from "@/types/admin/orders";
+import Image from "next/image";
+import { Order, getStatusText, getStatusBadgeColor } from "@/types/admin/orders";
 import { fetchAllOrders } from "@/lib/firestore";
+import StatusFilterButton from "@/components/admin/StatusFilterButton";
 
 export default function AdminOrdersPage(): React.JSX.Element {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([]);
 
   // Fetch orders from Firestore
   useEffect(() => {
@@ -31,35 +34,12 @@ export default function AdminOrdersPage(): React.JSX.Element {
     loadOrders();
   }, []);
 
-  const getStatusBadgeColor: (status: Order["status"]) => string = (status: Order["status"]) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "processing":
-        return "bg-blue-100 text-blue-800";
-      case "shipped":
-        return "bg-purple-100 text-purple-800";
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      case "returned":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusText: (status: Order["status"]) => string = (status: Order["status"]) => {
-    const statusMap = {
-      pending: "Beklemede",
-      processing: "İşleniyor",
-      shipped: "Kargoda",
-      delivered: "Teslim Edildi",
-      cancelled: "İptal Edildi",
-      returned: "İade Edildi",
-    };
-    return statusMap[status];
+  const toggleOrder: (orderId: string) => void = (orderId: string) => {
+    setExpandedOrderIds(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
   };
 
   const filteredOrders: Order[] =
@@ -101,229 +81,258 @@ export default function AdminOrdersPage(): React.JSX.Element {
       {/* Main Content (only show if not loading and no error) */}
       {!isLoading && !error && (
         <>
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200">
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setSelectedStatus("all")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === "all"
-                ? "bg-primary-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Tümü ({orders.length})
-          </button>
-          <button
-            onClick={() => setSelectedStatus("pending")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === "pending"
-                ? "bg-primary-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Beklemede ({orders.filter((o) => o.status === "pending").length})
-          </button>
-          <button
-            onClick={() => setSelectedStatus("processing")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === "processing"
-                ? "bg-primary-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            İşleniyor ({orders.filter((o) => o.status === "processing").length})
-          </button>
-          <button
-            onClick={() => setSelectedStatus("shipped")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === "shipped"
-                ? "bg-primary-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Kargoda ({orders.filter((o) => o.status === "shipped").length})
-          </button>
-          <button
-            onClick={() => setSelectedStatus("delivered")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === "delivered"
-                ? "bg-primary-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Teslim Edildi ({orders.filter((o) => o.status === "delivered").length})
-          </button>
-        </div>
-      </div>
-
-      {/* Orders List */}
-      <div className="space-y-4">
-        {filteredOrders.map((order) => (
-          <Link
-            href={`/admin/orders/${order.id}`}
-            key={order.id}
-            className="block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-          >
-            {/* Order Header */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-bold">{order.id}</h3>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(
-                        order.status
-                      )}`}
-                    >
-                      {getStatusText(order.status)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      {order.customer.fullName}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(order.createdAt).toLocaleDateString("tr-TR")}
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    📧 {order.customer.email}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    📱 {order.customer.phone}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-primary-600">
-                    ₺{order.total.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {order.paymentMethod === "credit_card" && "💳 Kredi Kartı"}
-                    {order.paymentMethod === "iyzico" && "💳 Iyzico"}
-                    {order.paymentMethod === "stripe" && "💳 Stripe"}
-                  </div>
-                </div>
-              </div>
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-xl border border-gray-200">
+            <div className="flex gap-2 flex-wrap">
+              <StatusFilterButton
+                label="Tümü"
+                count={orders.length}
+                status="all"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
+              <StatusFilterButton
+                label="Beklemede"
+                count={orders.filter((o) => o.status === "pending").length}
+                status="pending"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
+              <StatusFilterButton
+                label="Hazırlanıyor"
+                count={orders.filter((o) => o.status === "processing").length}
+                status="processing"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
+              <StatusFilterButton
+                label="Kargoda"
+                count={orders.filter((o) => o.status === "shipped").length}
+                status="shipped"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
+              <StatusFilterButton
+                label="Teslim Edildi"
+                count={orders.filter((o) => o.status === "delivered").length}
+                status="delivered"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
+              <StatusFilterButton
+                label="İptal Edildi"
+                count={orders.filter((o) => o.status === "cancelled").length}
+                status="cancelled"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
+              <StatusFilterButton
+                label="İade Edildi"
+                count={orders.filter((o) => o.status === "returned").length}
+                status="returned"
+                selectedStatus={selectedStatus}
+                onClick={setSelectedStatus}
+              />
             </div>
-
-            {/* Order Items */}
-            <div className="p-6 border-b border-gray-100">
-              <h4 className="text-sm font-bold uppercase text-gray-500 mb-3">
-                Ürünler
-              </h4>
-              <div className="space-y-3">
-                {order.items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-start py-2 border-b border-gray-50 last:border-0"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium">{item.name}</span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1 ml-6">
-                        Beden: {item.selectedSize} • Renk: {item.selectedColor} • Adet: {item.quantity}
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold">
-                      ₺{(item.price * item.quantity).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Price Breakdown */}
-              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Ara Toplam:</span>
-                  <span className="font-medium">₺{Number(order.subtotal).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Kargo:</span>
-                  <span className="font-medium">
-                    {order.shippingCost === 0 ? (
-                      <span className="text-green-600">Ücretsiz</span>
-                    ) : (
-                      `₺${Number(order.shippingCost).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    )}
-                  </span>
-                </div>
-                {order.discountTotal && order.discountTotal > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">İndirim:</span>
-                    <span className="font-medium text-red-600">-₺{Number(order.discountTotal).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200">
-                  <span>Toplam:</span>
-                  <span className="text-primary-600">₺{Number(order.total).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Shipping Info */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Shipping Address */}
-                <div>
-                  <h4 className="text-sm font-bold uppercase text-gray-500 mb-2">
-                    Teslimat Adresi
-                  </h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    <span className="font-medium">{order.shippingAddress.title}</span>
-                    <br />
-                    {order.shippingAddress.fullName}
-                    <br />
-                    {order.shippingAddress.address}
-                    <br />
-                    {order.shippingAddress.district}, {order.shippingAddress.city} {order.shippingAddress.zipCode}
-                    <br />
-                    {order.shippingAddress.country}
-                  </p>
-                </div>
-
-                {/* Tracking Info (if available) */}
-                {(order.trackingNumber || order.carrier) && (
-                  <div>
-                    <h4 className="text-sm font-bold uppercase text-gray-500 mb-2">
-                      Kargo Takip
-                    </h4>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1">
-                      {order.carrier && (
-                        <div className="text-sm">
-                          <span className="text-gray-600">Kargo Firması:</span>{" "}
-                          <span className="font-medium text-blue-900">{order.carrier}</span>
-                        </div>
-                      )}
-                      {order.trackingNumber && (
-                        <div className="text-sm">
-                          <span className="text-gray-600">Takip No:</span>{" "}
-                          <span className="font-mono font-medium text-blue-900">{order.trackingNumber}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-              </div>
-
-            </Link>
-
-        ))}
-
-        {filteredOrders.length === 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">Bu kategoride sipariş bulunamadı.</p>
           </div>
-        )}
-       </div>
-      </>
+
+          {/* Orders Table */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="w-12 px-6 py-3"></th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Sipariş
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Müşteri
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Tarih
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Durum
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Toplam
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    İşlemler
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredOrders.map((order) => {
+                  const isExpanded = expandedOrderIds.includes(order.id);
+                  
+                  return (
+                    <React.Fragment key={order.id}>
+                      {/* Summary Row */}
+                      <tr className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => toggleOrder(order.id)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          >
+                            <ChevronDown
+                              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-bold text-gray-900">{order.id}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">{order.customer.fullName}</div>
+                            <div className="text-gray-500 text-xs">{order.customer.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {new Date(order.createdAt).toLocaleDateString("tr-TR")}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(
+                              order.status
+                            )}`}
+                          >
+                            {getStatusText(order.status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-bold text-primary-600">
+                            ₺{order.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="inline-flex items-center px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium"
+                          >
+                            Yönet
+                          </Link>
+                        </td>
+                      </tr>
+
+                      {/* Detail Row (Expandable) */}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-0">
+                            <div className="bg-gray-50 border-t border-gray-200 p-6 animate-in slide-in-from-top-2 fade-in duration-200">
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Left: Products */}
+                                <div>
+                                  <h4 className="text-xs font-bold uppercase text-gray-500 mb-3 flex items-center gap-2">
+                                    <Package className="w-4 h-4" />
+                                    Ürünler
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {order.items.map((item, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200"
+                                      >
+                                        {item.image && (
+                                          <div className="relative w-10 h-10 flex-shrink-0">
+                                            <Image
+                                              src={item.image}
+                                              alt={item.name}
+                                              fill
+                                              className="object-cover rounded"
+                                              sizes="40px"
+                                            />
+                                          </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm font-medium text-gray-900 truncate">
+                                            {item.name}
+                                          </div>
+                                          <div className="text-xs text-gray-500">
+                                            {item.selectedSize} • {item.selectedColor} • Adet: {item.quantity}
+                                          </div>
+                                        </div>
+                                        <div className="text-sm font-bold text-gray-900 flex-shrink-0">
+                                          ₺{(item.price * item.quantity).toLocaleString("tr-TR")}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Right: Shipping Info */}
+                                <div>
+                                  <h4 className="text-xs font-bold uppercase text-gray-500 mb-3 flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" />
+                                    Teslimat Bilgileri
+                                  </h4>
+                                  <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-3">
+                                    <div>
+                                      <div className="text-xs text-gray-500 mb-1">Adres Başlığı</div>
+                                      <div className="text-sm font-medium">{order.shippingAddress.title}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-gray-500 mb-1">Alıcı</div>
+                                      <div className="text-sm font-medium">{order.shippingAddress.fullName}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-gray-500 mb-1">Telefon</div>
+                                      <div className="text-sm font-medium">{order.customer.phone}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-gray-500 mb-1">Adres</div>
+                                      <div className="text-sm leading-relaxed">
+                                        {order.shippingAddress.address}
+                                        <br />
+                                        {order.shippingAddress.district}, {order.shippingAddress.city}{" "}
+                                        {order.shippingAddress.zipCode}
+                                        <br />
+                                        {order.shippingAddress.country}
+                                      </div>
+                                    </div>
+                                    {(order.trackingNumber || order.carrier) && (
+                                      <div className="pt-3 border-t border-gray-200">
+                                        <div className="text-xs text-gray-500 mb-2">Kargo Takip</div>
+                                        {order.carrier && (
+                                          <div className="text-sm">
+                                            <span className="font-medium">Kargo: </span>
+                                            {order.carrier}
+                                          </div>
+                                        )}
+                                        {order.trackingNumber && (
+                                          <div className="text-sm">
+                                            <span className="font-medium">Takip No: </span>
+                                            <span className="font-mono">{order.trackingNumber}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {filteredOrders.length === 0 && (
+              <div className="p-12 text-center">
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Bu kategoride sipariş bulunamadı.</p>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
