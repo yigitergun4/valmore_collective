@@ -7,7 +7,6 @@ import { useState, useEffect, useRef } from "react";
 import { useShop } from "@/contexts/ShopContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-
 import { auth } from "@/lib/firebase";
 
 export default function Header() {
@@ -20,9 +19,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const router= useRouter();
-
   const pathname: string = usePathname();
-
   const langMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -104,12 +101,11 @@ export default function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-10 absolute left-1/2 -translate-x-1/2">
               <div className="relative group">
-                <Link
-                  href="/products"
-                  className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600 py-4"
+                <span
+                  className="text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity text-primary-600 py-4 cursor-default"
                 >
                   {t("nav.products")}
-                </Link>
+                </span>
                 
                 {/* Dropdown Menu */}
                 <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">

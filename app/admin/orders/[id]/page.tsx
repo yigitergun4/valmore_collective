@@ -18,9 +18,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 // Status Badge Component
-const StatusBadge = ({ status }: { status: Order["status"] }) => {
+const StatusBadge: React.FC<{ status: Order["status"] }> = ({ status }) => {
   const styles: Record<Order["status"], string> = {
     pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
     processing: "bg-blue-100 text-blue-800 border-blue-200",
@@ -39,7 +40,7 @@ const StatusBadge = ({ status }: { status: Order["status"] }) => {
     returned: "İade Edildi",
   };
 
-  const icons = {
+  const icons: Record<Order["status"], typeof Icon> = {
     pending: Clock,
     processing: Package,
     shipped: Truck,
@@ -48,7 +49,7 @@ const StatusBadge = ({ status }: { status: Order["status"] }) => {
     returned: ArrowLeft,
   };
 
-  const Icon = icons[status];
+  const Icon: React.FC<{ className?: string }> = icons[status];
 
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${styles[status]}`}>
@@ -62,24 +63,26 @@ export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [updating, setUpdating] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [updating, setUpdating] = useState<boolean>(false);
+  const [selectedStatus, setSelectedStatus] = useState<Order["status"] | "">("");
 
   // Modal State
-  const [showShippedModal, setShowShippedModal] = useState(false);
-  const [shippingData, setShippingData] = useState({
+  const [showShippedModal, setShowShippedModal] = useState<boolean>(false);
+  const [shippingData, setShippingData] = useState<{ carrier: string; trackingNumber: string }>({
     carrier: "",
     trackingNumber: "",
   });
 
   useEffect(() => {
-    const loadOrder = async () => {
+    const loadOrder: () => Promise<void> = async () => {
       try {
         if (typeof params.id !== "string") return;
-        const data = await fetchOrderById(params.id);
+        const data: Order | null = await fetchOrderById(params.id);
         if (data) {
           setOrder(data);
+          setSelectedStatus(data.status);
         } else {
           setError("Sipariş bulunamadı.");
         }
@@ -94,18 +97,18 @@ export default function OrderDetailPage() {
     loadOrder();
   }, [params.id]);
 
-  const handleStatusChange = async (newStatus: Order["status"]) => {
-    if (!order) return;
+  const handleUpdateStatus: () => Promise<void> = async () => {
+    if (!order || !selectedStatus) return;
 
-    if (newStatus === "shipped") {
+    if (selectedStatus === "shipped") {
       setShowShippedModal(true);
       return;
     }
 
     try {
       setUpdating(true);
-      await updateOrderStatus(order.id, newStatus);
-      setOrder({ ...order, status: newStatus });
+      await updateOrderStatus(order.id, selectedStatus);
+      setOrder({ ...order, status: selectedStatus });
     } catch (err) {
       console.error(err);
       alert("Durum güncellenirken bir hata oluştu.");
@@ -114,7 +117,7 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleShippedConfirm = async () => {
+  const handleShippedConfirm: () => Promise<void> = async () => {
     if (!order || !shippingData.carrier || !shippingData.trackingNumber) {
       alert("Lütfen kargo firması ve takip numarasını giriniz.");
       return;
@@ -296,19 +299,28 @@ export default function OrderDetailPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Durumu Güncelle
               </label>
-              <select
-                value={order.status}
-                onChange={(e) => handleStatusChange(e.target.value as Order["status"])}
-                disabled={updating}
-                className="w-full rounded-lg border-gray-300 shadow-sm px-3 py-2 focus:border-primary-500 focus:ring-primary-500"
-              >
-                <option value="pending">Bekliyor</option>
-                <option value="processing">Hazırlanıyor</option>
-                <option value="shipped">Kargolandı</option>
-                <option value="delivered">Teslim Edildi</option>
-                <option value="cancelled">İptal Edildi</option>
-                <option value="returned">İade Edildi</option>
-              </select>
+              <div className="space-y-3">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value as Order["status"])}
+                  disabled={updating}
+                  className="w-full rounded-lg border-gray-300 shadow-sm px-2 py-2 focus:border-primary-500 focus:ring-green-500"
+                >
+                  <option value="pending">Bekliyor</option>
+                  <option value="processing">Hazırlanıyor</option>
+                  <option value="shipped">Kargolandı</option>
+                  <option value="delivered">Teslim Edildi</option>
+                  <option value="cancelled">İptal Edildi</option>
+                  <option value="returned">İade Edildi</option>
+                </select>
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={updating || selectedStatus === order.status}
+                  className="w-full"
+                >
+                  {updating ? "Güncelleniyor..." : "Durumu Güncelle"}
+                </Button>
+              </div>
               <p className="text-xs text-gray-500 mt-3">
                 &quot;Kargolandı&quot; seçildiğinde kargo takip bilgileri istenecektir.
               </p>

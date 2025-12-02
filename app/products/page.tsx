@@ -26,6 +26,8 @@ function ProductsContent(): React.JSX.Element {
   const [showDiscountedOnly, setShowDiscountedOnly] = useState<boolean>(false);
   const [sortBy, setSortBy]: ["newest" | "price-low" | "price-high", (sortBy: "newest" | "price-low" | "price-high") => void] = useState<"newest" | "price-low" | "price-high">("newest");
   
+  const [isSortOpen, setIsSortOpen] = useState<boolean>(false);
+  
   // Handle URL params
   useEffect(() => {
     const genderParam = searchParams.get("gender");
@@ -132,40 +134,60 @@ function ProductsContent(): React.JSX.Element {
                 {filteredAndSortedProducts.length} {t("products.count")}
               </span>
 
-              <div className="relative group">
-                <button className="flex items-center gap-1 text-xs px-2 py-1 font-bold uppercase tracking-widest hover:opacity-60 transition-opacity">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsSortOpen(!isSortOpen)}
+                  className="flex items-center gap-1 text-xs px-2 py-1 font-bold uppercase tracking-widest hover:opacity-60 transition-opacity"
+                >
                   {sortBy === "newest" ? t("products.sort.newest") : sortBy === "price-low" ? t("products.sort.priceLow") : t("products.sort.priceHigh")}
-                  <ChevronDown className="w-3 h-3" />
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
-                <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
-                  <div className="bg-white border border-gray-100 shadow-lg py-2 min-w-[160px]">
-                    <button
-                      onClick={() => setSortBy("newest")}
-                      className={`block w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 ${
-                        sortBy === "newest" ? "text-primary-600" : "text-black"
-                      }`}
-                    >
-                      {t("products.sort.newest")}
-                    </button>
-                    <button
-                      onClick={() => setSortBy("price-low")}
-                      className={`block w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 ${
-                        sortBy === "price-low" ? "text-primary-600" : "text-black"
-                      }`}
-                    >
-                      {t("products.sort.priceLow")}
-                    </button>
-                    <button
-                      onClick={() => setSortBy("price-high")}
-                      className={`block w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 ${
-                        sortBy === "price-high" ? "text-primary-600" : "text-black"
-                      }`}
-                    >
-                      {t("products.sort.priceHigh")}
-                    </button>
-                  </div>
-                </div>
+                {isSortOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-30" 
+                      onClick={() => setIsSortOpen(false)} 
+                    />
+                    <div className="absolute right-0 top-full pt-2 z-40">
+                      <div className="bg-white border border-gray-100 shadow-lg py-2 min-w-[160px]">
+                        <button
+                          onClick={() => {
+                            setSortBy("newest");
+                            setIsSortOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 ${
+                            sortBy === "newest" ? "text-primary-600" : "text-black"
+                          }`}
+                        >
+                          {t("products.sort.newest")}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSortBy("price-low");
+                            setIsSortOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 ${
+                            sortBy === "price-low" ? "text-primary-600" : "text-black"
+                          }`}
+                        >
+                          {t("products.sort.priceLow")}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSortBy("price-high");
+                            setIsSortOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 ${
+                            sortBy === "price-high" ? "text-primary-600" : "text-black"
+                          }`}
+                        >
+                          {t("products.sort.priceHigh")}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
