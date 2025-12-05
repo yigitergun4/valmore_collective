@@ -25,7 +25,7 @@ function ProductsContent(): React.JSX.Element {
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   // Filter States
-  const [activeGender, setActiveGender]: [ProductGender | "ALL", (activeGender: ProductGender | "ALL") => void] = useState<ProductGender | "ALL">("Female");
+  const [activeGender, setActiveGender]: [ProductGender | "ALL", (activeGender: ProductGender | "ALL") => void] = useState<ProductGender | "ALL">("ALL");
   const [searchQuery, setSearchQuery]: [string, (searchQuery: string) => void] = useState<string>("");
   const [selectedCategory, setSelectedCategory]: [string, (selectedCategory: string) => void] = useState<string>("all");
   const [selectedSizes, setSelectedSizes]: [string[], (selectedSizes: string[]) => void] = useState<string[]>([]);

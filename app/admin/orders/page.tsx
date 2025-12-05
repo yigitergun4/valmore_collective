@@ -164,23 +164,21 @@ export default function AdminOrdersPage(): React.JSX.Element {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredOrders.map((order) => {
-                  const isExpanded = expandedOrderIds.includes(order.id);
+                  const isExpanded: boolean = expandedOrderIds.includes(order.id);
                   
                   return (
                     <React.Fragment key={order.id}>
                       {/* Summary Row */}
-                      <tr className="hover:bg-gray-50 transition-colors">
+                      <tr 
+                        onClick={() => toggleOrder(order.id)}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
                         <td className="px-6 py-4">
-                          <button
-                            onClick={() => toggleOrder(order.id)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                          >
-                            <ChevronDown
-                              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                                isExpanded ? "rotate-180" : ""
-                              }`}
-                            />
-                          </button>
+                          <ChevronDown
+                            className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-bold text-gray-900">{order.id}</div>
@@ -213,6 +211,7 @@ export default function AdminOrdersPage(): React.JSX.Element {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <Link
                             href={`/admin/orders/${order.id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium"
                           >
                             Yönet

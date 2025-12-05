@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname} from "next/navigation";
-import { ShoppingBag, Menu, X, User, LogOut, Search, Heart } from "lucide-react";
+import { ShoppingBag, Menu, X, User, LogOut, Search, Heart, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef, JSX } from "react";
 import { useShop } from "@/contexts/ShopContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import { auth } from "@/lib/firebase";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isProductsOpen, setIsProductsOpen] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
@@ -275,13 +276,35 @@ export default function Header() {
           >
             {t("nav.home")}
           </Link>
-          <Link
-            href="/products"
-            className="text-3xl font-bold uppercase tracking-tighter hover:opacity-60 transition-opacity text-primary-600"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            {t("nav.products")}
-          </Link>
+          
+          {/* Products with Gender Options */}
+          <div>
+            <button
+              onClick={() => setIsProductsOpen(!isProductsOpen)}
+              className="flex items-center gap-3 text-3xl font-bold uppercase tracking-tighter text-primary-600"
+            >
+              {t("nav.products")}
+              <ChevronDown className={`w-6 h-6 transition-transform duration-300 ${isProductsOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isProductsOpen ? 'max-h-48 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+              <div className="flex flex-col space-y-3 pl-4 border-l-2 border-primary-200">
+                <Link
+                  href="/products?gender=Female"
+                  className="text-xl font-medium uppercase tracking-wide hover:text-primary-600 transition-colors text-gray-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("products.genders.female")}
+                </Link>
+                <Link
+                  href="/products?gender=Male"
+                  className="text-xl font-medium uppercase tracking-wide hover:text-primary-600 transition-colors text-gray-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {t("products.genders.male")}
+                </Link>
+              </div>
+            </div>
+          </div>
           <Link
             href="/about"
             className="text-3xl font-bold uppercase tracking-tighter hover:opacity-60 transition-opacity text-primary-600"

@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Order } from "./admin/orders";
 
 export interface ProductVariant {
   color: string;
@@ -108,18 +109,31 @@ export interface CartItem {
 
 export interface AdminStats {
   totalSales: number;
-  totalOrders: number;
   totalProducts: number;
-  recentOrders: any[]; // Will define Order type later
+  totalSalesNotReturn: number;
+  totalOrdersLength: number;
+  orders: Order[];
 }
 
 
+
+export interface Address {
+  id?: string;
+  title: string;
+  fullName: string;
+  phone: string;
+  fullAddress: string;
+  city: string;
+  district: string;
+  zipCode: string;
+  country?: string;
+}
 
 export interface User {
   uid: string; // Firebase user ID
   email: string;
   fullName: string;
-  addresses?: any[]; // Will be properly typed when Address interface is used
+  addresses?: Address[];
   createdAt: string;
 }
 
