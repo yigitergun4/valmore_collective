@@ -14,6 +14,7 @@ import { createOrder } from "@/lib/firestore"; // New import
 import { useAlert } from "@/contexts/AlertContext";
 import { TURKISH_CITIES } from "@/lib/turkish-data";
 import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
+import { Order } from "@/types/admin/orders";
 
 
 export default function CheckoutPage(): React.JSX.Element | null {
@@ -52,7 +53,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
   useEffect(() => {
     if (user) {
       // Split user name into first and last name
-      const nameParts: string[] = user.name.split(" ");
+      const nameParts: string[] = user.fullName.split(" ");
       setFormData((prev) => ({
         ...prev,
         firstName: nameParts[0] || "",
@@ -158,9 +159,9 @@ export default function CheckoutPage(): React.JSX.Element | null {
 
       // Prepare order data
       const orderData = {
-        userId: user?.id || null, // null for guest users
+        userId: user?.uid || null, // null for guest users
         customer: {
-          id: user?.id || null,
+          id: user?.uid || null,
           fullName: `${formData.firstName} ${formData.lastName}`.trim(),
           email: formData.email,
           phone: '0' + formData.phone,

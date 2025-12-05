@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Mail, Lock, ArrowRight, ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
+import { auth } from "@/lib/firebase";
+import { setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 
 function LoginForm(): React.JSX.Element {
   const router = useRouter();
@@ -20,23 +22,46 @@ function LoginForm(): React.JSX.Element {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
 
+  // Load saved email and remember me preference on mount
+  useEffect(() => {
+    const savedEmail: string | null = localStorage.getItem("rememberedEmail");
+    const savedRememberMe: string | null = localStorage.getItem("rememberMe");
+    
+    if (savedEmail && savedRememberMe) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
-      const redirect = searchParams.get("redirect") || "/";
+      const redirect: string | null = searchParams.get("redirect") || "/";
       router.push(redirect);
     }
   }, [user, router, searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
+      // Set Firebase Auth persistence based on Remember Me checkbox
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      
+      const success: boolean = await login(email, password);
 
       if (success) {
-        const redirect = searchParams.get("redirect") || "/";
+        // Save or clear email in localStorage based on Remember Me checkbox
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", email);
+          localStorage.setItem("rememberMe", "true");
+        } else {
+          localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberMe");
+        }
+        
+        const redirect: string | null = searchParams.get("redirect") || "/";
         router.push(redirect);
         router.refresh();
       } else {
@@ -178,7 +203,6 @@ function LoginForm(): React.JSX.Element {
               </>
             )}
           </button>
-
           <div className="relative flex items-center justify-center my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
@@ -187,7 +211,6 @@ function LoginForm(): React.JSX.Element {
               {t("auth.login.or")}
             </div>
           </div>
-
           <GoogleAuthButton />
         </form>
       </div>

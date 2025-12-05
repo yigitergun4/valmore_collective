@@ -116,15 +116,16 @@ export interface AdminStats {
 
 
 export interface User {
-  id: string;
+  uid: string; // Firebase user ID
   email: string;
-  name: string;
+  fullName: string;
+  addresses?: any[]; // Will be properly typed when Address interface is used
   createdAt: string;
 }
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
