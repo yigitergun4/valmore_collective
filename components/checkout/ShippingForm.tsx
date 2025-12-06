@@ -133,7 +133,7 @@ export default function ShippingForm({
               type="tel"
               name="phone"
               value={
-                formData.phone.replace(/(\d{3})(\d{0,3})(\d{0,2})(\d{0,2})/, (match, p1, p2, p3, p4) => {
+                formData.phone.replace(/(\d{3})(\d{0,3})(\d{0,2})(\d{0,2})/, (match,p1, p2, p3, p4) => {
                   let result = p1;
                   if (p2) result += ' ' + p2;
                   if (p3) result += ' ' + p3;

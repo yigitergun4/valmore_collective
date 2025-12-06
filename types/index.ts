@@ -133,8 +133,10 @@ export interface User {
   uid: string; // Firebase user ID
   email: string;
   fullName: string;
+  phoneNumber: string;
   addresses?: Address[];
   createdAt: string;
+  gender: "Male" | "Female" | "NotSelected";
 }
 
 export interface AuthContextType {
