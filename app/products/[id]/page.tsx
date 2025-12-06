@@ -2,16 +2,13 @@ import { getAllProducts, getProductById, getRelatedProducts } from "@/lib/produc
 import ProductDetailClient from "./ProductDetailClient";
 import { Suspense } from "react";
 import { Product } from "@/types";
+import { PageProps } from "@/types/products";
 
 export async function generateStaticParams(): Promise<{ id: string }[]> {
   const products: Product[] = await getAllProducts();
-  return products.map((product) => ({
+  return products.map((product: Product) => ({
     id: product.id,
   }));
-}
-
-interface PageProps {
-  params: Promise<{ id: string }>;
 }
 
 export default async function ProductDetailPage({ params }: PageProps): Promise<React.JSX.Element> {

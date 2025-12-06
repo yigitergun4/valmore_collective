@@ -97,6 +97,8 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Beden Rehberi",
       productDescription: "Açıklama",
       shippingReturns: "Kargo & İade",
+      showMore: "Daha Fazla Göster",
+      showLess: "Daha Az Göster",
       freeShippingFrom: "1000 TL üzeri ücretsiz kargo",
       returnPolicy: "30 gün iade hakkı",
       share: "Paylaş",
@@ -107,6 +109,9 @@ export const translations: Record<Language, any> = {
       count: "Ürün",
       searchLabel: "Arama",
       categoriesLabel: "Kategoriler",
+      selectSize: "Lütfen beden seçiniz",
+      selectColor: "Lütfen renk seçiniz",
+      variantNotInStock: "Seçilen varyasyon stokta yok",
       categories: {
         all: "Tümü",
         shirts: "Gömlekler",
@@ -125,6 +130,9 @@ export const translations: Record<Language, any> = {
       clearFilter: "Filtreleri Temizle",
       applyFilter: "Filtreleri Uygula",
       price: "Fiyat",
+      material: "Malzeme",
+      fit: "Kalıp",
+      careInstructions: "Bakım Talimatları",
     },
     // Cart
     cart: {
@@ -217,6 +225,7 @@ export const translations: Record<Language, any> = {
         emailExists: "Bu e-posta adresi zaten kullanılıyor",
         back: "Ana Sayfaya Dön",
         google: "Google ile Kayıt Ol",
+        registrationFailed: "Kayıt başarısız. Lütfen tekrar deneyin",
       },
     },
     // About
@@ -492,6 +501,8 @@ export const translations: Record<Language, any> = {
       sizeGuide: "Size Guide",
       productDescription: "Description",
       shippingReturns: "Shipping & Returns",
+      showMore: "Show More",
+      showLess: "Show Less",
       freeShippingFrom: "Free shipping over 1000 TL",
       returnPolicy: "30 day return policy",
       share: "Share",
@@ -502,6 +513,9 @@ export const translations: Record<Language, any> = {
       count: "Products",
       searchLabel: "Search",
       categoriesLabel: "Categories",
+      selectSize: "Please select size",
+      selectColor: "Please select color",
+      variantNotInStock: "Selected variant is out of stock",
       categories: {
         all: "All",
         shirts: "Shirts",
@@ -520,6 +534,9 @@ export const translations: Record<Language, any> = {
       clearFilter: "Clear All",
       applyFilter: "Apply Filter",
       price: "Price",
+      material: "Material",
+      fit: "Fit",
+      careInstructions: "Care Instructions",
     },
     // Cart
     cart: {
@@ -612,6 +629,7 @@ export const translations: Record<Language, any> = {
         emailExists: "This email address is already in use",
         back: "Back to Home",
         google: "Sign up with Google",
+        registrationFailed: "Registration failed. Please try again.",
       },
     },
     // About

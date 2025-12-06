@@ -203,3 +203,15 @@ export interface AddressFormFieldsProps {
   /** Whether to use object spread pattern for updates (for complex forms) */
   useSpreadUpdate?: boolean;
 }
+
+export interface OptionSelectorProps {
+  label: string;
+  options: string[];
+  selectedOption: string;
+  onSelect: (option: string) => void;
+  disabled?: boolean;
+  /** List of options that should be disabled (e.g., unavailable sizes) */
+  disabledOptions?: string[];
+  /** Variant for different visual styles */
+  variant?: "default" | "compact";
+}

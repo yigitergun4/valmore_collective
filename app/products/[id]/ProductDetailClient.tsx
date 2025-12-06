@@ -17,6 +17,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import OptionSelector from "@/components/OptionSelector";
+import ProductInfo from "@/components/products/ProductInfo";
+import ExpandableText from "@/components/products/ExpandableText";
 import Link from "next/link";
 
 export default function ProductDetailClient({ 
@@ -48,7 +50,7 @@ export default function ProductDetailClient({
 
   // Filter images based on selected color using useMemo
   const displayImages:ProductImage[] = useMemo(() => {
-    const filtered = product.images.filter(img => 
+    const filtered:ProductImage[] = product.images.filter(img => 
       img.color === "Genel" || (selectedColor && img.color === selectedColor)
     );
     return filtered.length > 0 ? filtered : product.images;
@@ -72,6 +74,19 @@ export default function ProductDetailClient({
     }
     return product.inStock;
   }, [hasVariants, selectedColor, variants, product.inStock]);
+
+  // Determine unavailable sizes (sizes that should be disabled)
+  const unavailableSizes:string[] = useMemo(() => {
+    // If variant is not in stock, all sizes are unavailable
+    if (hasVariants && selectedColor && !isVariantInStock) {
+      return availableSizes;
+    }
+    // If product itself is not in stock, all sizes are unavailable
+    if (!hasVariants && !product.inStock) {
+      return product.sizes;
+    }
+    return [];
+  }, [hasVariants, selectedColor, isVariantInStock, availableSizes, product.inStock, product.sizes]);
 
   // Discount Logic
   const originalPrice:number = product.originalPrice || 0;
@@ -109,21 +124,21 @@ export default function ProductDetailClient({
   }
 
   // Check if we're in edit mode
-  const originalSize = searchParams.get("size");
-  const originalColor = searchParams.get("color");
-  const isEditMode = !!(originalSize && originalColor);
+  const originalSize:string | null = searchParams.get("size");
+  const originalColor:string | null = searchParams.get("color");
+  const isEditMode:boolean = !!(originalSize && originalColor);
 
   const handleAddToCart:React.MouseEventHandler<HTMLButtonElement> = async () => {
     if (!selectedSize && product.sizes.length > 0) {
-      showError("Lütfen bir beden seçiniz.");
+      showError(t("products.selectSize"));
       return;
     }
     
     // Variant Stock Check
     if (hasVariants && selectedColor) {
-      const variant = variants.find(v => v.color === selectedColor);
+      const variant:ProductVariant | undefined = variants.find(v => v.color === selectedColor);
       if (variant && !variant.inStock) {
-        showError("Seçilen varyasyon stokta yok.");
+        showError(t("products.variantNotInStock"));
         return;
       }
     }
@@ -238,10 +253,16 @@ export default function ProductDetailClient({
               </p>
             </div>
 
-            {/* Description */}
-            <p className="text-sm text-gray-700 leading-relaxed mb-10">
-              {product.description}
-            </p>
+            {/* Description - Truncated with Show More */}
+            <div className="mb-6">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-3">
+                {t("products.productDescription")}
+              </h3>
+              <ExpandableText text={product.description} maxLines={3} />
+            </div>
+
+            {/* Product Info (Material, Fit, Care) */}
+            <ProductInfo product={product} />
 
             {/* Colors */}
             {product.colors.length > 0 && (
@@ -266,6 +287,7 @@ export default function ProductDetailClient({
                   options={availableSizes.sort((a, b) => a.localeCompare(b))}
                   selectedOption={selectedSize}
                   onSelect={setSelectedSize}
+                  disabledOptions={unavailableSizes}
                 />
               </div>
             )}
@@ -369,40 +391,59 @@ export default function ProductDetailClient({
         </div>
 
         {/* Mobile Product Info */}
-        <div className="px-5 py-6">
-          <div className="flex justify-between items-start mb-2">
+        <div className="px-5 py-6 space-y-6">
+          {/* Product Name & Favorite */}
+          <div className="space-y-2">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+              REF. {product.id.substring(0, 8).toUpperCase()}
+            </p>
             <h1 className="text-2xl font-bold uppercase tracking-tight text-black">
               {product.name}
             </h1>
           </div>
           
-          <div className="flex items-baseline gap-3 mb-6">
+          {/* Price */}
+          <div className="flex items-baseline gap-3">
             {hasDiscount ? (
               <>
+                <span className="text-2xl font-bold text-black">
+                  {finalPrice.toFixed(2)} {t("products.currency")}
+                </span>
                 <span className="text-gray-400 line-through text-sm">
                   {originalPrice.toFixed(2)} {t("products.currency")}
                 </span>
-                <span className="text-xl font-bold text-black">
-                  {finalPrice.toFixed(2)} {t("products.currency")}
-                </span>
-                <span className="text-[10px] font-bold text-white bg-red-600 px-2 py-0.5 uppercase">
+                <span className="text-xs font-bold text-white bg-red-600 px-2 py-0.5">
                   -{discountPercentage}%
                 </span>
               </>
             ) : (
-              <span className="text-xl font-bold text-black">
+              <span className="text-2xl font-bold text-black">
                 {finalPrice.toFixed(2)} {t("products.currency")}
               </span>
             )}
           </div>
 
-          <p className="text-sm text-gray-600 leading-relaxed mb-8">
-            {product.description}
-          </p>
+          {/* Description - Expandable */}
+          <div>
+            <ExpandableText text={product.description} maxLines={3} />
+          </div>
 
+          {/* Product Info Accordions */}
+          <ProductInfo product={product} />
+
+          {/* Shipping Info Badge */}
+          <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-lg">
+            <Truck className="w-5 h-5 text-primary-600 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium text-gray-900">{t("products.freeShipping")}</p>
+              <p className="text-gray-500 text-xs">{t("products.freeShippingFrom")}</p>
+            </div>
+          </div>
+
+          {/* Add to Cart Button */}
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="w-full py-4 bg-primary-600 text-white font-bold uppercase tracking-widest hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
           >
             <span>
               {isUpdated
@@ -427,97 +468,75 @@ export default function ProductDetailClient({
             style={{ opacity: isDrawerOpen ? 1 : 0 }}
           />
 
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white z-10 pt-4 pb-2 flex justify-center border-b border-primary-100">
-              <div className="w-12 h-1.5 bg-primary-200 rounded-full" />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[80vh] overflow-y-auto shadow-2xl">
+            {/* Drawer Handle */}
+            <div className="sticky top-0 bg-white z-10 pt-3 pb-2 flex justify-center">
+              <div className="w-10 h-1 bg-gray-200 rounded-full" />
             </div>
 
-            <div className="p-6 space-y-8 pb-12">
+            <div className="px-6 pb-8 space-y-6">
               {/* Header in Drawer */}
-              <div className="flex-1">
-              <h2 className="text-2xl font-bold uppercase tracking-tight shadow-black drop-shadow-md">
-                {product.name}
-              </h2>
-              <p className="text-xl font-medium mt-1 drop-shadow-md">
-                {finalPrice.toFixed(2)} {t("products.currency")}
-              </p>
-            </div>
+              <div className="pt-2">
+                <h2 className="text-lg font-bold uppercase tracking-wide text-black">
+                  {product.name}
+                </h2>
+                <p className="text-lg font-medium text-black mt-1">
+                  {finalPrice.toFixed(2)} {t("products.currency")}
+                </p>
+              </div>
 
               {/* Color Selection */}
               {product.colors.length > 0 && (
-                <div>
-                  <OptionSelector
-                    label={t("products.color")}
-                    options={product.colors}
-                    selectedOption={selectedColor}
-                    onSelect={(color) => {
-                      setSelectedColor(color);
-                      setSelectedSize(""); // Reset size when color changes
-                    }}
-                  />
-                </div>
+                <OptionSelector
+                  label={t("products.color")}
+                  options={product.colors}
+                  selectedOption={selectedColor}
+                  onSelect={(color) => {
+                    setSelectedColor(color);
+                    setSelectedSize("");
+                  }}
+                  variant="compact"
+                />
               )}
 
               {/* Size Selection */}
               {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
-                <div>
-                  <OptionSelector
-                    label={t("products.size")}
-                    options={availableSizes}
-                    selectedOption={selectedSize}
-                    onSelect={setSelectedSize}
-                  />
-                </div>
+                <OptionSelector
+                  label={t("products.size")}
+                  options={availableSizes}
+                  selectedOption={selectedSize}
+                  onSelect={setSelectedSize}
+                  disabledOptions={unavailableSizes}
+                  variant="compact"
+                />
               )}
 
-              {/* Add Button */}
+              {/* Add to Cart Button */}
               <button
                 onClick={handleAddToCart}
                 disabled={!canAddToCart}
-                className={`w-full py-4 text-sm font-bold uppercase tracking-widest ${
+                className={`w-full py-4 text-sm font-bold uppercase tracking-widest transition-colors ${
                   canAddToCart
-                    ? "bg-primary-600 text-white hover:bg-primary-700 transition-colors"
-                    : "bg-gray-200 text-gray-400"
+                    ? "bg-black text-white hover:bg-gray-900"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
                 {!isSizeValid || !isColorValid
                   ? (!isSizeValid && !isColorValid
-                      ? "Lütfen Renk ve Beden Seçin"
+                      ? t("products.selectSizeColor")
                       : !isSizeValid
-                      ? "Lütfen Beden Seçin"
-                      : "Lütfen Renk Seçin")
+                      ? t("products.selectSize")
+                      : t("products.selectColor"))
                   : (product.inStock
-                      ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : (isUpdated
-                        ? t("products.cartUpdated")
-                        : isEditMode
-                          ? t("products.updateCart")
-                          : t("products.addToCart")))
+                      ? (hasVariants && selectedColor && !isVariantInStock 
+                          ? t("products.outOfStock") 
+                          : (isUpdated
+                              ? t("products.cartUpdated")
+                              : isEditMode
+                                ? t("products.updateCart")
+                                : t("products.addToCart")))
                       : t("products.outOfStock"))}
               </button>
-
-              {/* Details Accordion */}
-              <div className="border-t border-gray-100 pt-6 space-y-4">
-                <details className="group">
-                  <summary className="flex justify-between items-center font-bold uppercase text-sm cursor-pointer list-none">
-                    {t("products.productDescription")}
-                    <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <p className="mt-4 text-sm text-gray-600 leading-relaxed">
-                    {product.description}
-                  </p>
-                </details>
-
-                <details className="group">
-                  <summary className="flex justify-between items-center font-bold uppercase text-sm cursor-pointer list-none">
-                    {t("products.shippingReturns")}
-                    <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <div className="mt-4 text-sm text-gray-600 space-y-2">
-                    <p>{t("products.freeShippingFrom")}</p>
-                    <p>{t("products.returnPolicy")}</p>
-                  </div>
-                </details>
-              </div>
             </div>
           </div>
         </div>

@@ -26,8 +26,6 @@ export default function ProfilePage() {
     gender: "" as User["gender"],
   });
 
-
-
   // Password change modal state
   const [showPasswordModal, setShowPasswordModal] = useState<boolean>(false);
   const [passwordModalData, setPasswordModalData] = useState<{currentPassword: string, newPassword: string, confirmPassword: string}>({

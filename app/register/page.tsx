@@ -22,6 +22,9 @@ export default function RegisterPage(): React.JSX.Element {
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   
+  // Validation States
+  const passwordMinLength: number = 6;
+  
   // UI States
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -31,7 +34,7 @@ export default function RegisterPage(): React.JSX.Element {
   // Verification States
   const [step, setStep] = useState<'register' | 'verify'>('register');
 
-  const handleRegister = async (e: React.FormEvent): Promise<void> => {
+  const handleRegister: React.FormEventHandler<HTMLFormElement> = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError("");
 
@@ -41,7 +44,7 @@ export default function RegisterPage(): React.JSX.Element {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < passwordMinLength) {
       setError(t("auth.register.passwordTooShort"));
       return;
     }
@@ -49,7 +52,7 @@ export default function RegisterPage(): React.JSX.Element {
     setIsLoading(true);
 
     // Try to register first
-    const success = await register(name, email, password);
+    const success: boolean = await register(name, email, password);
 
     if (success) {
       // Send verification email
@@ -57,12 +60,12 @@ export default function RegisterPage(): React.JSX.Element {
       setIsLoading(false);
       setStep('verify');
     } else {
-      setError("Registration failed. Please try again.");
-      showError("Registration failed. Please try again.");
+      setError(t("auth.register.registrationFailed"));
+      showError(t("auth.register.registrationFailed"));
     }
   };
 
-  const handleResendEmail = async (): Promise<void> => {
+  const handleResendEmail: React.MouseEventHandler<HTMLButtonElement> = async (): Promise<void> => {
     setIsLoading(true);
     try {
       await sendVerificationEmail();
@@ -128,7 +131,6 @@ export default function RegisterPage(): React.JSX.Element {
                 placeholder="John Doe"
               />
             </div>
-
             <div>
               <label
                 htmlFor="email"
