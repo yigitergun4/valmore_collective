@@ -9,11 +9,8 @@ import { Order, getStatusBadgeColor } from "@/types/admin/orders";
 import { 
   Loader2, 
   ArrowLeft, 
-  Package, 
   Truck, 
-  MapPin, 
   CreditCard,
-  Calendar,
   Phone,
   Mail,
   User,
@@ -101,191 +98,206 @@ export default function OrderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="w-6 h-6 animate-spin text-black" />
       </div>
     );
   }
 
   if (!order) {
-    return (
-      <div className="text-center py-12">
-        <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">{t("orders.detail.notFound")}</p>
-        <Link href="/profile/orders" className="text-primary-600 underline mt-2 inline-block">
-          {t("orders.detail.backToOrders")}
-        </Link>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-gray-900">{t("orders.detail.title")}</h1>
-          <p className="text-sm text-gray-500">
-            {t("orders.detail.orderId")}: {order.id.slice(0, 8).toUpperCase()}
+      <div className="border-b border-gray-200 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-black transition-colors mb-4 group"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            {t("orders.detail.backToOrders")}
+          </button>
+          <h1 className="text-2xl font-light tracking-wide text-gray-900 uppercase">{t("orders.detail.title")}</h1>
+          <p className="text-sm text-gray-500 mt-2 font-mono">
+            #{order.id.toUpperCase()}
           </p>
         </div>
-        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(order.status)}`}>
-          {getStatusText(order.status)}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className={`px-2.5 py-0.5 rounded text-xs font-medium uppercase tracking-wide ${getStatusBadgeColor(order.status)}`}>
+            {getStatusText(order.status)}
+          </span>
+          <span className="text-sm text-gray-500">
+            {formatDate(order.createdAt)}
+          </span>
+        </div>
       </div>
 
-      {/* Order Date */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg w-fit">
-        <p>{t("orders.detail.orderDate")}</p>
-        <Calendar className="w-4 h-4 text-primary-600" />
-        <span>{formatDate(order.createdAt)}</span>
-      </div>
-
-      {/* Tracking Info */}
-      {order.status === "shipped" && order.trackingNumber && (
-        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Truck className="w-5 h-5 text-purple-600" />
-            <span className="font-medium text-purple-900">{t("orders.detail.tracking")}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-purple-700">{order.carrier}</p>
-              <p className="font-mono font-medium text-purple-900">{order.trackingNumber}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Left Column: Products */}
+        <div className="lg:col-span-2 space-y-8">
+          <div>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-900 mb-6 pb-2 border-b border-gray-100">
+              {t("orders.detail.products")}
+            </h2>
+            <div className="space-y-8">
+              {order.items.map((item, index) => (
+                <div key={index} className="flex gap-6">
+                  <div className="relative w-20 aspect-[3/4] bg-gray-100 flex-shrink-0">
+                    <Image
+                      src={item.image || "/placeholder.png"}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 py-1">
+                    <div className="flex justify-between items-start gap-4">
+                      <div>
+                        <h3 className="font-medium text-gray-900 uppercase tracking-wide text-sm">{item.name}</h3>
+                        <div className="mt-2 space-y-1">
+                          {item.selectedSize && (
+                            <p className="text-sm text-gray-500">
+                              <span className="uppercase text-xs tracking-wider mr-2">Size:</span>
+                              {item.selectedSize}
+                            </p>
+                          )}
+                          {item.selectedColor && (
+                            <p className="text-sm text-gray-500">
+                              <span className="uppercase text-xs tracking-wider mr-2">Color:</span>
+                              {item.selectedColor}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500">
+                            <span className="uppercase text-xs tracking-wider mr-2">Qty:</span>
+                            {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-medium text-gray-900 text-sm">
+                        {formatPrice(item.price * item.quantity)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <button
-              onClick={copyTrackingNumber}
-              className="p-2 hover:bg-purple-100 rounded-lg transition-colors"
-            >
-              {copiedTracking ? (
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-              ) : (
-                <Copy className="w-5 h-5 text-purple-600" />
+          </div>
+
+          {/* Tracking Info */}
+          {order.status === "shipped" && order.trackingNumber && (
+            <div className="bg-gray-50 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-gray-900" />
+                  <h3 className="text-sm font-medium uppercase tracking-wider text-gray-900">{t("orders.detail.tracking")}</h3>
+                </div>
+                <button
+                  onClick={copyTrackingNumber}
+                  className="text-xs text-gray-500 hover:text-black transition-colors flex items-center gap-1"
+                >
+                  {copiedTracking ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3" />
+                      {t("orders.detail.trackingCopied")}
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      Kopyala
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-600 uppercase tracking-wide">{order.carrier}</p>
+                <p className="font-mono text-lg text-gray-900 tracking-wider">{order.trackingNumber}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Summary & Info */}
+        <div className="space-y-8">
+          {/* Order Summary */}
+          <div className="bg-gray-50 p-6">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-900 mb-6">
+              {t("orders.detail.summary")}
+            </h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between text-gray-600">
+                <span>{t("orders.detail.subtotal")}</span>
+                <span>{formatPrice(order.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>{t("orders.detail.shipping")}</span>
+                <span>{formatPrice(order.shippingCost)}</span>
+              </div>
+              {order.discountTotal && order.discountTotal > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>{t("orders.detail.discount")}</span>
+                  <span>-{formatPrice(order.discountTotal)}</span>
+                </div>
               )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Order Items */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-700">{t("orders.detail.products")}</h2>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {order.items.map((item, index) => (
-            <div key={index} className="flex gap-4 p-4">
-              <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                <Image
-                  src={item.image || "/placeholder.png"}
-                  alt={item.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
-                <div className="flex gap-2 mt-1 text-sm text-gray-500">
-                  {item.selectedSize && (
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">{item.selectedSize}</span>
-                  )}
-                  {item.selectedColor && (
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">{item.selectedColor}</span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-gray-500">x{item.quantity}</span>
-                  <span className="font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</span>
+              <div className="border-t border-gray-200 pt-3 mt-3">
+                <div className="flex justify-between font-medium text-gray-900 text-base">
+                  <span>{t("orders.detail.total")}</span>
+                  <span>{formatPrice(order.total)}</span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Price Summary */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-700">{t("orders.detail.summary")}</h2>
-        </div>
-        <div className="p-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">{t("orders.detail.subtotal")}</span>
-            <span className="text-gray-700">{formatPrice(order.subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">{t("orders.detail.shipping")}</span>
-            <span className="text-gray-700">{formatPrice(order.shippingCost)}</span>
-          </div>
-          {order.discountTotal && order.discountTotal > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">{t("orders.detail.discount")}</span>
-              <span className="text-green-600">-{formatPrice(order.discountTotal)}</span>
-            </div>
-          )}
-          <div className="border-t border-gray-100 pt-2 mt-2">
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-900">{t("orders.detail.total")}</span>
-              <span className="font-bold text-lg text-gray-900">{formatPrice(order.total)}</span>
+          {/* Shipping Address */}
+          <div>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-900 mb-4 pb-2 border-b border-gray-100">
+              {t("orders.detail.shippingAddress")}
+            </h2>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p className="font-medium text-gray-900 mb-2">{order.shippingAddress.fullName}</p>
+              <p>{order.shippingAddress.address}</p>
+              <p>
+                {order.shippingAddress.district} / {order.shippingAddress.city}
+              </p>
+              {order.shippingAddress.zipCode && (
+                <p>{order.shippingAddress.zipCode}</p>
+              )}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Shipping Address */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-primary-600" />
-          <h2 className="text-sm font-semibold text-gray-700">{t("orders.detail.shippingAddress")}</h2>
-        </div>
-        <div className="p-4 space-y-1 text-sm">
-          <p className="font-medium text-gray-900">{order.shippingAddress.fullName}</p>
-          <p className="text-gray-600">{order.shippingAddress.address}</p>
-          <p className="text-gray-600">
-            {order.shippingAddress.district} / {order.shippingAddress.city}
-          </p>
-          {order.shippingAddress.zipCode && (
-            <p className="text-gray-500">{order.shippingAddress.zipCode}</p>
-          )}
-        </div>
-      </div>
+          {/* Customer Info */}
+          <div>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-900 mb-4 pb-2 border-b border-gray-100">
+              {t("orders.detail.customerInfo")}
+            </h2>
+            <div className="text-sm text-gray-600 space-y-2">
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-gray-400" />
+                <span>{order.customer.fullName}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-gray-400" />
+                <span>{order.customer.email}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <span>{order.customer.phone}</span>
+              </div>
+            </div>
+          </div>
 
-      {/* Customer Info */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-          <User className="w-4 h-4 text-primary-600" />
-          <h2 className="text-sm font-semibold text-gray-700">{t("orders.detail.customerInfo")}</h2>
-        </div>
-        <div className="p-4 space-y-3">
-          <div className="flex items-center gap-3 text-sm">
-            <User className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-700">{order.customer.fullName}</span>
+          {/* Payment Method */}
+          <div>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-900 mb-4 pb-2 border-b border-gray-100">
+              {t("orders.detail.payment")}
+            </h2>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <CreditCard className="w-4 h-4 text-gray-400" />
+              <span className="capitalize">{order.paymentMethod.replace("_", " ")}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Mail className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-700">{order.customer.email}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Phone className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-700">{order.customer.phone}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Method */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-primary-600" />
-          <h2 className="text-sm font-semibold text-gray-700">{t("orders.detail.payment")}</h2>
-        </div>
-        <div className="p-4">
-          <span className="text-sm text-gray-700 capitalize">{order.paymentMethod.replace("_", " ")}</span>
         </div>
       </div>
     </div>
