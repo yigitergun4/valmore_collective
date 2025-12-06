@@ -12,7 +12,6 @@ import {
   Heart,
   Share2,
   ChevronUp,
-  ChevronRight,
   Truck,
   ShieldCheck,
 } from "lucide-react";
@@ -39,7 +38,6 @@ export default function ProductDetailClient({
   
   const isFavorited:boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
 
   // Reset success state when user changes size or color
@@ -159,8 +157,6 @@ export default function ProductDetailClient({
       // Normal add to cart flow
       await addToCart(product, effectiveSize, effectiveColor);
     }
-    
-    setIsDrawerOpen(false);
   };
 
   const isSizeValid:boolean = product.sizes?.length > 0 ? !!selectedSize : true;
@@ -376,7 +372,7 @@ export default function ProductDetailClient({
                   src={image.url}
                   alt={`${product.name} - ${index + 1}`}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="100vw"
                   priority={index === 0}
                 />
@@ -384,16 +380,25 @@ export default function ProductDetailClient({
             ))}
           </div>
           
-          {/* Image Counter */}
-          <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full">
-            {currentImageIndex + 1} / {displayImages.length}
+          {/* Progress Indicator */}
+          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-4 pb-3">
+            {displayImages.map((_, index) => (
+              <div
+                key={index}
+                className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? "bg-primary"
+                    : "bg-white/20"
+                }`}
+              />
+            ))}
           </div>
         </div>
 
         {/* Mobile Product Info */}
         <div className="px-5 py-6 space-y-6">
-          {/* Product Name & Favorite */}
-          <div className="space-y-2">
+          {/* Product Name & Reference */}
+          <div className="space-y-1">
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
               REF. {product.id.substring(0, 8).toUpperCase()}
             </p>
@@ -423,8 +428,35 @@ export default function ProductDetailClient({
             )}
           </div>
 
+          {/* Color Selection - Inline */}
+          {product.colors.length > 0 && (
+            <OptionSelector
+              label={t("products.color")}
+              options={product.colors}
+              selectedOption={selectedColor}
+              onSelect={(color) => {
+                setSelectedColor(color);
+                setSelectedSize("");
+              }}
+            />
+          )}
+
+          {/* Size Selection - Inline */}
+          {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
+            <OptionSelector
+              label={t("products.size")}
+              options={availableSizes}
+              selectedOption={selectedSize}
+              onSelect={setSelectedSize}
+              disabledOptions={unavailableSizes}
+            />
+          )}
+
           {/* Description - Expandable */}
-          <div>
+          <div className="pt-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-2">
+              {t("products.productDescription")}
+            </h3>
             <ExpandableText text={product.description} maxLines={3} />
           </div>
 
@@ -439,106 +471,35 @@ export default function ProductDetailClient({
               <p className="text-gray-500 text-xs">{t("products.freeShippingFrom")}</p>
             </div>
           </div>
-
-          {/* Add to Cart Button */}
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            className="w-full py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
-          >
-            <span>
-              {isUpdated
-                ? t("products.cartUpdated")
-                : isEditMode
-                  ? t("products.updateCart")
-                  : t("products.addToCart")}
-            </span>
-            <ChevronUp className="w-4 h-4" />
-          </button>
         </div>
 
-        {/* Bottom Drawer */}
-        <div
-          className={`fixed inset-0 z-50 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            isDrawerOpen ? "translate-y-0" : "translate-y-full"
-          }`}
-        >
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500"
-            onClick={() => setIsDrawerOpen(false)}
-            style={{ opacity: isDrawerOpen ? 1 : 0 }}
-          />
-
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[80vh] overflow-y-auto shadow-2xl">
-            {/* Drawer Handle */}
-            <div className="sticky top-0 bg-white z-10 pt-3 pb-2 flex justify-center">
-              <div className="w-10 h-1 bg-gray-200 rounded-full" />
-            </div>
-
-            <div className="px-6 pb-8 space-y-6">
-              {/* Header in Drawer */}
-              <div className="pt-2">
-                <h2 className="text-lg font-bold uppercase tracking-wide text-black">
-                  {product.name}
-                </h2>
-                <p className="text-lg font-medium text-black mt-1">
-                  {finalPrice.toFixed(2)} {t("products.currency")}
-                </p>
-              </div>
-
-              {/* Color Selection */}
-              {product.colors.length > 0 && (
-                <OptionSelector
-                  label={t("products.color")}
-                  options={product.colors}
-                  selectedOption={selectedColor}
-                  onSelect={(color) => {
-                    setSelectedColor(color);
-                    setSelectedSize("");
-                  }}
-                  variant="compact"
-                />
-              )}
-
-              {/* Size Selection */}
-              {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
-                <OptionSelector
-                  label={t("products.size")}
-                  options={availableSizes}
-                  selectedOption={selectedSize}
-                  onSelect={setSelectedSize}
-                  disabledOptions={unavailableSizes}
-                  variant="compact"
-                />
-              )}
-
-              {/* Add to Cart Button */}
-              <button
-                onClick={handleAddToCart}
-                disabled={!canAddToCart}
-                className={`w-full py-4 text-sm font-bold uppercase tracking-widest transition-colors ${
-                  canAddToCart
-                    ? "bg-black text-white hover:bg-gray-900"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                {!isSizeValid || !isColorValid
-                  ? (!isSizeValid && !isColorValid
-                      ? t("products.selectSizeColor")
-                      : !isSizeValid
-                      ? t("products.selectSize")
-                      : t("products.selectColor"))
-                  : (product.inStock
-                      ? (hasVariants && selectedColor && !isVariantInStock 
-                          ? t("products.outOfStock") 
-                          : (isUpdated
-                              ? t("products.cartUpdated")
-                              : isEditMode
-                                ? t("products.updateCart")
-                                : t("products.addToCart")))
-                      : t("products.outOfStock"))}
-              </button>
-            </div>
-          </div>
+        {/* Sticky Bottom Bar */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 px-5 py-4 shadow-lg">
+          <button
+            onClick={handleAddToCart}
+            disabled={!canAddToCart}
+            className={`w-full py-4 text-sm font-bold uppercase tracking-widest transition-colors ${
+              canAddToCart
+                ? "bg-primary-600 text-white hover:bg-primary-700"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {!isSizeValid || !isColorValid
+              ? (!isSizeValid && !isColorValid
+                  ? t("products.selectSizeColor")
+                  : !isSizeValid
+                  ? t("products.selectSize")
+                  : t("products.selectColor"))
+              : (product.inStock
+                  ? (hasVariants && selectedColor && !isVariantInStock 
+                      ? t("products.outOfStock") 
+                      : (isUpdated
+                          ? t("products.cartUpdated")
+                          : isEditMode
+                            ? t("products.updateCart")
+                            : t("products.addToCart")))
+                  : t("products.outOfStock"))}
+          </button>
         </div>
       </div>
 

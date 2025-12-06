@@ -41,7 +41,7 @@ export default function OptionSelector({
                   ? "border-primary bg-primary text-white"
                   : isOptionDisabled
                     ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through"
-                    : "border-gray-300 bg-white text-gray-900 hover:border-black cursor-pointer"
+                    : "border-gray-300 bg-white text-gray-900 hover:border-primary cursor-pointer"
                 }
               `}
             >
