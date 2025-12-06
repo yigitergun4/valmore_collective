@@ -15,7 +15,10 @@ export default function ProfileLayout({
   const { logout } = useAuth();
   const { t } = useLanguage();
 
-  const menuItems = [
+  // Check if we're on an order detail page
+  const isOrderDetailPage: boolean = pathname.startsWith("/profile/orders/") && pathname !== "/profile/orders";
+
+  const menuItems: { title: string; href: string; icon: React.ReactNode }[] = [
     {
       title: t("profile.sidebar.profile"),
       href: "/profile",
@@ -33,18 +36,32 @@ export default function ProfileLayout({
     },
   ];
 
+  // For order detail pages, render without sidebar
+  if (isOrderDetailPage) {
+    return (
+      <div className="min-h-screen bg-white pt-24 pb-12">
+        <div className="container mx-auto px-4">
+          <main className="w-full">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 lg:p-8 shadow-sm">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white pt-24 pb-12">
       <div className="container mx-auto px-4">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
+          {/* Sidebar - hidden on mobile */}
+          <aside className="hidden lg:block w-full lg:w-64 flex-shrink-0">
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 sticky top-24">
               <div className="mb-6">
                 <h2 className="text-lg font-bold text-gray-900">{t("profile.sidebar.myAccount")}</h2>
                 <p className="text-sm text-gray-500">{t("profile.sidebar.manageAccount")}</p>
               </div>
-              
               <nav className="space-y-1">
                 {menuItems.map((item) => {
                   const isActive = pathname === item.href;
@@ -74,10 +91,9 @@ export default function ProfileLayout({
               </nav>
             </div>
           </aside>
-
           {/* Main Content */}
           <main className="flex-1 min-w-0">
-            <div className="bg-white rounded-xl border border-gray-100 p-6 lg:p-8 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 lg:p-8 shadow-sm">
               {children}
             </div>
           </main>
@@ -86,4 +102,3 @@ export default function ProfileLayout({
     </div>
   );
 }
-

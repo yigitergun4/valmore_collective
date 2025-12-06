@@ -2,6 +2,11 @@ export type Language = "tr" | "en";
 
 export const translations: Record<Language, any> = {
   tr: {
+    common: {
+      previous: "Önceki",
+      next: "Sonraki",
+      pageOf: "Sayfa {current} / {total}",
+    },
     // Navigation
     nav: {
       home: "Ana Sayfa",
@@ -318,6 +323,10 @@ export const translations: Record<Language, any> = {
       emptyDesc: "Alışveriş yapmaya başladığınızda siparişleriniz burada görünecek.",
       startShopping: "Alışverişe Başla",
       items: "ürün",
+      size: "Beden",
+      color: "Renk",
+      quantity: "Adet",
+      moreItems: "ürün daha",
       viewDetails: "Detayları Gör",
       deliveredTo: "Teslim edildi",
       status: {
@@ -386,6 +395,11 @@ export const translations: Record<Language, any> = {
     },
   },
   en: {
+    common: {
+      previous: "Previous",
+      next: "Next",
+      pageOf: "Page {current} of {total}",
+    },
     // Navigation
     nav: {
       home: "Home",
@@ -703,6 +717,10 @@ export const translations: Record<Language, any> = {
       emptyDesc: "Your orders will appear here once you start shopping.",
       startShopping: "Start Shopping",
       items: "items",
+      size: "Size",
+      color: "Color",
+      quantity: "Qty",
+      moreItems: "more items",
       viewDetails: "View Details",
       deliveredTo: "Delivered to",
       status: {
