@@ -4,20 +4,22 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getUserProfile, addAddress, updateAddress, deleteAddress } from "@/lib/firestore/users";
-import { Address } from "@/types";
+import { Address, User } from "@/types";
 import { TURKISH_CITIES } from "@/lib/turkish-data";
 import { toast } from "react-hot-toast";
 import { Loader2, Plus, MapPin, Pencil, Trash2, X, AlertCircle } from "lucide-react";
 import { FormErrors } from "@/types/profile";
+import AddressFormFields from "@/components/shared/AddressFormFields";
+import { AddressFormData } from "@/types";
 
 export default function AddressesPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   // Form State
@@ -34,7 +36,7 @@ export default function AddressesPage() {
   const fetchAddresses: () => Promise<void> = async () => {
     if (user?.uid) {
       try {
-        const profile = await getUserProfile(user.uid);
+        const profile: User | null = await getUserProfile(user.uid);
         if (profile) {
           setAddresses(profile.addresses || []);
         }
@@ -59,10 +61,12 @@ export default function AddressesPage() {
       newErrors.fullName = t("addresses.validation.nameMinLength");
     }
 
-    // Phone validation (10 digits)
+    // Phone validation (must start with 5 and be 10 digits)
     const phoneDigits: string = formData.phone.replace(/\D/g, "");
     if (phoneDigits.length !== 10) {
       newErrors.phone = t("addresses.validation.phoneInvalid");
+    } else if (!phoneDigits.startsWith("5")) {
+      newErrors.phone = t("addresses.validation.phoneMustStart5");
     }
 
     // Full address validation (min 10 chars)
@@ -157,26 +161,8 @@ export default function AddressesPage() {
     }
   };
 
-  // Format phone number as user types
-  const handlePhoneChange: (value: string) => void = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 10);
-    setFormData({ ...formData, phone: digits });
-    if (errors.phone) {
-      setErrors({ ...errors, phone: undefined });
-    }
-  };
-
-  // Format zip code as user types
-  const handleZipChange: (value: string) => void = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 5);
-    setFormData({ ...formData, zipCode: digits });
-    if (errors.zipCode) {
-      setErrors({ ...errors, zipCode: undefined });
-    }
-  };
-
   // Get districts based on selected city
-  const districts = TURKISH_CITIES.find(c => c.name === formData.city)?.districts || [];
+  const districts: string[] = TURKISH_CITIES.find(c => c.name === formData.city)?.districts || [];
 
   if (isLoading) {
     return (
@@ -226,7 +212,7 @@ export default function AddressesPage() {
                   </div>
                   <h3 className="font-bold text-gray-900">{address.title}</h3>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleOpenModal(address)}
                     className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
@@ -307,124 +293,18 @@ export default function AddressesPage() {
                       <AlertCircle className="w-3 h-3" />
                       {errors.fullName}
                     </p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t("addresses.phone")}
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    className={`w-full h-10 px-3 border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm ${
-                      errors.phone ? "border-red-300 bg-red-50" : "border-gray-200"
-                    }`}
-                    placeholder="5XX XXX XX XX"
-                    required
-                  />
-                  {errors.phone && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.phone}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* City */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t("addresses.city")}
-                  </label>
-                  <select
-                    value={formData.city}
-                    onChange={(e) => {
-                      setFormData({ ...formData, city: e.target.value, district: "" });
-                    }}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
-                    required
-                  >
-                    <option value="">{t("addresses.select")}</option>
-                    {TURKISH_CITIES.map((city) => (
-                      <option key={city.name} value={city.name}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* District */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t("addresses.district")}
-                  </label>
-                  <select
-                    value={formData.district}
-                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
-                    required
-                    disabled={!formData.city}
-                  >
-                    <option value="">{t("addresses.select")}</option>
-                    {districts.map((district) => (
-                      <option key={district} value={district}>
-                        {district}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Full Address */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("addresses.fullAddress")}
-                </label>
-                <textarea
-                  value={formData.fullAddress}
-                  onChange={(e) => {
-                    setFormData({ ...formData, fullAddress: e.target.value });
-                    if (errors.fullAddress) setErrors({ ...errors, fullAddress: undefined });
-                  }}
-                  rows={3}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm resize-none ${
-                    errors.fullAddress ? "border-red-300 bg-red-50" : "border-gray-200"
-                  }`}
-                  required
-                />
-                {errors.fullAddress && (
-                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.fullAddress}
-                  </p>
                 )}
+                </div>
               </div>
 
-              {/* Zip Code */}
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("addresses.zipCode")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.zipCode}
-                  onChange={(e) => handleZipChange(e.target.value)}
-                  className={`w-full h-10 px-3 border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm ${
-                    errors.zipCode ? "border-red-300 bg-red-50" : "border-gray-200"
-                  }`}
-                  placeholder="34000"
-                />
-                {errors.zipCode && (
-                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.zipCode}
-                  </p>
-                )}
-              </div>
+              {/* Shared Address Form Fields */}
+              <AddressFormFields
+                formData={formData as AddressFormData}
+                setFormData={(updates: Partial<AddressFormData>) => setFormData(prev => ({ ...prev, ...updates }))}
+                errors={errors as Record<string, string | undefined>}
+                setErrors={(newErrors: Record<string, string | undefined>) => setErrors(newErrors as FormErrors)}
+                useSpreadUpdate
+              />
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button

@@ -186,3 +186,20 @@ export interface CheckoutFormData {
   cardExpiry: string;
   cardCVC: string;
 }
+
+export interface AddressFormData {
+  phone: string;
+  city: string;
+  district: string;
+  fullAddress: string;
+  zipCode: string;
+}
+
+export interface AddressFormFieldsProps {
+  formData: AddressFormData;
+  setFormData: React.Dispatch<React.SetStateAction<AddressFormData>> | ((updates: Partial<AddressFormData>) => void);
+  errors: Record<string, string | undefined>;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>> | ((updates: Record<string, string | undefined>) => void);
+  /** Whether to use object spread pattern for updates (for complex forms) */
+  useSpreadUpdate?: boolean;
+}

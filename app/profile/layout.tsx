@@ -55,8 +55,8 @@ export default function ProfileLayout({
     <div className="min-h-screen bg-white pt-24 pb-12">
       <div className="container mx-auto px-4">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar - hidden on mobile */}
-          <aside className="hidden lg:block w-full lg:w-64 flex-shrink-0">
+          {/* Sidebar - visible on mobile */}
+          <aside className="w-full lg:w-64 flex-shrink-0">
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 sticky top-24">
               <div className="mb-6">
                 <h2 className="text-lg font-bold text-gray-900">{t("profile.sidebar.myAccount")}</h2>

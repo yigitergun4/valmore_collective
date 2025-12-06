@@ -371,6 +371,7 @@ export const translations: Record<Language, any> = {
       district: "İlçe",
       fullAddress: "Açık Adres",
       zipCode: "Posta Kodu",
+      country: "Ülke",
       select: "Seçiniz",
       cancel: "İptal",
       save: "Kaydet",
@@ -388,6 +389,7 @@ export const translations: Record<Language, any> = {
       },
       validation: {
         phoneInvalid: "Geçerli bir telefon numarası girin (10 haneli)",
+        phoneMustStart5: "Telefon numarası 5 ile başlamalıdır",
         zipInvalid: "Posta kodu 5 haneli olmalıdır",
         nameMinLength: "Ad Soyad en az 3 karakter olmalıdır",
         addressMinLength: "Açık adres en az 10 karakter olmalıdır",
@@ -765,6 +767,7 @@ export const translations: Record<Language, any> = {
       district: "District",
       fullAddress: "Full Address",
       zipCode: "Zip Code",
+      country: "Country",
       select: "Select",
       cancel: "Cancel",
       save: "Save",
@@ -782,6 +785,7 @@ export const translations: Record<Language, any> = {
       },
       validation: {
         phoneInvalid: "Enter a valid phone number (10 digits)",
+        phoneMustStart5: "Phone number must start with 5",
         zipInvalid: "Zip code must be 5 digits",
         nameMinLength: "Full name must be at least 3 characters",
         addressMinLength: "Address must be at least 10 characters",
