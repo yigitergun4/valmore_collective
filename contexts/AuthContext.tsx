@@ -34,6 +34,8 @@ export function AuthProvider({ children }: ProviderProps) {
           email: firebaseUser.email || '',
           fullName: firebaseUser.displayName || '',
           addresses: [],
+          phoneNumber: '',
+          gender: "NotSelected",
           createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
         };
         setUser(userData);
@@ -76,6 +78,8 @@ export function AuthProvider({ children }: ProviderProps) {
         email: result.user.email || '',
         fullName: result.user.displayName || '',
         addresses: [],
+        phoneNumber: '',
+        gender: "NotSelected",
         createdAt: result.user.metadata.creationTime || new Date().toISOString(),
       };
       setUser(userData);
