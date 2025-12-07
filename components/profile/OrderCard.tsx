@@ -48,14 +48,17 @@ export default function OrderCard({ order }: OrderCardProps) {
           <span className={`px-2.5 py-1 rounded text-xs font-medium uppercase tracking-wide ${getStatusBadgeColor(order.status)}`}>
             {getStatusText(order.status)}
           </span>
-          <span className="text-xs text-gray-400 font-mono">
-            #{order.id.slice(0, 8).toUpperCase()}
-          </span>
+          <div className="flex items-center gap-1.5 ">
+            <span className="text-xs text-gray-500">{t("orders.detail.orderId")}:</span>
+            <span className="text-xs text-gray-900 font-mono font-medium">
+              #{order.id.toUpperCase()}
+            </span>
+          </div>
         </div>
         
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-gray-500">{formatDate(order.createdAt)}</span>
-          <span className="font-semibold text-gray-900">{formatPrice(order.total)}</span>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-xs text-gray-500">{t("orders.orderDate")}:</span>
+          <span className="text-gray-700 font-medium">{formatDate(order.createdAt)}</span>
         </div>
       </div>
 

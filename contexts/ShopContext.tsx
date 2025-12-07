@@ -151,6 +151,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart: (product: Product, size: string, color: string) => Promise<boolean> = async (product: Product, size: string, color: string): Promise<boolean> => {
     try {
+      // Find variant to get Barcode
+      const variant = product.variants?.find(
+        (v: any) => v.color === color && v.size === size 
+      ) || product.variants?.find(
+        (v: any) => v.color === color && v.sizes?.includes(size)
+      );
+
       const newItem: CartItem = {
         productId: product.id,
         name: product.name,
@@ -159,6 +166,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         selectedSize: size,
         selectedColor: color,
         quantity: 1,
+        barcode: variant?.barcode || product.barcode,
         updatedAt: Date.now(),
       };
 

@@ -197,7 +197,7 @@ export default function OrderDetailPage() {
               </h2>
             </div>
             <div className="divide-y divide-gray-100">
-              {order.items.map((item, index) => (
+              {order.items.map((item, index:number) => (
                 <div key={index} className="p-6 flex gap-4">
                   <div className="relative w-20 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     <Image
@@ -214,6 +214,7 @@ export default function OrderDetailPage() {
                         <div className="mt-1 space-y-1">
                           <p className="text-sm text-gray-500">Beden: {item.selectedSize}</p>
                           <p className="text-sm text-gray-500">Renk: {item.selectedColor}</p>
+                          {item.barcode && <p className="text-sm text-gray-500">Barkod: {item.barcode}</p>}
                         </div>
                       </div>
                       <p className="font-medium text-gray-900">

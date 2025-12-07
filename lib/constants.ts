@@ -21,6 +21,12 @@ export const shoeSizes: string[] = ["36", "37", "38", "39", "40", "41", "42", "4
 export const SHIPPING_COST: number = 100;
 export const FREE_SHIPPING_THRESHOLD: number = 1000;
 
+export const GENDER_OPTIONS = [
+    { value: 'Male', label: 'Erkek' },
+    { value: 'Female', label: 'Kadın' },
+    { value: 'Unisex', label: 'Unisex' },
+] as const;
+
 export const PRODUCT_CATEGORIES: readonly ProductCategory[] = [
     // Clothing
     { value: "Tişörtler", label: "Tişörtler", type: "clothing", translationKey: "tshirts" },

@@ -338,6 +338,7 @@ export const translations: Record<Language, any> = {
       moreItems: "ürün daha",
       viewDetails: "Detayları Gör",
       deliveredTo: "Teslim edildi",
+      orderDate: "Sipariş Tarihi",
       status: {
         pending: "Beklemede",
         processing: "Hazırlanıyor",
@@ -743,6 +744,7 @@ export const translations: Record<Language, any> = {
       moreItems: "more items",
       viewDetails: "View Details",
       deliveredTo: "Delivered to",
+      orderDate: "Order Date",
       status: {
         pending: "Pending",
         processing: "Processing",

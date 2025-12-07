@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useMemo, JSX } from "react";
-import { Product, ProductVariant, ProductImage } from "@/types";
+import React, { useState, useRef, useMemo, useEffect, JSX } from "react";
+import { Product, ProductImage, ProductVariant } from "@/types";
+import { useVariations } from "@/hooks/useVariations";
 import { uploadProductImage } from "@/lib/firestore/products";
-import { X, Upload, Plus, Info, Edit2, Save, Loader2, Trash2 } from "lucide-react";
+import { X, Upload, Plus, Info, Edit2, Save, Loader2, Trash2, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import {
@@ -12,12 +13,16 @@ import {
   getSizePlaceholder,
   isSizeRequired,
   clothingSizes,
-  shoeSizes
+  shoeSizes,
+  GENDER_OPTIONS
 } from "@/lib/constants";
 import { CompressionOptions } from "@/types/admin";
-import { ProductFormProps, GENDER_OPTIONS, LocalImage } from "@/types";
+import { ProductFormProps, LocalImage } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/Input";
+import { Switch } from "@/components/ui/Switch";
 import toast from "react-hot-toast";
+import { Variation, generateUUID } from "@/types/variations";
 
 
 export default function ProductForm({
@@ -30,6 +35,34 @@ export default function ProductForm({
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   // --- 1. Data Structure & State ---
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Convert existing ProductVariant[] to Variation[] format for editing
+  const initialVariationsFromProps: Variation[] = useMemo(() => {
+    if (!initialData?.variants || initialData.variants.length === 0) {
+      return [];
+    }
+    
+    // Flatten ProductVariant (which has sizes: string[]) into Variation (which has size: string)
+    const flattened: Variation[] = [];
+    initialData.variants.forEach((variant: ProductVariant) => {
+      variant.sizes.forEach((size: string) => {
+        flattened.push({
+          id: generateUUID(),
+          color: variant.color,
+          size: size,
+          sku: variant.sku || `${initialData.name?.toUpperCase().replace(/\s+/g, '')}-${variant.color.toUpperCase()}-${size}`,
+          barcode: variant.barcode || "",
+          stockStatus: variant.inStock,
+        });
+      });
+    });
+    return flattened;
+  }, [initialData?.variants, initialData?.name]);
 
   const [formData, setFormData] = useState<Omit<Product, "id" | "createdAt">>({
     name: initialData?.name || "",
@@ -58,16 +91,25 @@ export default function ProductForm({
   const [hasDiscount, setHasDiscount] = useState<boolean>(initialData?.isDiscounted || false);
   const [discountedPrice, setDiscountedPrice] = useState<number>(initialData?.isDiscounted ? initialData.price : 0);
 
-  // Variant Builder State
-  const [variants, setVariants] = useState<ProductVariant[]>(initialData?.variants || []);
-  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null);
-  
-  // New Variant Inputs
+  // Variant Builder State - Using custom hook with initial data from existing product
+  const {
+    variations,
+    addVariations,
+    updateVariation,
+    removeVariation,
+    removeByColor,
+    getUniqueColors,
+    getUniqueSizes,
+    hasInStock,
+    reset: resetVariations,
+    groupedByColor,
+  } = useVariations(initialVariationsFromProps);
+
+  // New Variant Input State
   const [newVariantColor, setNewVariantColor] = useState<string>("");
-  const [newVariantSizes, setNewVariantSizes] = useState<string>(""); // Comma separated for manual input
   const [selectedPredefinedSizes, setSelectedPredefinedSizes] = useState<string[]>([]);
+  const [newVariantSizes, setNewVariantSizes] = useState<string>(""); // Comma separated for manual input
   const [newVariantStock, setNewVariantStock] = useState<boolean>(true);
-  const [newVariantSku, setNewVariantSku] = useState<string>("");
   const [newVariantBarcode, setNewVariantBarcode] = useState<string>("");
 
   // Simple Mode Inputs
@@ -76,16 +118,19 @@ export default function ProductForm({
 
   const [uploading, setUploading] = useState<boolean>(false);
   const [compressionStatus, setCompressionStatus] = useState<string>("");
+  
+  // Expanded color groups for accordion
+  const [expandedColors, setExpandedColors] = useState<Set<string>>(new Set());
 
   // --- Derived State ---
 
   // Derive available colors for image dropdown
   const availableColors: string[] = useMemo(() => {
     if (formData.hasVariants) {
-      return Array.from(new Set(variants.map(v => v.color))).filter(Boolean);
+      return getUniqueColors();
     }
     return formData.colors;
-  }, [formData.hasVariants, variants, formData.colors]);
+  }, [formData.hasVariants, variations, formData.colors, getUniqueColors]);
 
   // --- Handlers ---
 
@@ -221,17 +266,17 @@ export default function ProductForm({
     }));
   };
 
-  // --- Variant Management ---
+  // --- Variant Management (Flat Array) ---
 
-  const handleAddVariant: () => void = () => {
+  const handleAddVariation: () => void = (): void => {
     if (!newVariantColor) {
       toast.error("Lütfen bir renk giriniz.");
       return;
     }
 
     let sizes: string[] = [];
-    const categoryType = getCategoryType(formData.category);
-    const hasPredefined = categoryType === 'shoes' || categoryType === 'clothing';
+    const categoryType: string = getCategoryType(formData.category);
+    const hasPredefined: boolean = categoryType === 'shoes' || categoryType === 'clothing';
 
     if (hasPredefined) {
       if (selectedPredefinedSizes.length === 0 && isSizeRequired(formData.category)) {
@@ -241,36 +286,32 @@ export default function ProductForm({
       sizes = [...selectedPredefinedSizes];
     } else {
       sizes = newVariantSizes.split(",").map(s => s.trim()).filter(Boolean);
+      if (sizes.length === 0) {
+        sizes = ["Standard"];
+      }
     }
 
-    const newVariant: ProductVariant = {
+    // Add variations using hook (includes duplicate validation and auto-SKU)
+    const success: boolean = addVariations({
+      productName: formData.name || "URUN",
       color: newVariantColor,
       sizes,
-      inStock: newVariantStock,
-      sku: newVariantSku,
-      barcode: newVariantBarcode
-    };
+      stockStatus: newVariantStock,
+      barcode: newVariantBarcode,
+    });
 
-    if (editingVariantIndex !== null) {
-      setVariants(prev => prev.map((v, i) => i === editingVariantIndex ? newVariant : v));
-      setEditingVariantIndex(null);
-      toast.success("Varyasyon güncellendi.");
-    } else {
-      setVariants([...variants, newVariant]);
-      toast.success("Varyasyon eklendi.");
+    if (success) {
+      toast.success(`${sizes.length} varyasyon eklendi.`);
+      // Reset fields
+      setNewVariantColor("");
+      setNewVariantSizes("");
+      setSelectedPredefinedSizes([]);
+      setNewVariantStock(true);
+      setNewVariantBarcode("");
     }
-
-    // Reset fields
-    setNewVariantColor("");
-    setNewVariantSizes("");
-    setSelectedPredefinedSizes([]);
-    setNewVariantStock(true);
-    setNewVariantSku("");
-    setNewVariantBarcode("");
   };
 
-  const handleBarcodeChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // sadece numeric olmalı
+  const handleBarcodeChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { value } = e.target;
     if (!/^[0-9]*$/.test(value)) {
       return;
@@ -278,36 +319,13 @@ export default function ProductForm({
     setNewVariantBarcode(value);
   };
 
-  const handleEditVariant: (index: number) => void = (index: number) => {
-    const variant = variants[index];
-    setEditingVariantIndex(index);
-    setNewVariantColor(variant.color);
-    setNewVariantStock(variant.inStock);
-    setNewVariantSku(variant.sku || "");
-    setNewVariantBarcode(variant.barcode || "");
-
-    const categoryType = getCategoryType(formData.category);
-    if (categoryType === 'shoes' || categoryType === 'clothing') {
-      setSelectedPredefinedSizes(variant.sizes);
-      setNewVariantSizes("");
-    } else {
-      setNewVariantSizes(variant.sizes.join(", "));
-      setSelectedPredefinedSizes([]);
-    }
+  const handleDeleteVariation: (id: string) => void = (id: string): void => {
+    removeVariation(id);
+    toast.success("Varyasyon silindi.");
   };
 
-  const handleDeleteVariant: (index: number) => void = (index: number) => {
-    setVariants(prev => prev.filter((_, i) => i !== index));
-    if (editingVariantIndex === index) {
-      setEditingVariantIndex(null);
-      // Reset form
-      setNewVariantColor("");
-      setNewVariantSizes("");
-      setSelectedPredefinedSizes([]);
-      setNewVariantStock(true);
-      setNewVariantSku("");
-      setNewVariantBarcode("");
-    }
+  const handleToggleStock: (id: string, currentStatus: boolean) => void = (id: string, currentStatus: boolean): void => {
+    updateVariation(id, { stockStatus: !currentStatus });
   };
 
   // --- 3. Smart Validation & Submission ---
@@ -346,19 +364,18 @@ export default function ProductForm({
       let finalInStock: boolean = formData.inStock;
 
       if (formData.hasVariants) {
-        finalColors = Array.from(new Set(variants.map(v => v.color)));
-        finalSizes = Array.from(new Set(variants.flatMap(v => v.sizes)));
-        // If any variant is in stock, the product is in stock
-        finalInStock = variants.some(v => v.inStock);
+        finalColors = getUniqueColors();
+        finalSizes = getUniqueSizes();
+        finalInStock = hasInStock();
       }
 
       // 2. Validation
       if (formData.hasVariants) {
-        if (variants.length === 0) throw new Error("Lütfen en az bir varyasyon ekleyin.");
+        if (variations.length === 0) throw new Error("Lütfen en az bir varyasyon ekleyin.");
         
         if (isSizeRequired(formData.category)) {
-          const hasSizes = variants.some(v => v.sizes && v.sizes.length > 0);
-          if (!hasSizes) throw new Error("Lütfen varyasyonlar için beden giriniz.");
+          const variationHasSizes = variations.some(v => v.size && v.size !== "Standard");
+          if (!variationHasSizes) throw new Error("Lütfen varyasyonlar için beden giriniz.");
         }
       } else {
         if (isSizeRequired(formData.category) && formData.sizes.length === 0) {
@@ -375,6 +392,18 @@ export default function ProductForm({
         color: img.color
       }));
 
+      // Map Flat Array variations to ProductVariant format
+      // We accept that 'sizes' will contain only 1 item per variant to preserve unique SKUs/Barcodes for each size-color combo
+      const productVariants: ProductVariant[] = formData.hasVariants 
+        ? variations.map(v => ({
+            color: v.color,
+            sizes: [v.size],
+            inStock: v.stockStatus,
+            sku: v.sku,
+            barcode: v.barcode,
+          }))
+        : [];
+
       const submitData = {
         ...formData,
         price: finalPrice,
@@ -384,7 +413,7 @@ export default function ProductForm({
         colors: finalColors,
         sizes: finalSizes,
         inStock: finalInStock,
-        variants: formData.hasVariants ? variants : [],
+        variants: productVariants,
         slug,
         createdAt: initialData?.createdAt || new Date().toISOString(),
       };
@@ -529,46 +558,39 @@ export default function ProductForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Satış Fiyatı (₺)</label>
-                <input
+                <Input
                   type="number"
                   name="basePrice"
                   required
                   min="0"
-                  step="10"
                   value={formData.price === 0 ? "" : formData.price}
                   onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="text-sm font-medium text-gray-700">İndirim Var mı?</span>
-                <button
-                  type="button"
-                  onClick={() => setHasDiscount(!hasDiscount)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    hasDiscount ? "bg-primary-600" : "bg-gray-200"
-                  }`}
-                >
-                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${hasDiscount ? "translate-x-5" : "translate-x-0"}`} />
-                </button>
+                <Switch
+                  checked={hasDiscount}
+                  onCheckedChange={(checked) => {
+                    setHasDiscount(checked);
+                    if (!checked) {
+                      setDiscountedPrice(0);
+                    }
+                  }}
+                  label="İndirim Var mı?"
+                />
               </div>
 
               {hasDiscount && (
                 <div className="col-span-2 animate-in fade-in slide-in-from-top-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">İndirimli Fiyat (₺)</label>
-                  <input
+                  <Input
                     type="number"
                     required={hasDiscount}
                     min="0"
-                    step="10"
                     value={discountedPrice === 0 ? "" : discountedPrice}
                     onChange={(e) => setDiscountedPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    error={discountedPrice >= formData.price && discountedPrice > 0 ? "İndirimli fiyat, satış fiyatından düşük olmalıdır." : undefined}
                   />
-                  {discountedPrice >= formData.price && discountedPrice > 0 && (
-                    <p className="text-xs text-red-500 mt-1">İndirimli fiyat, satış fiyatından düşük olmalıdır.</p>
-                  )}
                 </div>
               )}
             </div>
@@ -578,28 +600,39 @@ export default function ProductForm({
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b pb-2">
               <h3 className="text-lg font-semibold text-gray-900">Varyasyonlar & Stok</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Gelişmiş Varyasyon Modu</span>
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, hasVariants: !prev.hasVariants }))}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    formData.hasVariants ? "bg-primary-600" : "bg-gray-200"
-                  }`}
-                >
-                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.hasVariants ? "translate-x-5" : "translate-x-0"}`} />
-                </button>
+              <div className="flex items-center">
+                <Switch
+                  checked={formData.hasVariants}
+                  onCheckedChange={(checked) => {
+                    setFormData(prev => ({ ...prev, hasVariants: checked }));
+                    if (!checked) {
+                      // Reset variant builder fields
+                      resetVariations();
+                      setNewVariantColor("");
+                      setNewVariantSizes("");
+                      setSelectedPredefinedSizes([]);
+                      setNewVariantStock(true);
+                      setNewVariantBarcode("");
+                    }
+                  }}
+                  label="Gelişmiş Varyasyon Modu"
+                  className="min-w-[200px] gap-4"
+                />
               </div>
             </div>
 
             {formData.hasVariants ? (
-              // --- Variant Builder UI ---
-              <div className="space-y-6 animate-in fade-in">
+              // --- Variant Builder UI (Flat Array) ---
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
                   <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    {editingVariantIndex !== null ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                    {editingVariantIndex !== null ? "Varyasyonu Düzenle" : "Yeni Varyasyon Ekle"}
+                    <Plus className="w-4 h-4" />
+                    Yeni Varyasyon Ekle
                   </h4>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    SKU otomatik oluşturulur (ÜRÜN-RENK-BEDEN formatında)
+                  </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -621,16 +654,6 @@ export default function ProductForm({
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">SKU (Opsiyonel)</label>
-                      <input
-                        type="text"
-                        value={newVariantSku}
-                        onChange={(e) => setNewVariantSku(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
-                      />
-                    </div>
-
-                    <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Barkod (Opsiyonel)</label>
                       <input
                         type="text"
@@ -639,103 +662,172 @@ export default function ProductForm({
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
                       />
                     </div>
+
+                    <div className="flex items-end">
+                      <label className="flex items-center space-x-2 cursor-pointer pb-2">
+                        <input 
+                          type="checkbox" 
+                          checked={newVariantStock}
+                          onChange={(e) => setNewVariantStock(e.target.checked)}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-gray-700">Stokta Var</span>
+                      </label>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={newVariantStock}
-                        onChange={(e) => setNewVariantStock(e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-gray-700">Stokta Var</span>
-                    </label>
-
-                    <div className="flex gap-2">
-                      {editingVariantIndex !== null && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => {
-                            setEditingVariantIndex(null);
-                            setNewVariantColor("");
-                            setNewVariantSizes("");
-                            setSelectedPredefinedSizes([]);
-                            setNewVariantStock(true);
-                            setNewVariantSku("");
-                            setNewVariantBarcode("");
-                          }}
-                          size="sm"
-                        >
-                          İptal
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        onClick={handleAddVariant}
-                        size="sm"
-                        className={editingVariantIndex !== null ? "bg-blue-600 hover:bg-blue-700" : ""}
-                      >
-                        {editingVariantIndex !== null ? "Güncelle" : "Ekle"}
-                      </Button>
-                    </div>
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      type="button"
+                      onClick={handleAddVariation}
+                      size="sm"
+                    >
+                      Ekle
+                    </Button>
                   </div>
                 </div>
 
-                {/* Variants List */}
-                <div className="space-y-2">
-                  {variants.map((variant, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-primary-200 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
-                          {variant.color.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{variant.color}</p>
-                          <p className="text-xs text-gray-500">
-                            {variant.sizes.length > 0 ? variant.sizes.join(", ") : "Standart Beden"}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <div className="text-right hidden sm:block">
-                          <p className="text-xs text-gray-500">SKU: {variant.sku || "-"}</p>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${variant.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                            {variant.inStock ? "Stokta" : "Tükendi"}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleEditVariant(index)}
-                            className="p-1 text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteVariant(index)}
-                            className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
+
+                {/* Color-Grouped Variations with Accordion */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    Varyasyonlar ({hasMounted ? variations.length : "..."})
+                  </h4>
+                  
+                  {!hasMounted ? (
+                    // Skeleton Loader
+                    <div className="space-y-2">
+                         {[1, 2, 3].map((i) => (
+                           <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg animate-pulse">
+                             <div className="flex items-center gap-4">
+                               <div className="w-8 h-8 rounded-full bg-gray-200" />
+                               <div className="space-y-2">
+                                 <div className="h-4 w-32 bg-gray-200 rounded" />
+                                 <div className="h-3 w-24 bg-gray-200 rounded" />
+                               </div>
+                             </div>
+                             <div className="flex gap-2">
+                               <div className="h-6 w-16 bg-gray-200 rounded" />
+                               <div className="h-8 w-8 bg-gray-200 rounded" />
+                             </div>
+                           </div>
+                         ))}
                     </div>
-                  ))}
-                  {variants.length === 0 && (
+                  ) : Object.keys(groupedByColor).length === 0 ? (
                     <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 rounded-lg border border-dashed border-gray-300">
                       Henüz varyasyon eklenmedi.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {Object.entries(groupedByColor).map(([color, colorVariations]) => {
+                        const isExpanded = expandedColors.has(color);
+                        const inStockCount = colorVariations.filter(v => v.stockStatus).length;
+                        
+                        return (
+                          <div key={color} className="border border-gray-200 rounded-lg overflow-hidden">
+                            {/* Color Header - Clickable */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExpandedColors(prev => {
+                                  const newSet = new Set(prev);
+                                  if (newSet.has(color)) {
+                                    newSet.delete(color);
+                                  } else {
+                                    newSet.add(color);
+                                  }
+                                  return newSet;
+                                });
+                              }}
+                              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                            >
+                              <div className="flex items-center gap-3">
+                                <ChevronDown 
+                                  className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                                />
+                                <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-700">
+                                  {color.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-sm font-medium text-gray-900">{color}</span>
+                                <span className="text-xs text-gray-500">
+                                  ({colorVariations.length} beden, {inStockCount} stokta)
+                                </span>
+                              </div>
+                              
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`"${color}" rengindeki tüm varyasyonları silmek istediğinize emin misiniz?`)) {
+                                    removeByColor(color);
+                                    toast.success(`"${color}" rengi silindi.`);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (confirm(`"${color}" rengindeki tüm varyasyonları silmek istediğinize emin misiniz?`)) {
+                                      removeByColor(color);
+                                      toast.success(`"${color}" rengi silindi.`);
+                                    }
+                                  }
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </div>
+                            </button>
+                            
+                            {/* Expandable Size List */}
+                            {isExpanded && (
+                              <div className="border-t border-gray-200 divide-y divide-gray-100">
+                                {colorVariations.map((variation) => (
+                                  <div 
+                                    key={variation.id} 
+                                    className="flex items-center justify-between px-4 py-2 bg-white hover:bg-gray-50 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-sm font-medium text-gray-700 w-12">{variation.size}</span>
+                                      <span className="text-xs text-gray-400 font-mono">{variation.sku}</span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleStock(variation.id, variation.stockStatus)}
+                                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                          variation.stockStatus 
+                                            ? "bg-green-100 text-green-800 hover:bg-green-200" 
+                                            : "bg-red-100 text-red-800 hover:bg-red-200"
+                                        }`}
+                                      >
+                                        {variation.stockStatus ? "Stokta" : "Tükendi"}
+                                      </button>
+                                      
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteVariation(variation.id)}
+                                        className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
               </div>
             ) : (
               // --- Simple Mode UI ---
-              <div className="space-y-6 animate-in fade-in">
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Bedenler</label>
@@ -873,18 +965,11 @@ export default function ProductForm({
               </div>
 
               <div className="pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Öne Çıkan Ürün</span>
-                  <button
-                    type="button"
-                    onClick={() => handleToggle("featured")}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      formData.featured ? "bg-primary-600" : "bg-gray-200"
-                    }`}
-                  >
-                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.featured ? "translate-x-5" : "translate-x-0"}`} />
-                  </button>
-                </div>
+                <Switch
+                  checked={formData.featured}
+                  onCheckedChange={() => handleToggle("featured")}
+                  label="Öne Çıkan Ürün"
+                />
               </div>
             </div>
           </div>

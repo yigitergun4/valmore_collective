@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Order } from "./admin/orders";
+import { GENDER_OPTIONS } from "@/lib/constants";
 
 export interface ProductVariant {
   color: string;
@@ -38,11 +39,8 @@ export interface ProductDetailClientProps {
   allProducts: Product[];
   relatedProducts: Product[];
 }
-export const GENDER_OPTIONS = [
-  { value: 'Male', label: 'Erkek' },
-  { value: 'Female', label: 'Kadın' },
-  { value: 'Unisex', label: 'Unisex' },
-] as const;
+
+export { GENDER_OPTIONS };
 
 export type ProductGender = typeof GENDER_OPTIONS[number]['value'];
 
@@ -104,6 +102,7 @@ export interface CartItem {
   selectedSize: string;
   selectedColor: string;
   quantity: number;
+  barcode?: string;
   updatedAt: number; // Timestamp for sorting
 }
 
@@ -214,4 +213,43 @@ export interface OptionSelectorProps {
   disabledOptions?: string[];
   /** Variant for different visual styles */
   variant?: "default" | "compact";
+}
+
+// ui folder
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  /** Optional label to display above the input */
+  label?: string;
+  /** Error message to display below the input */
+  error?: string;
+}
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  /** Optional label to display above the textarea */
+  label?: string;
+}
+
+export interface SelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  /** Optional label to display above the select */
+  label?: string;
+  /** Options to render */
+  options?: { value: string; label: string }[];
+  /** Placeholder option text */
+  placeholder?: string;
+}
+
+export interface SwitchProps {
+  /** Whether the switch is checked */
+  checked: boolean;
+  /** Callback when the switch is toggled */
+  onCheckedChange: (checked: boolean) => void;
+  /** Optional label to display beside the switch */
+  label?: string;
+  /** Whether the label is on the left (default) or right */
+  labelPosition?: "left" | "right";
+  /** Additional class for the container */
+  className?: string;
+  /** Whether the switch is disabled */
+  disabled?: boolean;
 }
