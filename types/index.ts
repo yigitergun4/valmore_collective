@@ -43,7 +43,7 @@ export interface ProductDetailClientProps {
 
 export { GENDER_OPTIONS };
 
-export type ProductGender = typeof GENDER_OPTIONS[number]['value'];
+export type ProductGender = (typeof GENDER_OPTIONS)[number]["value"];
 
 export interface ProductFormProps {
   initialData?: Product;
@@ -83,10 +83,29 @@ export interface ShopContextType {
   favorites: string[];
   isCartOpen: boolean;
   cartCount: number;
-  addToCart: (product: Product, size: string, color: string) => Promise<boolean>;
-  removeFromCart: (productId: string, size: string, color: string) => Promise<void>;
-  updateQuantity: (productId: string, size: string, color: string, quantity: number) => Promise<void>;
-  updateCartItem: (productId: string, oldSize: string, oldColor: string, newSize: string, newColor: string) => Promise<void>;
+  addToCart: (
+    product: Product,
+    size: string,
+    color: string
+  ) => Promise<boolean>;
+  removeFromCart: (
+    productId: string,
+    size: string,
+    color: string
+  ) => Promise<void>;
+  updateQuantity: (
+    productId: string,
+    size: string,
+    color: string,
+    quantity: number
+  ) => Promise<void>;
+  updateCartItem: (
+    productId: string,
+    oldSize: string,
+    oldColor: string,
+    newSize: string,
+    newColor: string
+  ) => Promise<void>;
   toggleFavorite: (productId: string) => Promise<void>;
   setIsCartOpen: (isOpen: boolean) => void;
   openCart: () => void;
@@ -115,8 +134,6 @@ export interface AdminStats {
   orders: Order[];
 }
 
-
-
 export interface Address {
   id?: string;
   title: string;
@@ -141,7 +158,11 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  login: (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -197,9 +218,13 @@ export interface AddressFormData {
 
 export interface AddressFormFieldsProps {
   formData: AddressFormData;
-  setFormData: React.Dispatch<React.SetStateAction<AddressFormData>> | ((updates: Partial<AddressFormData>) => void);
+  setFormData:
+    | React.Dispatch<React.SetStateAction<AddressFormData>>
+    | ((updates: Partial<AddressFormData>) => void);
   errors: Record<string, string | undefined>;
-  setErrors: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>> | ((updates: Record<string, string | undefined>) => void);
+  setErrors:
+    | React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>
+    | ((updates: Record<string, string | undefined>) => void);
   /** Whether to use object spread pattern for updates (for complex forms) */
   useSpreadUpdate?: boolean;
 }
@@ -217,7 +242,8 @@ export interface OptionSelectorProps {
 }
 
 // ui folder
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   /** Optional label to display above the input */
   label?: string;
   /** Error message to display below the input */
