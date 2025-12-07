@@ -337,4 +337,22 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         updateCartItem,
-        toggleFa
+        toggleFavorite,
+        setIsCartOpen,
+        openCart,
+        closeCart,
+        clearCart
+      }}
+    >
+      {children}
+    </ShopContext.Provider>
+  );
+}
+
+export function useShop() {
+  const context = useContext(ShopContext);
+  if (context === undefined) {
+    throw new Error('useShop must be used within a ShopProvider');
+  }
+  return context;
+}
