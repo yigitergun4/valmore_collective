@@ -1,3 +1,4 @@
+import type React from "react";
 import { ReactNode } from "react";
 import { Order } from "./admin/orders";
 import { GENDER_OPTIONS } from "@/lib/constants";

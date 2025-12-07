@@ -1,3 +1,4 @@
+import type React from "react";
 import { Variation,AddVariationsInput } from "../variations";
 
 export interface UseVariationsReturn {
