@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, setDoc, DocumentReference, DocumentData, DocumentSnapshot } from 'firebase/firestore';
-import { Product,ShopContextType, CartItem } from '@/types';
+import { Product,ShopContextType, CartItem, ProductVariant } from '@/types';
 
 
 
@@ -152,7 +152,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const addToCart: (product: Product, size: string, color: string) => Promise<boolean> = async (product: Product, size: string, color: string): Promise<boolean> => {
     try {
       // Find variant to get Barcode
-      const variant = product.variants?.find(
+      const variant:ProductVariant | undefined = product.variants?.find(
         (v: any) => v.color === color && v.size === size 
       ) || product.variants?.find(
         (v: any) => v.color === color && v.sizes?.includes(size)
@@ -337,22 +337,4 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         updateCartItem,
-        toggleFavorite,
-        setIsCartOpen,
-        openCart,
-        closeCart,
-        clearCart,
-      }}
-    >
-      {children}
-    </ShopContext.Provider>
-  );
-}
-
-export function useShop() {
-  const context = useContext(ShopContext);
-  if (context === undefined) {
-    throw new Error('useShop must be used within a ShopProvider');
-  }
-  return context;
-}
+        toggleFa
