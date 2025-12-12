@@ -61,30 +61,45 @@ export default function ProductDetailClient({
   // Derived state for variants
   const availableSizes:string[] = useMemo(() => {
     if (hasVariants && selectedColor) {
-      return variants.find(v => v.color === selectedColor)?.sizes || [];
+      // Get all sizes from all variants matching the selected color
+      const colorVariants:ProductVariant[] = variants.filter(v => v.color === selectedColor);
+      const allSizes:string[] = colorVariants.flatMap(v => v.sizes);
+      // Return unique sizes
+      return [...new Set(allSizes)];
     }
     return product.sizes;
   }, [hasVariants, selectedColor, variants, product.sizes]);
 
+  // Check if any variant of the selected color is in stock
   const isVariantInStock:boolean = useMemo(() => {
     if (hasVariants && selectedColor) {
-      return variants.find(v => v.color === selectedColor)?.inStock ?? false;
+      // Return true if ANY variant of this color is in stock
+      return variants.some(v => v.color === selectedColor && v.inStock);
     }
     return product.inStock;
   }, [hasVariants, selectedColor, variants, product.inStock]);
 
   // Determine unavailable sizes (sizes that should be disabled)
   const unavailableSizes:string[] = useMemo(() => {
-    // If variant is not in stock, all sizes are unavailable
-    if (hasVariants && selectedColor && !isVariantInStock) {
-      return availableSizes;
+    if (hasVariants && selectedColor) {
+      // Get sizes that are out of stock for this color
+      const colorVariants:ProductVariant[] = variants.filter(v => v.color === selectedColor);
+      const outOfStockSizes: string[] = [];
+      
+      colorVariants.forEach(v => {
+        if (!v.inStock) {
+          v.sizes.forEach(size => outOfStockSizes.push(size));
+        }
+      });
+      
+      return [...new Set(outOfStockSizes)];
     }
     // If product itself is not in stock, all sizes are unavailable
     if (!hasVariants && !product.inStock) {
       return product.sizes;
     }
     return [];
-  }, [hasVariants, selectedColor, isVariantInStock, availableSizes, product.inStock, product.sizes]);
+  }, [hasVariants, selectedColor, variants, product.inStock, product.sizes]);
 
   // Discount Logic
   const originalPrice:number = product.originalPrice || 0;

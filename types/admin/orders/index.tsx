@@ -18,6 +18,7 @@ export interface Order {
     image: string;        // "Siparişlerim" sayfasında göstermek için
     selectedSize: string; // Giyim için KRİTİK
     selectedColor: string; // Giyim için KRİTİK
+    barcode?: string;
   }[];
 
   // Mali Durum

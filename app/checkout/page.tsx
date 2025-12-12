@@ -16,6 +16,7 @@ import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import ShippingForm from "@/components/checkout/ShippingForm";
 import PaymentForm from "@/components/checkout/PaymentForm";
 import OrderSummary from "@/components/checkout/OrderSummary";
+import { Order } from "@/types/admin/orders";
 
 export default function CheckoutPage(): React.JSX.Element | null {
   const { cart: items, cartCount: getTotalItems, clearCart } = useShop();
@@ -184,7 +185,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
           email: formData.email,
           phone: '0' + formData.phone,
         },
-        items: items.map((item) => ({
+        items: items.map((item: CartItem) => ({
           productId: item.productId,
           name: item.name,
           price: item.price,
@@ -192,6 +193,7 @@ export default function CheckoutPage(): React.JSX.Element | null {
           image: item.image,
           selectedSize: item.selectedSize,
           selectedColor: item.selectedColor,
+          barcode: item.barcode,
         })),
         subtotal,
         shippingCost,

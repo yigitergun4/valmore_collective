@@ -1,5 +1,7 @@
+import type React from "react";
 import { ReactNode } from "react";
 import { Order } from "./admin/orders";
+import { GENDER_OPTIONS } from "@/lib/constants";
 
 export interface ProductVariant {
   color: string;
@@ -38,13 +40,10 @@ export interface ProductDetailClientProps {
   allProducts: Product[];
   relatedProducts: Product[];
 }
-export const GENDER_OPTIONS = [
-  { value: 'Male', label: 'Erkek' },
-  { value: 'Female', label: 'Kadın' },
-  { value: 'Unisex', label: 'Unisex' },
-] as const;
 
-export type ProductGender = typeof GENDER_OPTIONS[number]['value'];
+export { GENDER_OPTIONS };
+
+export type ProductGender = (typeof GENDER_OPTIONS)[number]["value"];
 
 export interface ProductFormProps {
   initialData?: Product;
@@ -84,10 +83,29 @@ export interface ShopContextType {
   favorites: string[];
   isCartOpen: boolean;
   cartCount: number;
-  addToCart: (product: Product, size: string, color: string) => Promise<boolean>;
-  removeFromCart: (productId: string, size: string, color: string) => Promise<void>;
-  updateQuantity: (productId: string, size: string, color: string, quantity: number) => Promise<void>;
-  updateCartItem: (productId: string, oldSize: string, oldColor: string, newSize: string, newColor: string) => Promise<void>;
+  addToCart: (
+    product: Product,
+    size: string,
+    color: string
+  ) => Promise<boolean>;
+  removeFromCart: (
+    productId: string,
+    size: string,
+    color: string
+  ) => Promise<void>;
+  updateQuantity: (
+    productId: string,
+    size: string,
+    color: string,
+    quantity: number
+  ) => Promise<void>;
+  updateCartItem: (
+    productId: string,
+    oldSize: string,
+    oldColor: string,
+    newSize: string,
+    newColor: string
+  ) => Promise<void>;
   toggleFavorite: (productId: string) => Promise<void>;
   setIsCartOpen: (isOpen: boolean) => void;
   openCart: () => void;
@@ -104,6 +122,7 @@ export interface CartItem {
   selectedSize: string;
   selectedColor: string;
   quantity: number;
+  barcode?: string;
   updatedAt: number; // Timestamp for sorting
 }
 
@@ -114,8 +133,6 @@ export interface AdminStats {
   totalOrdersLength: number;
   orders: Order[];
 }
-
-
 
 export interface Address {
   id?: string;
@@ -141,7 +158,11 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  login: (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -197,9 +218,13 @@ export interface AddressFormData {
 
 export interface AddressFormFieldsProps {
   formData: AddressFormData;
-  setFormData: React.Dispatch<React.SetStateAction<AddressFormData>> | ((updates: Partial<AddressFormData>) => void);
+  setFormData:
+    | React.Dispatch<React.SetStateAction<AddressFormData>>
+    | ((updates: Partial<AddressFormData>) => void);
   errors: Record<string, string | undefined>;
-  setErrors: React.Dispatch<React.SetStateAction<Record<string, string | undefined>>> | ((updates: Record<string, string | undefined>) => void);
+  setErrors:
+    | React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>
+    | ((updates: Record<string, string | undefined>) => void);
   /** Whether to use object spread pattern for updates (for complex forms) */
   useSpreadUpdate?: boolean;
 }
@@ -214,4 +239,44 @@ export interface OptionSelectorProps {
   disabledOptions?: string[];
   /** Variant for different visual styles */
   variant?: "default" | "compact";
+}
+
+// ui folder
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  /** Optional label to display above the input */
+  label?: string;
+  /** Error message to display below the input */
+  error?: string;
+}
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  /** Optional label to display above the textarea */
+  label?: string;
+}
+
+export interface SelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  /** Optional label to display above the select */
+  label?: string;
+  /** Options to render */
+  options?: { value: string; label: string }[];
+  /** Placeholder option text */
+  placeholder?: string;
+}
+
+export interface SwitchProps {
+  /** Whether the switch is checked */
+  checked: boolean;
+  /** Callback when the switch is toggled */
+  onCheckedChange: (checked: boolean) => void;
+  /** Optional label to display beside the switch */
+  label?: string;
+  /** Whether the label is on the left (default) or right */
+  labelPosition?: "left" | "right";
+  /** Additional class for the container */
+  className?: string;
+  /** Whether the switch is disabled */
+  disabled?: boolean;
 }
