@@ -1,27 +1,24 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import {useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
+import {
+  ProductDetailClientProps,
+  ProductImage,
+  ProductVariant,
+} from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  ChevronLeft,
-  Heart,
-  Share2,
-  ChevronUp,
-  Truck,
-  ShieldCheck,
-} from "lucide-react";
+import { ChevronLeft, Heart, Share2, Truck, ShieldCheck } from "lucide-react";
 import OptionSelector from "@/components/OptionSelector";
 import ProductInfo from "@/components/products/ProductInfo";
 import ExpandableText from "@/components/products/ExpandableText";
 import Link from "next/link";
 
-export default function ProductDetailClient({ 
-  product, 
+export default function ProductDetailClient({
+  product,
 }: ProductDetailClientProps): React.JSX.Element {
   const router = useRouter();
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
@@ -35,35 +32,69 @@ export default function ProductDetailClient({
   const [selectedColor, setSelectedColor] = useState<string>(
     searchParams.get("color") || ""
   );
-  
-  const isFavorited:boolean = favorites.includes(product?.id || "");
+
+  const isFavorited: boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
+  const mobileSliderRef = useRef<HTMLDivElement>(null);
 
-  // Reset success state when user changes size or color
+  // Reset success state when user changes size
   useEffect(() => {
     setIsUpdated(false);
-    setCurrentImageIndex(0);
-  }, [selectedSize, selectedColor]);
+  }, [selectedSize]);
 
-  // Filter images based on selected color using useMemo
-  const displayImages:ProductImage[] = useMemo(() => {
-    const filtered:ProductImage[] = product.images.filter(img => 
-      img.color === "Genel" || (selectedColor && img.color === selectedColor)
-    );
-    return filtered.length > 0 ? filtered : product.images;
-  }, [product.images, selectedColor]);
+  // Show all images (no color filtering)
+  const displayImages: ProductImage[] = product.images;
+
+  // Handle color selection - switch to first image of that color if current image doesn't match
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    setSelectedSize(""); // Reset size when color changes
+
+    // Check if current image already shows this color
+    const currentImage = displayImages[currentImageIndex];
+    // If current image is not of the selected color, switch to first image of that color
+    if (currentImage && currentImage.color !== color) {
+      const colorImageIndex = displayImages.findIndex(
+        (img) => img.color === color
+      );
+      if (colorImageIndex !== -1) {
+        setCurrentImageIndex(colorImageIndex);
+        // Scroll the mobile slider to the correct image
+        if (mobileSliderRef.current) {
+          const containerWidth = mobileSliderRef.current.offsetWidth;
+          mobileSliderRef.current.scrollTo({
+            left: colorImageIndex * containerWidth,
+            behavior: "smooth",
+          });
+        }
+      }
+    }
+  };
+
+  // Mobile Swipe Logic (Horizontal)
+  const handleScroll: React.UIEventHandler<HTMLDivElement> = (
+    e: React.UIEvent<HTMLDivElement>
+  ) => {
+    const container: HTMLDivElement = e.currentTarget;
+    const scrollLeft: number = container.scrollLeft;
+    const width: number = container.offsetWidth;
+    const index: number = Math.round(scrollLeft / width);
+    setCurrentImageIndex(index);
+  };
 
   // Variant Logic
-  const hasVariants:boolean = product.hasVariants;
-  const variants:ProductVariant[] = product.variants || [];
+  const hasVariants: boolean = product.hasVariants;
+  const variants: ProductVariant[] = product.variants || [];
 
   // Derived state for variants
-  const availableSizes:string[] = useMemo(() => {
+  const availableSizes: string[] = useMemo(() => {
     if (hasVariants && selectedColor) {
       // Get all sizes from all variants matching the selected color
-      const colorVariants:ProductVariant[] = variants.filter(v => v.color === selectedColor);
-      const allSizes:string[] = colorVariants.flatMap(v => v.sizes);
+      const colorVariants: ProductVariant[] = variants.filter(
+        (v) => v.color === selectedColor
+      );
+      const allSizes: string[] = colorVariants.flatMap((v) => v.sizes);
       // Return unique sizes
       return [...new Set(allSizes)];
     }
@@ -71,27 +102,29 @@ export default function ProductDetailClient({
   }, [hasVariants, selectedColor, variants, product.sizes]);
 
   // Check if any variant of the selected color is in stock
-  const isVariantInStock:boolean = useMemo(() => {
+  const isVariantInStock: boolean = useMemo(() => {
     if (hasVariants && selectedColor) {
       // Return true if ANY variant of this color is in stock
-      return variants.some(v => v.color === selectedColor && v.inStock);
+      return variants.some((v) => v.color === selectedColor && v.inStock);
     }
     return product.inStock;
   }, [hasVariants, selectedColor, variants, product.inStock]);
 
   // Determine unavailable sizes (sizes that should be disabled)
-  const unavailableSizes:string[] = useMemo(() => {
+  const unavailableSizes: string[] = useMemo(() => {
     if (hasVariants && selectedColor) {
       // Get sizes that are out of stock for this color
-      const colorVariants:ProductVariant[] = variants.filter(v => v.color === selectedColor);
+      const colorVariants: ProductVariant[] = variants.filter(
+        (v) => v.color === selectedColor
+      );
       const outOfStockSizes: string[] = [];
-      
-      colorVariants.forEach(v => {
+
+      colorVariants.forEach((v) => {
         if (!v.inStock) {
-          v.sizes.forEach(size => outOfStockSizes.push(size));
+          v.sizes.forEach((size) => outOfStockSizes.push(size));
         }
       });
-      
+
       return [...new Set(outOfStockSizes)];
     }
     // If product itself is not in stock, all sizes are unavailable
@@ -102,21 +135,12 @@ export default function ProductDetailClient({
   }, [hasVariants, selectedColor, variants, product.inStock, product.sizes]);
 
   // Discount Logic
-  const originalPrice:number = product.originalPrice || 0;
-  const finalPrice:number = product.price;
-  const hasDiscount:boolean = originalPrice > finalPrice;
-  const discountPercentage:number = hasDiscount 
+  const originalPrice: number = product.originalPrice || 0;
+  const finalPrice: number = product.price;
+  const hasDiscount: boolean = originalPrice > finalPrice;
+  const discountPercentage: number = hasDiscount
     ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
     : 0;
-
-  // Mobile Swipe Logic (Horizontal)
-  const handleScroll:React.UIEventHandler<HTMLDivElement>  = (e: React.UIEvent<HTMLDivElement>) => {
-    const container:HTMLDivElement = e.currentTarget;
-    const scrollLeft:number = container.scrollLeft;
-    const width:number = container.offsetWidth;
-    const index:number = Math.round(scrollLeft / width);
-    setCurrentImageIndex(index);
-  };
 
   if (!product) {
     return (
@@ -137,19 +161,23 @@ export default function ProductDetailClient({
   }
 
   // Check if we're in edit mode
-  const originalSize:string | null = searchParams.get("size");
-  const originalColor:string | null = searchParams.get("color");
-  const isEditMode:boolean = !!(originalSize && originalColor);
+  const originalSize: string | null = searchParams.get("size");
+  const originalColor: string | null = searchParams.get("color");
+  const isEditMode: boolean = !!(originalSize && originalColor);
 
-  const handleAddToCart:React.MouseEventHandler<HTMLButtonElement> = async () => {
+  const handleAddToCart: React.MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
     if (!selectedSize && product.sizes.length > 0) {
       showError(t("products.selectSize"));
       return;
     }
-    
+
     // Variant Stock Check
     if (hasVariants && selectedColor) {
-      const variant:ProductVariant | undefined = variants.find(v => v.color === selectedColor);
+      const variant: ProductVariant | undefined = variants.find(
+        (v) => v.color === selectedColor
+      );
       if (variant && !variant.inStock) {
         showError(t("products.variantNotInStock"));
         return;
@@ -157,16 +185,27 @@ export default function ProductDetailClient({
     }
 
     // Determine effective values (use "Standard" if options are empty)
-    const effectiveSize:string = product.sizes?.length > 0 ? selectedSize : "Standard";
-    const effectiveColor:string = product.colors?.length > 0 ? selectedColor : "Standard";
+    const effectiveSize: string =
+      product.sizes?.length > 0 ? selectedSize : "Standard";
+    const effectiveColor: string =
+      product.colors?.length > 0 ? selectedColor : "Standard";
 
     // Validate only if options exist
     if (product.sizes?.length > 0 && !selectedSize) return;
     if (product.colors?.length > 0 && !selectedColor) return;
 
-    if (isEditMode && (originalSize !== selectedSize || originalColor !== selectedColor)) {
+    if (
+      isEditMode &&
+      (originalSize !== selectedSize || originalColor !== selectedColor)
+    ) {
       // Update existing cart item
-      await updateCartItem(product.id, originalSize!, originalColor!, effectiveSize, effectiveColor);
+      await updateCartItem(
+        product.id,
+        originalSize!,
+        originalColor!,
+        effectiveSize,
+        effectiveColor
+      );
       setIsUpdated(true);
     } else if (!isEditMode) {
       // Normal add to cart flow
@@ -174,11 +213,19 @@ export default function ProductDetailClient({
     }
   };
 
-  const isSizeValid:boolean = product.sizes?.length > 0 ? !!selectedSize : true;
-  const isColorValid:boolean = product.colors?.length > 0 ? !!selectedColor : true;
-  const canAddToCart:boolean = product.inStock && isSizeValid && isColorValid && (!hasVariants || (hasVariants && isVariantInStock));
+  const isSizeValid: boolean =
+    product.sizes?.length > 0 ? !!selectedSize : true;
+  const isColorValid: boolean =
+    product.colors?.length > 0 ? !!selectedColor : true;
+  const canAddToCart: boolean =
+    product.inStock &&
+    isSizeValid &&
+    isColorValid &&
+    (!hasVariants || (hasVariants && isVariantInStock));
 
-  const handleToggleFavorite:React.MouseEventHandler<HTMLButtonElement> = () => {
+  const handleToggleFavorite: React.MouseEventHandler<
+    HTMLButtonElement
+  > = () => {
     if (product) {
       toggleFavorite(product.id);
     }
@@ -195,7 +242,8 @@ export default function ProductDetailClient({
               // Logic for odd number of images: make the last one span full width
               const isLast = index === displayImages.length - 1;
               const isOddTotal = displayImages.length % 2 !== 0;
-              const spanClass = (isLast && isOddTotal) ? "col-span-2" : "col-span-1";
+              const spanClass =
+                isLast && isOddTotal ? "col-span-2" : "col-span-1";
 
               return (
                 <div
@@ -238,7 +286,7 @@ export default function ProductDetailClient({
                   />
                 </button>
               </div>
-              
+
               <div className="flex items-baseline gap-3 mt-2">
                 {hasDiscount ? (
                   <>
@@ -248,9 +296,9 @@ export default function ProductDetailClient({
                     <span className="text-2xl font-bold text-black">
                       {finalPrice.toFixed(2)} {t("products.currency")}
                     </span>
-                  <span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
-                    -{discountPercentage}%
-                  </span>
+                    <span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
+                      -{discountPercentage}%
+                    </span>
                   </>
                 ) : (
                   <span className="text-2xl font-bold text-black">
@@ -282,26 +330,24 @@ export default function ProductDetailClient({
                   label="Renk"
                   options={product.colors}
                   selectedOption={selectedColor}
-                  onSelect={(color) => {
-                    setSelectedColor(color);
-                    setSelectedSize(""); // Reset size when color changes
-                  }}
+                  onSelect={handleColorSelect}
                 />
               </div>
             )}
 
             {/* Sizes - Only show if color is selected (if colors exist) */}
-            {availableSizes.length > 0 && (!product.colors.length || selectedColor) && (
-              <div className="mb-8">
-                <OptionSelector
-                  label="Beden"
-                  options={availableSizes.sort((a, b) => a.localeCompare(b))}
-                  selectedOption={selectedSize}
-                  onSelect={setSelectedSize}
-                  disabledOptions={unavailableSizes}
-                />
-              </div>
-            )}
+            {availableSizes.length > 0 &&
+              (!product.colors.length || selectedColor) && (
+                <div className="mb-8">
+                  <OptionSelector
+                    label="Beden"
+                    options={availableSizes.sort((a, b) => a.localeCompare(b))}
+                    selectedOption={selectedSize}
+                    onSelect={setSelectedSize}
+                    disabledOptions={unavailableSizes}
+                  />
+                </div>
+              )}
 
             {/* Actions */}
             <div className="mt-auto space-y-4">
@@ -315,14 +361,16 @@ export default function ProductDetailClient({
                 }`}
               >
                 {!isSizeValid || !isColorValid
-                  ? (!isSizeValid && !isColorValid
-                      ? "Lütfen Renk ve Beden Seçin"
-                      : !isSizeValid
-                      ? "Lütfen Beden Seçin"
-                      : "Lütfen Renk Seçin")
-                  : (product.inStock 
-                      ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : t("products.addToCart"))
-                      : "Tükendi")}
+                  ? !isSizeValid && !isColorValid
+                    ? "Lütfen Renk ve Beden Seçin"
+                    : !isSizeValid
+                    ? "Lütfen Beden Seçin"
+                    : "Lütfen Renk Seçin"
+                  : product.inStock
+                  ? hasVariants && selectedColor && !isVariantInStock
+                    ? "Tükendi"
+                    : t("products.addToCart")
+                  : "Tükendi"}
               </button>
 
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
@@ -364,7 +412,9 @@ export default function ProductDetailClient({
             <button
               onClick={handleToggleFavorite}
               className={`p-2 backdrop-blur-md rounded-full transition-colors shadow-sm ${
-                isFavorited ? "bg-primary-600 text-white" : "bg-white/80 text-black"
+                isFavorited
+                  ? "bg-primary-600 text-white"
+                  : "bg-white/80 text-black"
               }`}
             >
               <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
@@ -378,11 +428,15 @@ export default function ProductDetailClient({
         {/* Horizontal Image Slider */}
         <div className="relative w-full aspect-[3/4]">
           <div
+            ref={mobileSliderRef}
             className="flex overflow-x-auto snap-x snap-mandatory w-full h-full hide-scrollbar"
             onScroll={handleScroll}
           >
             {displayImages.map((image, index) => (
-              <div key={index} className="w-full flex-shrink-0 snap-center relative h-full">
+              <div
+                key={index}
+                className="w-full flex-shrink-0 snap-center relative h-full"
+              >
                 <Image
                   src={image.url}
                   alt={`${product.name} - ${index + 1}`}
@@ -394,16 +448,14 @@ export default function ProductDetailClient({
               </div>
             ))}
           </div>
-          
+
           {/* Progress Indicator */}
           <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-4 pb-3">
             {displayImages.map((_, index) => (
               <div
                 key={index}
                 className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
-                  index === currentImageIndex
-                    ? "bg-primary"
-                    : "bg-white/20"
+                  index === currentImageIndex ? "bg-primary" : "bg-white/20"
                 }`}
               />
             ))}
@@ -421,7 +473,7 @@ export default function ProductDetailClient({
               {product.name}
             </h1>
           </div>
-          
+
           {/* Price */}
           <div className="flex items-baseline gap-3">
             {hasDiscount ? (
@@ -449,23 +501,22 @@ export default function ProductDetailClient({
               label={t("products.color")}
               options={product.colors}
               selectedOption={selectedColor}
-              onSelect={(color) => {
-                setSelectedColor(color);
-                setSelectedSize("");
-              }}
+              onSelect={handleColorSelect}
             />
           )}
 
           {/* Size Selection - Inline */}
-          {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
-            <OptionSelector
-              label={t("products.size")}
-              options={availableSizes}
-              selectedOption={selectedSize}
-              onSelect={setSelectedSize}
-              disabledOptions={unavailableSizes}
-            />
-          )}
+          {product.sizes &&
+            product.sizes.length > 0 &&
+            (!product.colors.length || selectedColor) && (
+              <OptionSelector
+                label={t("products.size")}
+                options={availableSizes}
+                selectedOption={selectedSize}
+                onSelect={setSelectedSize}
+                disabledOptions={unavailableSizes}
+              />
+            )}
 
           {/* Description - Expandable */}
           <div className="pt-2">
@@ -482,8 +533,12 @@ export default function ProductDetailClient({
           <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-lg">
             <Truck className="w-5 h-5 text-primary-600 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-gray-900">{t("products.freeShipping")}</p>
-              <p className="text-gray-500 text-xs">{t("products.freeShippingFrom")}</p>
+              <p className="font-medium text-gray-900">
+                {t("products.freeShipping")}
+              </p>
+              <p className="text-gray-500 text-xs">
+                {t("products.freeShippingFrom")}
+              </p>
             </div>
           </div>
         </div>
@@ -500,20 +555,20 @@ export default function ProductDetailClient({
             }`}
           >
             {!isSizeValid || !isColorValid
-              ? (!isSizeValid && !isColorValid
-                  ? t("products.selectSizeColor")
-                  : !isSizeValid
-                  ? t("products.selectSize")
-                  : t("products.selectColor"))
-              : (product.inStock
-                  ? (hasVariants && selectedColor && !isVariantInStock 
-                      ? t("products.outOfStock") 
-                      : (isUpdated
-                          ? t("products.cartUpdated")
-                          : isEditMode
-                            ? t("products.updateCart")
-                            : t("products.addToCart")))
-                  : t("products.outOfStock"))}
+              ? !isSizeValid && !isColorValid
+                ? t("products.selectSizeColor")
+                : !isSizeValid
+                ? t("products.selectSize")
+                : t("products.selectColor")
+              : product.inStock
+              ? hasVariants && selectedColor && !isVariantInStock
+                ? t("products.outOfStock")
+                : isUpdated
+                ? t("products.cartUpdated")
+                : isEditMode
+                ? t("products.updateCart")
+                : t("products.addToCart")
+              : t("products.outOfStock")}
           </button>
         </div>
       </div>
