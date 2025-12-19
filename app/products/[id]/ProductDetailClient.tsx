@@ -43,6 +43,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
+  const mobileSliderRef = useRef<HTMLDivElement>(null);
 
   // Prevent body scroll when gallery is open
   useEffect(() => {
@@ -61,8 +62,14 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
     setIsUpdated(false);
   }, [selectedSize]);
 
-  // Show all images (no color filtering)
-  const displayImages: ProductImage[] = product.images;
+  // Filter images based on selected color using useMemo
+  const displayImages:ProductImage[] = useMemo(() => {
+    if (!selectedColor) {
+      return product.images;
+    }
+    const filtered:ProductImage[] = product.images.filter(img => img.color === selectedColor);
+    return filtered.length > 0 ? filtered : product.images;
+  }, [product.images, selectedColor]);
 
   // Handle color selection - switch to first image of that color if current image doesn't match
   const handleColorSelect = (color: string) => {
@@ -90,15 +97,6 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
     }
   };
 
-
-  // Filter images based on selected color using useMemo
-  const displayImages:ProductImage[] = useMemo(() => {
-    if (!selectedColor) {
-      return product.images;
-    }
-    const filtered:ProductImage[] = product.images.filter(img => img.color === selectedColor);
-    return filtered.length > 0 ? filtered : product.images;
-  }, [product.images, selectedColor]);
 
   // Variant Logic
   const hasVariants: boolean = product.hasVariants;
