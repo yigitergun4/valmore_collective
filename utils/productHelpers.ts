@@ -47,17 +47,31 @@ export function calculateProductPrice({
 }: CalculateProductPriceParams): ProductPriceResult {
     const originalPrice: number = product.originalPrice || 0;
     const discountedPrice: number = product.price;
-    const hasDiscount: boolean = !!discountedPrice && discountedPrice < originalPrice;
-    const finalPrice: number = hasDiscount ? discountedPrice! : originalPrice;
+
+    // If no originalPrice is set, use product.price as the final price (no discount scenario)
+    if (!originalPrice || originalPrice === 0) {
+        return {
+            originalPrice: discountedPrice,
+            discountedPrice: 0,
+            finalPrice: discountedPrice,
+            hasDiscount: false,
+            discountPercentage: 0,
+        };
+    }
+
+    // Calculate discount if discounted price is less than original
+    const hasDiscount: boolean = discountedPrice > 0 && discountedPrice < originalPrice;
+    const finalPrice: number = hasDiscount ? discountedPrice : originalPrice;
     const discountPercentage: number = hasDiscount
-        ? Math.round(((originalPrice - discountedPrice!) / originalPrice) * 100)
+        ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
         : 0;
 
     return {
         originalPrice,
-        discountedPrice: discountedPrice || 0,
+        discountedPrice: hasDiscount ? discountedPrice : 0,
         finalPrice,
         hasDiscount,
         discountPercentage,
     };
 }
+
