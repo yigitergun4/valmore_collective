@@ -9,7 +9,7 @@ import { getColorHex } from "@/lib/colorUtils";
 
 
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, filterGender }: ProductCardProps) {
   const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
@@ -37,6 +37,11 @@ export default function ProductCard({ product }: ProductCardProps) {
     setActiveImageIndex(safeIndex);
   };
 
+  // Build link href with optional filter context
+  const linkHref = filterGender && filterGender !== "ALL" 
+    ? `/products/${product.id}?from=${filterGender}` 
+    : `/products/${product.id}`;
+
   return (
     <div
       className="group relative flex flex-col"
@@ -47,7 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       }}
       onMouseMove={handleMouseMove}
     >
-      <Link href={`/products/${product.id}`} className="block flex-1">
+      <Link href={linkHref} className="block flex-1">
         {/* Image Container */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-100 mb-3">
           {primaryImage ? (

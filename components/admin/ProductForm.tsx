@@ -409,15 +409,15 @@ export default function ProductForm({
       
       let orderedImages: ProductImage[] = [...rawImages];
       if (primaryImageIndex > 0 && primaryImageIndex < rawImages.length) {
-        const primaryImg = rawImages[primaryImageIndex];
-        const primaryColor = primaryImg.color;
+        const primaryImg: ProductImage = rawImages[primaryImageIndex];
+        const primaryColor: string = primaryImg.color;
         
         // Remove primary image from array
         orderedImages = rawImages.filter((_, idx) => idx !== primaryImageIndex);
         
         // Split into same color and other colors
-        const sameColorImages = orderedImages.filter(img => img.color === primaryColor);
-        const otherImages = orderedImages.filter(img => img.color !== primaryColor);
+        const sameColorImages: ProductImage[] = orderedImages.filter(img => img.color === primaryColor);
+        const otherImages: ProductImage[] = orderedImages.filter(img => img.color !== primaryColor);
         
         // Reorder: primary first, then same color, then others
         orderedImages = [primaryImg, ...sameColorImages, ...otherImages];
@@ -474,11 +474,11 @@ export default function ProductForm({
   // --- Render Helpers ---
   
   const renderSizeSelector: () => JSX.Element = () => {
-    const categoryType = getCategoryType(formData.category);
-    const predefinedSizes = categoryType === 'shoes' ? shoeSizes : categoryType === 'clothing' ? clothingSizes : [];
+    const categoryType: string = getCategoryType(formData.category);
+    const predefinedSizes: string[] = categoryType === 'shoes' ? shoeSizes : categoryType === 'clothing' ? clothingSizes : [];
 
     if (predefinedSizes.length > 0) {
-      const allSelected = predefinedSizes.every(size => selectedPredefinedSizes.includes(size));
+      const allSelected: boolean = predefinedSizes.every(size => selectedPredefinedSizes.includes(size));
       
       return (
         <div className="space-y-2">
@@ -560,14 +560,11 @@ export default function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Left Column: Main Info */}
         <div className="lg:col-span-2 space-y-8">
-          
           {/* Basic Info Card */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
             <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Temel Bilgiler</h3>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ürün Adı</label>
@@ -581,7 +578,6 @@ export default function ProductForm({
                   placeholder="Örn: Premium Pamuklu T-Shirt"
                 />
               </div>
-
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama</label>
                 <textarea
@@ -594,7 +590,6 @@ export default function ProductForm({
                   placeholder="Ürün detaylarını buraya giriniz..."
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Marka</label>
                 <input
@@ -606,7 +601,6 @@ export default function ProductForm({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                 <select
@@ -624,11 +618,9 @@ export default function ProductForm({
               </div>
             </div>
           </div>
-
           {/* Pricing Card */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
             <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Fiyatlandırma</h3>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Satış Fiyatı (₺)</label>
@@ -653,7 +645,6 @@ export default function ProductForm({
                   label="İndirim Var mı?"
                 />
               </div>
-
               {hasDiscount && (
                 <div className="col-span-2 animate-in fade-in slide-in-from-top-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">İndirimli Fiyat (₺)</label>
@@ -669,7 +660,6 @@ export default function ProductForm({
               )}
             </div>
           </div>
-
           {/* Variants & Inventory Card */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b pb-2">

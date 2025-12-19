@@ -132,6 +132,24 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const minSwipeDistance:number = 50;
 
+  // Get filter context from URL (passed from products page)
+  const fromGender: string | null = searchParams.get("from");
+  
+  // Filter products for swipe navigation based on filter context
+  const swipeProducts = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) return [];
+    
+    // If we have a filter context from URL, use it
+    if (fromGender && fromGender !== "ALL") {
+      return allProducts.filter(p => 
+        !p.gender || p.gender === fromGender || p.gender === "Unisex"
+      );
+    }
+    
+    // No filter context - show all products
+    return allProducts;
+  }, [allProducts, fromGender]);
+
   const onTouchStart:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
@@ -148,21 +166,25 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
     const isRightSwipe:boolean = distance < -minSwipeDistance;
 
     if (isLeftSwipe || isRightSwipe) {
-      if (!allProducts || allProducts.length === 0) return;
-      const currentIndex:number = allProducts.findIndex((p:any) => p.id === product.id);
+      if (!swipeProducts || swipeProducts.length === 0) return;
+      const currentIndex:number = swipeProducts.findIndex((p:any) => p.id === product.id);
       if (currentIndex === -1) return;
 
       let nextIndex:number = -1;
       if (isLeftSwipe) {
          // Next product
-         nextIndex = currentIndex + 1 < allProducts.length ? currentIndex + 1 : 0;
+         nextIndex = currentIndex + 1 < swipeProducts.length ? currentIndex + 1 : 0;
       } else {
          // Prev product
-         nextIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : allProducts.length - 1;
+         nextIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : swipeProducts.length - 1;
       }
       
       if (nextIndex !== -1) {
-        router.push(`/products/${allProducts[nextIndex].id}`);
+        // Preserve filter context when navigating
+        const nextUrl = fromGender && fromGender !== "ALL"
+          ? `/products/${swipeProducts[nextIndex].id}?from=${fromGender}`
+          : `/products/${swipeProducts[nextIndex].id}`;
+        router.push(nextUrl);
       }
     }
   };
