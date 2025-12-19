@@ -61,6 +61,7 @@ export interface Product {
   originalPrice?: number;
   isDiscounted: boolean;
   images: ProductImage[];
+  primaryImageIndex?: number;
   category: string;
   brand: string;
   gender: ProductGender;
@@ -219,12 +220,12 @@ export interface AddressFormData {
 export interface AddressFormFieldsProps {
   formData: AddressFormData;
   setFormData:
-    | React.Dispatch<React.SetStateAction<AddressFormData>>
-    | ((updates: Partial<AddressFormData>) => void);
+  | React.Dispatch<React.SetStateAction<AddressFormData>>
+  | ((updates: Partial<AddressFormData>) => void);
   errors: Record<string, string | undefined>;
   setErrors:
-    | React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>
-    | ((updates: Record<string, string | undefined>) => void);
+  | React.Dispatch<React.SetStateAction<Record<string, string | undefined>>>
+  | ((updates: Record<string, string | undefined>) => void);
   /** Whether to use object spread pattern for updates (for complex forms) */
   useSpreadUpdate?: boolean;
 }
@@ -280,3 +281,10 @@ export interface SwitchProps {
   /** Whether the switch is disabled */
   disabled?: boolean;
 }
+
+// Re-export organized types for backward compatibility
+export * from "./components";
+export * from "./components/products";
+export * from "./utils";
+export * from "./contexts";
+export * from "./lib";

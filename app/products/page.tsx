@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Product, ProductGender, GENDER_OPTIONS } from "@/types";
 import { PRODUCT_CATEGORIES, ProductCategory } from "@/lib/constants";
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE: number = 12;
 
 function ProductsContent(): React.JSX.Element {
   const { t } = useLanguage();
@@ -117,14 +117,14 @@ function ProductsContent(): React.JSX.Element {
   }, [activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
 
   // Derived pagination data
-  const currentProducts = useMemo(() => {
+  const currentProducts: Product[] = useMemo(() => {
     return filteredAndSortedProducts.slice(0, visibleCount);
   }, [filteredAndSortedProducts, visibleCount]);
 
-  const hasMore = visibleCount < filteredAndSortedProducts.length;
+  const hasMore: boolean = visibleCount < filteredAndSortedProducts.length;
 
   // Load More Handler
-  const handleLoadMore = useCallback(() => {
+  const handleLoadMore: () => void = useCallback(() => {
     if (!hasMore || isLoadingMore) return;
     
     setIsLoadingMore(true);
@@ -139,7 +139,7 @@ function ProductsContent(): React.JSX.Element {
   useEffect(() => {
     if (!loadMoreTriggerRef.current) return;
     
-    const observer = new IntersectionObserver(
+    const observer: IntersectionObserver = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         // Only trigger on mobile (viewport width < 1024px)
@@ -196,7 +196,6 @@ function ProductsContent(): React.JSX.Element {
                   {sortBy === "newest" ? t("products.sort.newest") : sortBy === "price-low" ? t("products.sort.priceLow") : t("products.sort.priceHigh")}
                   <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isSortOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
                 {isSortOpen && (
                   <>
                     <div 
@@ -257,11 +256,10 @@ function ProductsContent(): React.JSX.Element {
         ) : filteredAndSortedProducts.length > 0 ? (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 gap-y-8 lg:gap-x-4 lg:gap-y-12">
-              {currentProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {currentProducts.map((product:Product) => (
+                <ProductCard key={product.id} product={product} filterGender={activeGender} />
               ))}
             </div>
-
             {/* Load More Section */}
             {hasMore && (
               <div className="mt-12 lg:mt-16">
@@ -274,13 +272,12 @@ function ProductsContent(): React.JSX.Element {
                   {isLoadingMore ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t("products.loading") || "YÜKLENIYOR..."}
+                      {t("products.loading")}
                     </>
                   ) : (
-                    t("products.loadMore") || "DAHA FAZLA ÜRÜN GÖSTER"
+                    t("products.loadMore")
                   )}
                 </button>
-
                 {/* Mobile: Infinite Scroll Trigger + Loading Indicator */}
                 <div 
                   ref={loadMoreTriggerRef} 
@@ -307,7 +304,6 @@ function ProductsContent(): React.JSX.Element {
           </div>
         )}
       </main>
-
       {/* Filter Drawer */}
       <FilterDrawer
         isOpen={isFilterOpen}

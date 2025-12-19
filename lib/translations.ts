@@ -48,6 +48,8 @@ export const translations: Record<Language, any> = {
       filter: "Filtrele",
       discountFilter: "İndirimli Ürünler",
       featured: "Seçkin",
+      loadMore: "Daha Fazla Ürün",
+      loading: "Yükleniyor...",
       sort: {
         name: "İsme Göre Sırala",
         newest: "YENİLER",
@@ -453,6 +455,8 @@ export const translations: Record<Language, any> = {
       filter: "Filter",
       discountFilter: "Discounted Products",
       featured: "Featured",
+      loadMore: "Load More",
+      loading: "Loading...",
       sort: {
         name: "Sort by Name",
         newest: "NEWEST",

@@ -3,40 +3,58 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {
-  ProductDetailClientProps,
-  ProductImage,
-  ProductVariant,
-} from "@/types";
+import {Product, ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ChevronLeft, Heart, Share2, Truck, ShieldCheck } from "lucide-react";
+import {
+  Heart,
+  Share2,
+  Truck,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import OptionSelector from "@/components/OptionSelector";
 import ProductInfo from "@/components/products/ProductInfo";
 import ExpandableText from "@/components/products/ExpandableText";
+import MobileTopBar from "@/components/products/MobileTopBar";
+import ProductPriceDisplay from "@/components/products/ProductPriceDisplay";
+import ShippingInfo from "@/components/products/ShippingInfo";
+import { getAddToCartButtonText, calculateProductPrice } from "@/utils/productHelpers";
 import Link from "next/link";
 
-export default function ProductDetailClient({
-  product,
-}: ProductDetailClientProps): React.JSX.Element {
+export default function ProductDetailClient(props: ProductDetailClientProps): React.JSX.Element {
+  const { product, allProducts } = props;
   const router = useRouter();
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
   const { showError } = useAlert();
-
   const searchParams = useSearchParams();
+  // Get the first product image's color to use as default (excluding "Genel")
+  const firstImageColor:string = product.images.find(img => img.color !== "Genel")?.color || product.colors[0] || "";
+  
   const [selectedSize, setSelectedSize] = useState<string>(
     searchParams.get("size") || ""
   );
   const [selectedColor, setSelectedColor] = useState<string>(
-    searchParams.get("color") || ""
+    searchParams.get("color") || firstImageColor
   );
-
-  const isFavorited: boolean = favorites.includes(product?.id || "");
+  const isFavorited:boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
-  const mobileSliderRef = useRef<HTMLDivElement>(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
+
+  // Prevent body scroll when gallery is open
+  useEffect(() => {
+    if (isGalleryOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isGalleryOpen]);
 
   // Reset success state when user changes size
   useEffect(() => {
@@ -72,16 +90,15 @@ export default function ProductDetailClient({
     }
   };
 
-  // Mobile Swipe Logic (Horizontal)
-  const handleScroll: React.UIEventHandler<HTMLDivElement> = (
-    e: React.UIEvent<HTMLDivElement>
-  ) => {
-    const container: HTMLDivElement = e.currentTarget;
-    const scrollLeft: number = container.scrollLeft;
-    const width: number = container.offsetWidth;
-    const index: number = Math.round(scrollLeft / width);
-    setCurrentImageIndex(index);
-  };
+
+  // Filter images based on selected color using useMemo
+  const displayImages:ProductImage[] = useMemo(() => {
+    if (!selectedColor) {
+      return product.images;
+    }
+    const filtered:ProductImage[] = product.images.filter(img => img.color === selectedColor);
+    return filtered.length > 0 ? filtered : product.images;
+  }, [product.images, selectedColor]);
 
   // Variant Logic
   const hasVariants: boolean = product.hasVariants;
@@ -134,13 +151,8 @@ export default function ProductDetailClient({
     return [];
   }, [hasVariants, selectedColor, variants, product.inStock, product.sizes]);
 
-  // Discount Logic
-  const originalPrice: number = product.originalPrice || 0;
-  const finalPrice: number = product.price;
-  const hasDiscount: boolean = originalPrice > finalPrice;
-  const discountPercentage: number = hasDiscount
-    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
-    : 0;
+  // Price calculations
+  const { originalPrice, finalPrice, hasDiscount, discountPercentage } = calculateProductPrice({ product });
 
   if (!product) {
     return (
@@ -160,6 +172,83 @@ export default function ProductDetailClient({
     );
   }
 
+  // New Swipe Logic (Horizontal for Product Navigation)
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
+  const minSwipeDistance:number = 50;
+
+  // Get filter context from URL (passed from products page)
+  const fromGender: string | null = searchParams.get("from");
+  
+  // Filter products for swipe navigation based on filter context
+  const swipeProducts:Product[] = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) return [];
+    
+    // If we have a filter context from URL, use it
+    if (fromGender && fromGender !== "ALL") {
+      return allProducts.filter(p => 
+        !p.gender || p.gender === fromGender || p.gender === "Unisex"
+      );
+    }
+    
+    // No filter context - show all products
+    return allProducts;
+  }, [allProducts, fromGender]);
+
+  const onTouchStart:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const onTouchMove:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const onTouchEnd:React.TouchEventHandler<HTMLDivElement> = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const deltaX:number = touchStart.x - touchEnd.x;
+    const deltaY:number = touchStart.y - touchEnd.y;
+    
+    // Check if the movement is more horizontal than vertical
+    const isHorizontalSwipe:boolean = Math.abs(deltaX) > Math.abs(deltaY);
+    
+    // Only proceed if it's a horizontal swipe
+    if (!isHorizontalSwipe) return;
+    
+    const isLeftSwipe:boolean = deltaX > minSwipeDistance;
+    const isRightSwipe:boolean = deltaX < -minSwipeDistance;
+
+    if (isLeftSwipe || isRightSwipe) {
+      if (!swipeProducts || swipeProducts.length === 0) return;
+      const currentIndex:number = swipeProducts.findIndex((p:any) => p.id === product.id);
+      if (currentIndex === -1) return;
+
+      let nextIndex:number = -1;
+      if (isLeftSwipe) {
+         // Next product
+         nextIndex = currentIndex + 1 < swipeProducts.length ? currentIndex + 1 : 0;
+      } else {
+         // Prev product
+         nextIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : swipeProducts.length - 1;
+      }
+      
+      if (nextIndex !== -1) {
+        // Preserve filter context when navigating
+        const nextUrl:string = fromGender && fromGender !== "ALL"
+          ? `/products/${swipeProducts[nextIndex].id}?from=${fromGender}`
+          : `/products/${swipeProducts[nextIndex].id}`;
+        router.push(nextUrl);
+      }
+    }
+  };
+
   // Check if we're in edit mode
   const originalSize: string | null = searchParams.get("size");
   const originalColor: string | null = searchParams.get("color");
@@ -175,8 +264,9 @@ export default function ProductDetailClient({
 
     // Variant Stock Check
     if (hasVariants && selectedColor) {
-      const variant: ProductVariant | undefined = variants.find(
-        (v) => v.color === selectedColor
+      const variant:ProductVariant | undefined = variants.find(v => 
+        v.color === selectedColor && 
+        ((v as any).size === selectedSize || v.sizes?.includes(selectedSize))
       );
       if (variant && !variant.inStock) {
         showError(t("products.variantNotInStock"));
@@ -184,11 +274,9 @@ export default function ProductDetailClient({
       }
     }
 
-    // Determine effective values (use "Standard" if options are empty)
-    const effectiveSize: string =
-      product.sizes?.length > 0 ? selectedSize : "Standard";
-    const effectiveColor: string =
-      product.colors?.length > 0 ? selectedColor : "Standard";
+    // Determine effective values (use "Standard" if options are empty or not selected)
+    const effectiveSize:string = (product.sizes?.length > 0 && selectedSize) ? selectedSize : "Standard";
+    const effectiveColor:string = (product.colors?.length > 0 && selectedColor) ? selectedColor : "Standard";
 
     // Validate only if options exist
     if (product.sizes?.length > 0 && !selectedSize) return;
@@ -213,19 +301,11 @@ export default function ProductDetailClient({
     }
   };
 
-  const isSizeValid: boolean =
-    product.sizes?.length > 0 ? !!selectedSize : true;
-  const isColorValid: boolean =
-    product.colors?.length > 0 ? !!selectedColor : true;
-  const canAddToCart: boolean =
-    product.inStock &&
-    isSizeValid &&
-    isColorValid &&
-    (!hasVariants || (hasVariants && isVariantInStock));
+  const isSizeValid:boolean = product.sizes?.length > 0 ? !!selectedSize : true;
+  const isColorValid:boolean = product.colors?.length > 0 ? !!selectedColor : true;
+  const canAddToCart:boolean = product.inStock && isSizeValid && isColorValid && (!hasVariants || (hasVariants && isVariantInStock));
 
-  const handleToggleFavorite: React.MouseEventHandler<
-    HTMLButtonElement
-  > = () => {
+  const handleToggleFavorite = () => {
     if (product) {
       toggleFavorite(product.id);
     }
@@ -240,11 +320,9 @@ export default function ProductDetailClient({
           <div className="grid grid-cols-2 gap-2">
             {displayImages.map((img, index) => {
               // Logic for odd number of images: make the last one span full width
-              const isLast = index === displayImages.length - 1;
-              const isOddTotal = displayImages.length % 2 !== 0;
-              const spanClass =
-                isLast && isOddTotal ? "col-span-2" : "col-span-1";
-
+              const isLast:boolean = index === displayImages.length - 1;
+              const isOddTotal:boolean = displayImages.length % 2 !== 0;
+              const spanClass:string = (isLast && isOddTotal) ? "col-span-2" : "col-span-1";
               return (
                 <div
                   key={index}
@@ -263,7 +341,6 @@ export default function ProductDetailClient({
             })}
           </div>
         </div>
-
         {/* Right Column: Sticky Product Details */}
         <div className="col-span-4 relative h-full">
           <div className="sticky top-24 h-fit flex flex-col pl-8">
@@ -286,7 +363,6 @@ export default function ProductDetailClient({
                   />
                 </button>
               </div>
-
               <div className="flex items-baseline gap-3 mt-2">
                 {hasDiscount ? (
                   <>
@@ -306,12 +382,10 @@ export default function ProductDetailClient({
                   </span>
                 )}
               </div>
-
               <p className="text-xs text-gray-400 mt-2 font-medium uppercase tracking-wider">
                 REF. {product.id.substring(0, 8).toUpperCase()}
               </p>
             </div>
-
             {/* Description - Truncated with Show More */}
             <div className="mb-6">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-3">
@@ -322,7 +396,6 @@ export default function ProductDetailClient({
 
             {/* Product Info (Material, Fit, Care) */}
             <ProductInfo product={product} />
-
             {/* Colors */}
             {product.colors.length > 0 && (
               <div className="mb-6">
@@ -334,21 +407,18 @@ export default function ProductDetailClient({
                 />
               </div>
             )}
-
             {/* Sizes - Only show if color is selected (if colors exist) */}
-            {availableSizes.length > 0 &&
-              (!product.colors.length || selectedColor) && (
-                <div className="mb-8">
-                  <OptionSelector
-                    label="Beden"
-                    options={availableSizes.sort((a, b) => a.localeCompare(b))}
-                    selectedOption={selectedSize}
-                    onSelect={setSelectedSize}
-                    disabledOptions={unavailableSizes}
-                  />
-                </div>
-              )}
-
+            {availableSizes.length > 0 && (!product.colors.length || selectedColor) && (
+              <div className="mb-8">
+                <OptionSelector
+                  label="Beden"
+                  options={availableSizes.sort((a, b) => a.localeCompare(b))}
+                  selectedOption={selectedSize}
+                  onSelect={setSelectedSize}
+                  disabledOptions={unavailableSizes}
+                />
+              </div>
+            )}
             {/* Actions */}
             <div className="mt-auto space-y-4">
               <button
@@ -360,19 +430,18 @@ export default function ProductDetailClient({
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {!isSizeValid || !isColorValid
-                  ? !isSizeValid && !isColorValid
-                    ? "Lütfen Renk ve Beden Seçin"
-                    : !isSizeValid
-                    ? "Lütfen Beden Seçin"
-                    : "Lütfen Renk Seçin"
-                  : product.inStock
-                  ? hasVariants && selectedColor && !isVariantInStock
-                    ? "Tükendi"
-                    : t("products.addToCart")
-                  : "Tükendi"}
+                {getAddToCartButtonText({
+                  isSizeValid,
+                  isColorValid,
+                  productInStock: product.inStock,
+                  hasVariants,
+                  selectedColor,
+                  isVariantInStock,
+                  isUpdated,
+                  isEditMode,
+                  t,
+                })}
               </button>
-
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
                 <div className="flex flex-col items-center text-center gap-2">
                   <Truck className="w-5 h-5 text-primary-600" />
@@ -401,61 +470,59 @@ export default function ProductDetailClient({
       {/* MOBILE LAYOUT */}
       <div className="lg:hidden min-h-screen w-full bg-white pb-24">
         {/* Top Bar */}
-        <div className="fixed top-0 left-0 right-0 z-30 p-4 flex justify-between items-start pointer-events-none">
-          <button
-            onClick={() => router.back()}
-            className="pointer-events-auto p-2 bg-white/80 backdrop-blur-md rounded-full text-black shadow-sm"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <div className="flex gap-3 pointer-events-auto">
-            <button
-              onClick={handleToggleFavorite}
-              className={`p-2 backdrop-blur-md rounded-full transition-colors shadow-sm ${
-                isFavorited
-                  ? "bg-primary-600 text-white"
-                  : "bg-white/80 text-black"
-              }`}
-            >
-              <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
-            </button>
-            <button className="p-2 bg-white/80 backdrop-blur-md rounded-full text-black hover:bg-white transition-colors shadow-sm">
-              <Share2 className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+        <MobileTopBar
+          onBack={() => router.back()}
+          onToggleFavorite={handleToggleFavorite}
+          isFavorited={isFavorited}
+        />
 
-        {/* Horizontal Image Slider */}
-        <div className="relative w-full aspect-[3/4]">
+        {/* Vertical Image Slider (Mobile) - starts below header */}
+        <div className="relative w-full h-[calc(100vh-4rem)] mt-16 bg-white group">
           <div
-            ref={mobileSliderRef}
-            className="flex overflow-x-auto snap-x snap-mandatory w-full h-full hide-scrollbar"
-            onScroll={handleScroll}
+            className="flex flex-col overflow-y-auto snap-y snap-mandatory w-full h-full hide-scrollbar scroll-smooth"
+            onScroll={(e:React.UIEvent<HTMLDivElement>) => {
+               // Optional: Update index based on vertical scroll if we want 'dots' to reflect vertical pos.
+               // For vertical "Bershka style", dots might not be necessary or should be vertical.
+               // Let's implement index tracking for vertical scroll too.
+               const container:HTMLElement = e.currentTarget;
+               const scrollTop:number = container.scrollTop;
+               const height:number = container.offsetHeight;
+               const index:number = Math.round(scrollTop / height);
+               setCurrentImageIndex(index);
+            }}
           >
             {displayImages.map((image, index) => (
-              <div
-                key={index}
-                className="w-full flex-shrink-0 snap-center relative h-full"
+              <div 
+                key={index} 
+                className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                onClick={() => setIsGalleryOpen(true)}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
               >
                 <Image
                   src={image.url}
                   alt={`${product.name} - ${index + 1}`}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   sizes="100vw"
                   priority={index === 0}
                 />
               </div>
             ))}
           </div>
-
-          {/* Progress Indicator */}
-          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-4 pb-3">
+          
+          {/* Vertical Progress Indicator (Optional, maybe on right side?) 
+              Or keep bottom dots if it makes sense. Let's keep bottom dots but they might overlay the bottom of the image.
+           */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-10">
             {displayImages.map((_, index) => (
               <div
                 key={index}
-                className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
-                  index === currentImageIndex ? "bg-primary" : "bg-white/20"
+                className={`w-1.5 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? "h-4 bg-white shadow-md"
+                    : "h-1.5 bg-white/50"
                 }`}
               />
             ))}
@@ -464,36 +531,15 @@ export default function ProductDetailClient({
 
         {/* Mobile Product Info */}
         <div className="px-5 py-6 space-y-6">
-          {/* Product Name & Reference */}
-          <div className="space-y-1">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-              REF. {product.id.substring(0, 8).toUpperCase()}
-            </p>
-            <h1 className="text-2xl font-bold uppercase tracking-tight text-black">
-              {product.name}
-            </h1>
-          </div>
-
-          {/* Price */}
-          <div className="flex items-baseline gap-3">
-            {hasDiscount ? (
-              <>
-                <span className="text-2xl font-bold text-black">
-                  {finalPrice.toFixed(2)} {t("products.currency")}
-                </span>
-                <span className="text-gray-400 line-through text-sm">
-                  {originalPrice.toFixed(2)} {t("products.currency")}
-                </span>
-                <span className="text-xs font-bold text-white bg-red-600 px-2 py-0.5">
-                  -{discountPercentage}%
-                </span>
-              </>
-            ) : (
-              <span className="text-2xl font-bold text-black">
-                {finalPrice.toFixed(2)} {t("products.currency")}
-              </span>
-            )}
-          </div>
+          {/* Product Name & Price */}
+          <ProductPriceDisplay
+            productName={product.name}
+            productId={product.id}
+            finalPrice={finalPrice}
+            originalPrice={originalPrice}
+            hasDiscount={hasDiscount}
+            discountPercentage={discountPercentage}
+          />
 
           {/* Color Selection - Inline */}
           {product.colors.length > 0 && (
@@ -530,17 +576,7 @@ export default function ProductDetailClient({
           <ProductInfo product={product} />
 
           {/* Shipping Info Badge */}
-          <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-lg">
-            <Truck className="w-5 h-5 text-primary-600 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium text-gray-900">
-                {t("products.freeShipping")}
-              </p>
-              <p className="text-gray-500 text-xs">
-                {t("products.freeShippingFrom")}
-              </p>
-            </div>
-          </div>
+          <ShippingInfo />
         </div>
 
         {/* Sticky Bottom Bar */}
@@ -554,24 +590,82 @@ export default function ProductDetailClient({
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
           >
-            {!isSizeValid || !isColorValid
-              ? !isSizeValid && !isColorValid
-                ? t("products.selectSizeColor")
-                : !isSizeValid
-                ? t("products.selectSize")
-                : t("products.selectColor")
-              : product.inStock
-              ? hasVariants && selectedColor && !isVariantInStock
-                ? t("products.outOfStock")
-                : isUpdated
-                ? t("products.cartUpdated")
-                : isEditMode
-                ? t("products.updateCart")
-                : t("products.addToCart")
-              : t("products.outOfStock")}
+            {getAddToCartButtonText({
+              isSizeValid,
+              isColorValid,
+              productInStock: product.inStock,
+              hasVariants,
+              selectedColor,
+              isVariantInStock,
+              isUpdated,
+              isEditMode,
+              t,
+            })}
           </button>
         </div>
       </div>
+
+      {/* Fullscreen Gallery Modal */}
+      {isGalleryOpen && (
+        <div className="lg:hidden fixed inset-0 z-[100] bg-black">
+          {/* Close Button */}
+          <button
+            onClick={() => {
+              setIsGalleryOpen(false);
+              setCurrentImageIndex(0);
+            }}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/20 backdrop-blur-md rounded-full text-white"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 z-10 bg-black/30 px-3 py-1 rounded">
+            <span className="text-white text-xs font-medium tabular-nums">
+              {currentImageIndex + 1}/{displayImages.length}
+            </span>
+          </div>
+
+          {/* Fullscreen Image Slider */}
+          <div
+            className="flex flex-col overflow-y-auto snap-y snap-mandatory w-full h-full hide-scrollbar"
+            onScroll={(e) => {
+              const container = e.currentTarget;
+              const scrollTop = container.scrollTop;
+              const height = container.offsetHeight;
+              const index = Math.round(scrollTop / height);
+              setCurrentImageIndex(index);
+            }}
+          >
+            {displayImages.map((image, index) => (
+              <div key={index} className="w-full h-full flex-shrink-0 snap-center relative">
+                <Image
+                  src={image.url}
+                  alt={`${product.name} - ${index + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="100vw"
+                  priority={index === currentImageIndex}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Indicator */}
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5 z-10">
+            {displayImages.map((_, index) => (
+              <div
+                key={index}
+                className={`rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? "w-6 h-1.5 bg-white"
+                    : "w-1.5 h-1.5 bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {

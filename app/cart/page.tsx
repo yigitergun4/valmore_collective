@@ -6,8 +6,10 @@ import { useShop } from "@/contexts/ShopContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { CartItem } from "@/types";
+import { CartItem, Product } from "@/types";
 import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
+import { useState, useEffect, useMemo } from "react";
+import { getAllProducts } from "@/lib/productService";
 
 export default function CartPage(): React.JSX.Element {
   const {
@@ -16,7 +18,32 @@ export default function CartPage(): React.JSX.Element {
     updateQuantity,
   } = useShop();
   
-  const getTotalPrice: () => number = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  
+  // Fetch products to get correct images
+  useEffect(() => {
+    const fetchProducts: () => Promise<void> = async () => {
+      const allProducts: Product[] = await getAllProducts();
+      setProducts(allProducts);
+    };
+    if (items.length > 0) {
+      fetchProducts();
+    }
+  }, [items.length]);
+  
+  // Helper function to get the correct image for a cart item
+  const getItemImage: (item: CartItem) => string = (item: CartItem): string => {
+    const product: Product | undefined = products.find(p => p.id === item.productId);
+    if (product) {
+      // Find image matching the selected color
+      const colorImage = product.images.find(img => img.color === item.selectedColor);
+      if (colorImage) return colorImage.url;
+    }
+    // Fallback to stored image
+    return item.image;
+  };
+  
+  const getTotalPrice: () => number = (): number => {
     return items.reduce((total: number, item: CartItem) => total + item.price * item.quantity, 0);
   };
 
@@ -68,9 +95,9 @@ export default function CartPage(): React.JSX.Element {
                   href={`/products/${item.productId}?size=${item.selectedSize}&color=${item.selectedColor}`}
                   className="relative w-24 h-32 lg:w-32 lg:h-40 bg-gray-50 overflow-hidden flex-shrink-0 block"
                 >
-                  {item.image ? (
+                  {getItemImage(item) ? (
                     <Image
-                      src={item.image}
+                      src={getItemImage(item)}
                       alt={item.name}
                       fill
                       className="object-cover"
