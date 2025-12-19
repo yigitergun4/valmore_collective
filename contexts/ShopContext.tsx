@@ -166,7 +166,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         selectedSize: size,
         selectedColor: color,
         quantity: 1,
-        barcode: variant?.barcode || product.barcode,
+        barcode: variant?.barcode || product.barcode || "",
         updatedAt: Date.now(),
       };
 

@@ -240,18 +240,9 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
       }
     }
 
-    // Determine effective values (use "Standard" if options are empty)
-    const effectiveSize:string = product.sizes?.length > 0 ? selectedSize : "Standard";
-    const effectiveColor:string = product.colors?.length > 0 ? selectedColor : "Standard";
-
-    // Check if there's a matching image for the selected color
-    const hasMatchingImage:boolean = product.images.some(
-      img => img.color === effectiveColor || img.color === "Genel"
-    );
-    if (!hasMatchingImage && product.colors?.length > 0) {
-      showError(t("products.noMatchingImage") || "Bu renk için fotoğraf bulunamadı");
-      return;
-    }
+    // Determine effective values (use "Standard" if options are empty or not selected)
+    const effectiveSize:string = (product.sizes?.length > 0 && selectedSize) ? selectedSize : "Standard";
+    const effectiveColor:string = (product.colors?.length > 0 && selectedColor) ? selectedColor : "Standard";
 
     // Validate only if options exist
     if (product.sizes?.length > 0 && !selectedSize) return;
