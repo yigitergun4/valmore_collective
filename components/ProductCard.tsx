@@ -38,7 +38,7 @@ export default function ProductCard({ product, filterGender }: ProductCardProps)
   };
 
   // Build link href with optional filter context
-  const linkHref = filterGender && filterGender !== "ALL" 
+  const linkHref: string = filterGender && filterGender !== "ALL" 
     ? `/products/${product.id}?from=${filterGender}` 
     : `/products/${product.id}`;
 

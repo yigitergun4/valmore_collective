@@ -8,7 +8,6 @@ import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
-  ChevronLeft,
   Heart,
   Share2,
   Truck,
@@ -18,6 +17,10 @@ import {
 import OptionSelector from "@/components/OptionSelector";
 import ProductInfo from "@/components/products/ProductInfo";
 import ExpandableText from "@/components/products/ExpandableText";
+import MobileTopBar from "@/components/products/MobileTopBar";
+import ProductPriceDisplay from "@/components/products/ProductPriceDisplay";
+import ShippingInfo from "@/components/products/ShippingInfo";
+import { getAddToCartButtonText, calculateProductPrice } from "@/utils/productHelpers";
 import Link from "next/link";
 
 export default function ProductDetailClient(props: ProductDetailClientProps): React.JSX.Element {
@@ -115,13 +118,8 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
     return [];
   }, [hasVariants, selectedColor, variants, product.inStock, product.sizes]);
 
-  // Discount Logic
-  const originalPrice:number = product.originalPrice || 0;
-  const finalPrice:number = product.price;
-  const hasDiscount:boolean = originalPrice > finalPrice;
-  const discountPercentage:number = hasDiscount 
-    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
-    : 0;
+  // Price calculations
+  const { originalPrice, finalPrice, hasDiscount, discountPercentage } = calculateProductPrice({ product });
 
   if (!product) {
     return (
@@ -272,7 +270,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   const isColorValid:boolean = product.colors?.length > 0 ? !!selectedColor : true;
   const canAddToCart:boolean = product.inStock && isSizeValid && isColorValid && (!hasVariants || (hasVariants && isVariantInStock));
 
-  const handleToggleFavorite:React.MouseEventHandler<HTMLButtonElement> = () => {
+  const handleToggleFavorite = () => {
     if (product) {
       toggleFavorite(product.id);
     }
@@ -400,15 +398,17 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {!isSizeValid || !isColorValid
-                  ? (!isSizeValid && !isColorValid
-                      ? t("products.selectSizeColor")
-                      : !isSizeValid
-                      ? t("products.selectSize")
-                      : t("products.selectColor"))
-                  : (product.inStock 
-                      ? (hasVariants && selectedColor && !isVariantInStock ? t("products.outOfStock") : (isUpdated ? t("products.cartUpdated") : isEditMode ? t("products.updateCart") : t("products.addToCart")))
-                      : t("products.outOfStock"))}
+                {getAddToCartButtonText({
+                  isSizeValid,
+                  isColorValid,
+                  productInStock: product.inStock,
+                  hasVariants,
+                  selectedColor,
+                  isVariantInStock,
+                  isUpdated,
+                  isEditMode,
+                  t,
+                })}
               </button>
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
                 <div className="flex flex-col items-center text-center gap-2">
@@ -438,21 +438,11 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
       {/* MOBILE LAYOUT */}
       <div className="lg:hidden min-h-screen w-full bg-white pb-24">
         {/* Top Bar */}
-        <div className="fixed top-0 left-0 right-0 z-30 p-4 flex justify-between items-start pointer-events-none">
-          <div className="flex gap-3 pointer-events-auto">
-            <button
-              onClick={handleToggleFavorite}
-              className={`p-2 backdrop-blur-md rounded-full transition-colors shadow-sm ${
-                isFavorited ? "bg-primary-600 text-white" : "bg-white/80 text-black"
-              }`}
-            >
-              <Heart className={`w-6 h-6 ${isFavorited ? "fill-white" : ""}`} />
-            </button>
-            <button className="p-2 bg-white/80 backdrop-blur-md rounded-full text-black hover:bg-white transition-colors shadow-sm">
-              <Share2 className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+        <MobileTopBar
+          onBack={() => router.back()}
+          onToggleFavorite={handleToggleFavorite}
+          isFavorited={isFavorited}
+        />
 
         {/* Vertical Image Slider (Mobile) - starts below header */}
         <div className="relative w-full h-[calc(100vh-4rem)] mt-16 bg-white group">
@@ -509,36 +499,15 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
 
         {/* Mobile Product Info */}
         <div className="px-5 py-6 space-y-6">
-          {/* Product Name & Reference */}
-          <div className="space-y-1">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-              REF. {product.id.substring(0, 8).toUpperCase()}
-            </p>
-            <h1 className="text-2xl font-bold uppercase tracking-tight text-black">
-              {product.name}
-            </h1>
-          </div>
-          
-          {/* Price */}
-          <div className="flex items-baseline gap-3">
-            {hasDiscount ? (
-              <>
-                <span className="text-2xl font-bold text-black">
-                  {finalPrice.toFixed(2)} {t("products.currency")}
-                </span>
-                <span className="text-gray-400 line-through text-sm">
-                  {originalPrice.toFixed(2)} {t("products.currency")}
-                </span>
-                <span className="text-xs font-bold text-white bg-red-600 px-2 py-0.5">
-                  -{discountPercentage}%
-                </span>
-              </>
-            ) : (
-              <span className="text-2xl font-bold text-black">
-                {finalPrice.toFixed(2)} {t("products.currency")}
-              </span>
-            )}
-          </div>
+          {/* Product Name & Price */}
+          <ProductPriceDisplay
+            productName={product.name}
+            productId={product.id}
+            finalPrice={finalPrice}
+            originalPrice={originalPrice}
+            hasDiscount={hasDiscount}
+            discountPercentage={discountPercentage}
+          />
 
           {/* Color Selection - Inline */}
           {product.colors.length > 0 && (
@@ -576,13 +545,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
           <ProductInfo product={product} />
 
           {/* Shipping Info Badge */}
-          <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-lg">
-            <Truck className="w-5 h-5 text-primary-600 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium text-gray-900">{t("products.freeShipping")}</p>
-              <p className="text-gray-500 text-xs">{t("products.freeShippingFrom")}</p>
-            </div>
-          </div>
+          <ShippingInfo />
         </div>
 
         {/* Sticky Bottom Bar */}
@@ -596,21 +559,17 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
           >
-            {!isSizeValid || !isColorValid
-              ? (!isSizeValid && !isColorValid
-                  ? t("products.selectSizeColor")
-                  : !isSizeValid
-                  ? t("products.selectSize")
-                  : t("products.selectColor"))
-              : (product.inStock
-                  ? (hasVariants && selectedColor && !isVariantInStock 
-                      ? t("products.outOfStock") 
-                      : (isUpdated
-                          ? t("products.cartUpdated")
-                          : isEditMode
-                            ? t("products.updateCart")
-                            : t("products.addToCart")))
-                  : t("products.outOfStock"))}
+            {getAddToCartButtonText({
+              isSizeValid,
+              isColorValid,
+              productInStock: product.inStock,
+              hasVariants,
+              selectedColor,
+              isVariantInStock,
+              isUpdated,
+              isEditMode,
+              t,
+            })}
           </button>
         </div>
       </div>
