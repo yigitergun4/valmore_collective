@@ -256,7 +256,7 @@ function ProductsContent(): React.JSX.Element {
         ) : filteredAndSortedProducts.length > 0 ? (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 gap-y-8 lg:gap-x-4 lg:gap-y-12">
-              {currentProducts.map((product) => (
+              {currentProducts.map((product:Product) => (
                 <ProductCard key={product.id} product={product} filterGender={activeGender} />
               ))}
             </div>

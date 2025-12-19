@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
+import {Product, ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
 import { useAlert } from "@/contexts/AlertContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,6 +13,7 @@ import {
   Share2,
   Truck,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import OptionSelector from "@/components/OptionSelector";
 import ProductInfo from "@/components/products/ProductInfo";
@@ -39,6 +40,19 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   const isFavorited:boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState<boolean>(false);
+
+  // Prevent body scroll when gallery is open
+  useEffect(() => {
+    if (isGalleryOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isGalleryOpen]);
 
   // Reset success state when user changes size or color
   useEffect(() => {
@@ -128,15 +142,15 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   }
 
   // New Swipe Logic (Horizontal for Product Navigation)
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
   const minSwipeDistance:number = 50;
 
   // Get filter context from URL (passed from products page)
   const fromGender: string | null = searchParams.get("from");
   
   // Filter products for swipe navigation based on filter context
-  const swipeProducts = useMemo(() => {
+  const swipeProducts:Product[] = useMemo(() => {
     if (!allProducts || allProducts.length === 0) return [];
     
     // If we have a filter context from URL, use it
@@ -152,18 +166,33 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
 
   const onTouchStart:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
   };
 
   const onTouchMove:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
   };
 
   const onTouchEnd:React.TouchEventHandler<HTMLDivElement> = () => {
     if (!touchStart || !touchEnd) return;
-    const distance:number = touchStart - touchEnd;
-    const isLeftSwipe:boolean = distance > minSwipeDistance;
-    const isRightSwipe:boolean = distance < -minSwipeDistance;
+    
+    const deltaX:number = touchStart.x - touchEnd.x;
+    const deltaY:number = touchStart.y - touchEnd.y;
+    
+    // Check if the movement is more horizontal than vertical
+    const isHorizontalSwipe:boolean = Math.abs(deltaX) > Math.abs(deltaY);
+    
+    // Only proceed if it's a horizontal swipe
+    if (!isHorizontalSwipe) return;
+    
+    const isLeftSwipe:boolean = deltaX > minSwipeDistance;
+    const isRightSwipe:boolean = deltaX < -minSwipeDistance;
 
     if (isLeftSwipe || isRightSwipe) {
       if (!swipeProducts || swipeProducts.length === 0) return;
@@ -181,7 +210,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
       
       if (nextIndex !== -1) {
         // Preserve filter context when navigating
-        const nextUrl = fromGender && fromGender !== "ALL"
+        const nextUrl:string = fromGender && fromGender !== "ALL"
           ? `/products/${swipeProducts[nextIndex].id}?from=${fromGender}`
           : `/products/${swipeProducts[nextIndex].id}`;
         router.push(nextUrl);
@@ -410,12 +439,6 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
       <div className="lg:hidden min-h-screen w-full bg-white pb-24">
         {/* Top Bar */}
         <div className="fixed top-0 left-0 right-0 z-30 p-4 flex justify-between items-start pointer-events-none">
-          <button
-            onClick={() => router.back()}
-            className="pointer-events-auto p-2 bg-white/80 backdrop-blur-md rounded-full text-black shadow-sm"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
           <div className="flex gap-3 pointer-events-auto">
             <button
               onClick={handleToggleFavorite}
@@ -432,12 +455,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
         </div>
 
         {/* Vertical Image Slider (Mobile) - starts below header */}
-        <div 
-          className="relative w-full h-[calc(100vh-4rem)] mt-16 bg-white group"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
+        <div className="relative w-full h-[calc(100vh-4rem)] mt-16 bg-white group">
           <div
             className="flex flex-col overflow-y-auto snap-y snap-mandatory w-full h-full hide-scrollbar scroll-smooth"
             onScroll={(e) => {
@@ -452,7 +470,14 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
             }}
           >
             {displayImages.map((image, index) => (
-              <div key={index} className="w-full h-full flex-shrink-0 snap-center relative">
+              <div 
+                key={index} 
+                className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                onClick={() => setIsGalleryOpen(true)}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
                 <Image
                   src={image.url}
                   alt={`${product.name} - ${index + 1}`}
@@ -589,6 +614,68 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
           </button>
         </div>
       </div>
+
+      {/* Fullscreen Gallery Modal */}
+      {isGalleryOpen && (
+        <div className="lg:hidden fixed inset-0 z-[100] bg-black">
+          {/* Close Button */}
+          <button
+            onClick={() => {
+              setIsGalleryOpen(false);
+              setCurrentImageIndex(0);
+            }}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/20 backdrop-blur-md rounded-full text-white"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 z-10 bg-black/30 px-3 py-1 rounded">
+            <span className="text-white text-xs font-medium tabular-nums">
+              {currentImageIndex + 1}/{displayImages.length}
+            </span>
+          </div>
+
+          {/* Fullscreen Image Slider */}
+          <div
+            className="flex flex-col overflow-y-auto snap-y snap-mandatory w-full h-full hide-scrollbar"
+            onScroll={(e) => {
+              const container = e.currentTarget;
+              const scrollTop = container.scrollTop;
+              const height = container.offsetHeight;
+              const index = Math.round(scrollTop / height);
+              setCurrentImageIndex(index);
+            }}
+          >
+            {displayImages.map((image, index) => (
+              <div key={index} className="w-full h-full flex-shrink-0 snap-center relative">
+                <Image
+                  src={image.url}
+                  alt={`${product.name} - ${index + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="100vw"
+                  priority={index === currentImageIndex}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Indicator */}
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5 z-10">
+            {displayImages.map((_, index) => (
+              <div
+                key={index}
+                className={`rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? "w-6 h-1.5 bg-white"
+                    : "w-1.5 h-1.5 bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {
