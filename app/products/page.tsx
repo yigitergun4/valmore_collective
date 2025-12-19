@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Product, ProductGender, GENDER_OPTIONS } from "@/types";
 import { PRODUCT_CATEGORIES, ProductCategory } from "@/lib/constants";
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE: number = 12;
 
 function ProductsContent(): React.JSX.Element {
   const { t } = useLanguage();
@@ -261,7 +261,6 @@ function ProductsContent(): React.JSX.Element {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-
             {/* Load More Section */}
             {hasMore && (
               <div className="mt-12 lg:mt-16">
@@ -274,13 +273,12 @@ function ProductsContent(): React.JSX.Element {
                   {isLoadingMore ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t("products.loading") || "YÜKLENIYOR..."}
+                      {t("products.loading")}
                     </>
                   ) : (
-                    t("products.loadMore") || "DAHA FAZLA ÜRÜN GÖSTER"
+                    t("products.loadMore")
                   )}
                 </button>
-
                 {/* Mobile: Infinite Scroll Trigger + Loading Indicator */}
                 <div 
                   ref={loadMoreTriggerRef} 
@@ -307,7 +305,6 @@ function ProductsContent(): React.JSX.Element {
           </div>
         )}
       </main>
-
       {/* Filter Drawer */}
       <FilterDrawer
         isOpen={isFilterOpen}

@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   Heart,
   Share2,
-  ChevronUp,
   Truck,
   ShieldCheck,
 } from "lucide-react";
@@ -20,22 +19,23 @@ import ProductInfo from "@/components/products/ProductInfo";
 import ExpandableText from "@/components/products/ExpandableText";
 import Link from "next/link";
 
-export default function ProductDetailClient({ 
-  product, 
-}: ProductDetailClientProps): React.JSX.Element {
+export default function ProductDetailClient(props: ProductDetailClientProps): React.JSX.Element {
+  const { product, allProducts } = props;
+
   const router = useRouter();
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
   const { showError } = useAlert();
-
   const searchParams = useSearchParams();
+  // Get the first product image's color to use as default (excluding "Genel")
+  const firstImageColor:string = product.images.find(img => img.color !== "Genel")?.color || product.colors[0] || "";
+  
   const [selectedSize, setSelectedSize] = useState<string>(
     searchParams.get("size") || ""
   );
   const [selectedColor, setSelectedColor] = useState<string>(
-    searchParams.get("color") || ""
+    searchParams.get("color") || firstImageColor
   );
-  
   const isFavorited:boolean = favorites.includes(product?.id || "");
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [isUpdated, setIsUpdated] = useState<boolean>(false);
@@ -109,15 +109,6 @@ export default function ProductDetailClient({
     ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
     : 0;
 
-  // Mobile Swipe Logic (Horizontal)
-  const handleScroll:React.UIEventHandler<HTMLDivElement>  = (e: React.UIEvent<HTMLDivElement>) => {
-    const container:HTMLDivElement = e.currentTarget;
-    const scrollLeft:number = container.scrollLeft;
-    const width:number = container.offsetWidth;
-    const index:number = Math.round(scrollLeft / width);
-    setCurrentImageIndex(index);
-  };
-
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -136,6 +127,46 @@ export default function ProductDetailClient({
     );
   }
 
+  // New Swipe Logic (Horizontal for Product Navigation)
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance:number = 50;
+
+  const onTouchStart:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove:React.TouchEventHandler<HTMLDivElement> = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd:React.TouchEventHandler<HTMLDivElement> = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance:number = touchStart - touchEnd;
+    const isLeftSwipe:boolean = distance > minSwipeDistance;
+    const isRightSwipe:boolean = distance < -minSwipeDistance;
+
+    if (isLeftSwipe || isRightSwipe) {
+      if (!allProducts || allProducts.length === 0) return;
+      const currentIndex:number = allProducts.findIndex((p:any) => p.id === product.id);
+      if (currentIndex === -1) return;
+
+      let nextIndex:number = -1;
+      if (isLeftSwipe) {
+         // Next product
+         nextIndex = currentIndex + 1 < allProducts.length ? currentIndex + 1 : 0;
+      } else {
+         // Prev product
+         nextIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : allProducts.length - 1;
+      }
+      
+      if (nextIndex !== -1) {
+        router.push(`/products/${allProducts[nextIndex].id}`);
+      }
+    }
+  };
+
   // Check if we're in edit mode
   const originalSize:string | null = searchParams.get("size");
   const originalColor:string | null = searchParams.get("color");
@@ -149,7 +180,10 @@ export default function ProductDetailClient({
     
     // Variant Stock Check
     if (hasVariants && selectedColor) {
-      const variant:ProductVariant | undefined = variants.find(v => v.color === selectedColor);
+      const variant:ProductVariant | undefined = variants.find(v => 
+        v.color === selectedColor && 
+        ((v as any).size === selectedSize || v.sizes?.includes(selectedSize))
+      );
       if (variant && !variant.inStock) {
         showError(t("products.variantNotInStock"));
         return;
@@ -159,6 +193,15 @@ export default function ProductDetailClient({
     // Determine effective values (use "Standard" if options are empty)
     const effectiveSize:string = product.sizes?.length > 0 ? selectedSize : "Standard";
     const effectiveColor:string = product.colors?.length > 0 ? selectedColor : "Standard";
+
+    // Check if there's a matching image for the selected color
+    const hasMatchingImage:boolean = product.images.some(
+      img => img.color === effectiveColor || img.color === "Genel"
+    );
+    if (!hasMatchingImage && product.colors?.length > 0) {
+      showError(t("products.noMatchingImage") || "Bu renk için fotoğraf bulunamadı");
+      return;
+    }
 
     // Validate only if options exist
     if (product.sizes?.length > 0 && !selectedSize) return;
@@ -193,10 +236,9 @@ export default function ProductDetailClient({
           <div className="grid grid-cols-2 gap-2">
             {displayImages.map((img, index) => {
               // Logic for odd number of images: make the last one span full width
-              const isLast = index === displayImages.length - 1;
-              const isOddTotal = displayImages.length % 2 !== 0;
-              const spanClass = (isLast && isOddTotal) ? "col-span-2" : "col-span-1";
-
+              const isLast:boolean = index === displayImages.length - 1;
+              const isOddTotal:boolean = displayImages.length % 2 !== 0;
+              const spanClass:string = (isLast && isOddTotal) ? "col-span-2" : "col-span-1";
               return (
                 <div
                   key={index}
@@ -215,7 +257,6 @@ export default function ProductDetailClient({
             })}
           </div>
         </div>
-
         {/* Right Column: Sticky Product Details */}
         <div className="col-span-4 relative h-full">
           <div className="sticky top-24 h-fit flex flex-col pl-8">
@@ -238,7 +279,6 @@ export default function ProductDetailClient({
                   />
                 </button>
               </div>
-              
               <div className="flex items-baseline gap-3 mt-2">
                 {hasDiscount ? (
                   <>
@@ -258,12 +298,10 @@ export default function ProductDetailClient({
                   </span>
                 )}
               </div>
-
               <p className="text-xs text-gray-400 mt-2 font-medium uppercase tracking-wider">
                 REF. {product.id.substring(0, 8).toUpperCase()}
               </p>
             </div>
-
             {/* Description - Truncated with Show More */}
             <div className="mb-6">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-3">
@@ -274,7 +312,6 @@ export default function ProductDetailClient({
 
             {/* Product Info (Material, Fit, Care) */}
             <ProductInfo product={product} />
-
             {/* Colors */}
             {product.colors.length > 0 && (
               <div className="mb-6">
@@ -289,7 +326,6 @@ export default function ProductDetailClient({
                 />
               </div>
             )}
-
             {/* Sizes - Only show if color is selected (if colors exist) */}
             {availableSizes.length > 0 && (!product.colors.length || selectedColor) && (
               <div className="mb-8">
@@ -302,7 +338,6 @@ export default function ProductDetailClient({
                 />
               </div>
             )}
-
             {/* Actions */}
             <div className="mt-auto space-y-4">
               <button
@@ -316,15 +351,14 @@ export default function ProductDetailClient({
               >
                 {!isSizeValid || !isColorValid
                   ? (!isSizeValid && !isColorValid
-                      ? "Lütfen Renk ve Beden Seçin"
+                      ? t("products.selectSizeColor")
                       : !isSizeValid
-                      ? "Lütfen Beden Seçin"
-                      : "Lütfen Renk Seçin")
+                      ? t("products.selectSize")
+                      : t("products.selectColor"))
                   : (product.inStock 
-                      ? (hasVariants && selectedColor && !isVariantInStock ? "Tükendi" : t("products.addToCart"))
-                      : "Tükendi")}
+                      ? (hasVariants && selectedColor && !isVariantInStock ? t("products.outOfStock") : (isUpdated ? t("products.cartUpdated") : isEditMode ? t("products.updateCart") : t("products.addToCart")))
+                      : t("products.outOfStock"))}
               </button>
-
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary-100">
                 <div className="flex flex-col items-center text-center gap-2">
                   <Truck className="w-5 h-5 text-primary-600" />
@@ -375,19 +409,33 @@ export default function ProductDetailClient({
           </div>
         </div>
 
-        {/* Horizontal Image Slider */}
-        <div className="relative w-full aspect-[3/4]">
+        {/* Vertical Image Slider (Mobile) - starts below header */}
+        <div 
+          className="relative w-full h-[calc(100vh-4rem)] mt-16 bg-white group"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           <div
-            className="flex overflow-x-auto snap-x snap-mandatory w-full h-full hide-scrollbar"
-            onScroll={handleScroll}
+            className="flex flex-col overflow-y-auto snap-y snap-mandatory w-full h-full hide-scrollbar scroll-smooth"
+            onScroll={(e) => {
+               // Optional: Update index based on vertical scroll if we want 'dots' to reflect vertical pos.
+               // For vertical "Bershka style", dots might not be necessary or should be vertical.
+               // Let's implement index tracking for vertical scroll too.
+               const container = e.currentTarget;
+               const scrollTop = container.scrollTop;
+               const height = container.offsetHeight;
+               const index = Math.round(scrollTop / height);
+               setCurrentImageIndex(index);
+            }}
           >
             {displayImages.map((image, index) => (
-              <div key={index} className="w-full flex-shrink-0 snap-center relative h-full">
+              <div key={index} className="w-full h-full flex-shrink-0 snap-center relative">
                 <Image
                   src={image.url}
                   alt={`${product.name} - ${index + 1}`}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   sizes="100vw"
                   priority={index === 0}
                 />
@@ -395,15 +443,17 @@ export default function ProductDetailClient({
             ))}
           </div>
           
-          {/* Progress Indicator */}
-          <div className="absolute bottom-0 left-0 right-0 flex gap-1 px-4 pb-3">
+          {/* Vertical Progress Indicator (Optional, maybe on right side?) 
+              Or keep bottom dots if it makes sense. Let's keep bottom dots but they might overlay the bottom of the image.
+           */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-10">
             {displayImages.map((_, index) => (
               <div
                 key={index}
-                className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${
+                className={`w-1.5 rounded-full transition-all duration-300 ${
                   index === currentImageIndex
-                    ? "bg-primary"
-                    : "bg-white/20"
+                    ? "h-4 bg-white shadow-md"
+                    : "h-1.5 bg-white/50"
                 }`}
               />
             ))}

@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Product } from "@/types";
+import { ProductCardProps } from "@/types/components";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getColorHex } from "@/lib/colorUtils";
 
-interface ProductCardProps {
-  product: Product;
-}
+
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { t } = useLanguage();

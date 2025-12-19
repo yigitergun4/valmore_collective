@@ -4,7 +4,7 @@ import React, { useState, useRef, useMemo, useEffect, JSX } from "react";
 import { Product, ProductImage, ProductVariant } from "@/types";
 import { useVariations } from "@/hooks/useVariations";
 import { uploadProductImage } from "@/lib/firestore/products";
-import { X, Upload, Plus, Info, Edit2, Save, Loader2, Trash2, ChevronDown } from "lucide-react";
+import { X, Upload, Plus, Info, Save, Loader2, Trash2, ChevronDown, Star } from "lucide-react";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import {
@@ -21,6 +21,17 @@ import { ProductFormProps, LocalImage } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
 import { Variation, generateUUID } from "@/types/variations";
 
@@ -78,7 +89,7 @@ export default function ProductForm({
     careInstructions: initialData?.careInstructions || "",
     sku: initialData?.sku || "",
     barcode: initialData?.barcode || "",
-    images: (initialData?.images?.map(img => typeof img === 'string' ? { url: img, color: "Genel" } : img) || []) as LocalImage[],
+    images: (initialData?.images?.map(img => typeof img === 'string' ? { url: img, color: initialData?.colors?.[0] || "" } : img) || []) as LocalImage[],
     sizes: initialData?.sizes || [],
     colors: initialData?.colors || [],
     inStock: initialData?.inStock ?? true,
@@ -90,6 +101,7 @@ export default function ProductForm({
 
   const [hasDiscount, setHasDiscount] = useState<boolean>(initialData?.isDiscounted || false);
   const [discountedPrice, setDiscountedPrice] = useState<number>(initialData?.isDiscounted ? initialData.price : 0);
+  const [primaryImageIndex, setPrimaryImageIndex] = useState<number>(initialData?.primaryImageIndex ?? 0);
 
   // Variant Builder State - Using custom hook with initial data from existing product
   const {
@@ -115,7 +127,6 @@ export default function ProductForm({
   // Simple Mode Inputs
   const [newSize, setNewSize] = useState<string>("");
   const [newColor, setNewColor] = useState<string>("");
-
   const [uploading, setUploading] = useState<boolean>(false);
   const [compressionStatus, setCompressionStatus] = useState<string>("");
   
@@ -157,10 +168,11 @@ export default function ProductForm({
 
     const fileArray = Array.from(files);
     
-    // Create optimistic images
+    // Create optimistic images - default to first available color
+    const defaultColor: string = getUniqueColors()[0] || formData.colors[0] || "";
     const newImages: LocalImage[] = fileArray.map(file => ({
       url: URL.createObjectURL(file),
-      color: "Genel",
+      color: defaultColor,
       isUploading: true,
       file: file
     }));
@@ -320,8 +332,10 @@ export default function ProductForm({
   };
 
   const handleDeleteVariation: (id: string) => void = (id: string): void => {
-    removeVariation(id);
-    toast.success("Varyasyon silindi.");
+    if (confirm("Bu varyasyonu silmek istediğinize emin misiniz?")) {
+      removeVariation(id);
+      toast.success("Varyasyon silindi.");
+    }
   };
 
   const handleToggleStock: (id: string, currentStatus: boolean) => void = (id: string, currentStatus: boolean): void => {
@@ -387,10 +401,27 @@ export default function ProductForm({
       const slug: string = slugify(formData.name);
       const finalPrice: number = hasDiscount ? discountedPrice : formData.price;
 
-      const cleanImages: ProductImage[] = formData.images.map(img => ({
+      // Reorder images: primary image first, then same color images, then others
+      const rawImages: ProductImage[] = formData.images.map(img => ({
         url: img.url,
         color: img.color
       }));
+      
+      let orderedImages: ProductImage[] = [...rawImages];
+      if (primaryImageIndex > 0 && primaryImageIndex < rawImages.length) {
+        const primaryImg = rawImages[primaryImageIndex];
+        const primaryColor = primaryImg.color;
+        
+        // Remove primary image from array
+        orderedImages = rawImages.filter((_, idx) => idx !== primaryImageIndex);
+        
+        // Split into same color and other colors
+        const sameColorImages = orderedImages.filter(img => img.color === primaryColor);
+        const otherImages = orderedImages.filter(img => img.color !== primaryColor);
+        
+        // Reorder: primary first, then same color, then others
+        orderedImages = [primaryImg, ...sameColorImages, ...otherImages];
+      }
 
       // Map Flat Array variations to ProductVariant format
       // We accept that 'sizes' will contain only 1 item per variant to preserve unique SKUs/Barcodes for each size-color combo
@@ -409,7 +440,8 @@ export default function ProductForm({
         price: finalPrice,
         originalPrice: hasDiscount ? formData.price : undefined,
         isDiscounted: hasDiscount,
-        images: cleanImages,
+        images: orderedImages, // Use reordered images
+        primaryImageIndex: 0, // Always 0 since we reordered
         colors: finalColors,
         sizes: finalSizes,
         inStock: finalInStock,
@@ -446,28 +478,70 @@ export default function ProductForm({
     const predefinedSizes = categoryType === 'shoes' ? shoeSizes : categoryType === 'clothing' ? clothingSizes : [];
 
     if (predefinedSizes.length > 0) {
+      const allSelected = predefinedSizes.every(size => selectedPredefinedSizes.includes(size));
+      
       return (
-        <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-md bg-white">
-          {predefinedSizes.map((size) => (
+        <div className="space-y-2">
+          {/* Select All / Clear All buttons */}
+          <div className="flex gap-2">
             <button
-              key={size}
               type="button"
               onClick={() => {
-                setSelectedPredefinedSizes(prev => 
-                  prev.includes(size) 
-                    ? prev.filter(s => s !== size)
-                    : [...prev, size]
-                );
+                if (allSelected) {
+                  setSelectedPredefinedSizes([]);
+                } else {
+                  setSelectedPredefinedSizes([...predefinedSizes]);
+                }
               }}
-              className={`px-2 py-1 text-xs rounded border transition-colors ${
-                selectedPredefinedSizes.includes(size)
-                  ? "bg-primary-600 text-white border-primary-600"
-                  : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              className={`px-3 py-1 text-xs font-medium rounded border transition-colors ${
+                allSelected 
+                  ? "bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200" 
+                  : "bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100"
               }`}
             >
-              {size}
+              {allSelected ? "Temizle" : "Hepsini Seç"}
             </button>
-          ))}
+            {selectedPredefinedSizes.length > 0 && !allSelected && (
+              <span className="text-xs text-gray-500 self-center">
+                {selectedPredefinedSizes.length} seçili
+              </span>
+            )}
+          </div>
+          {/* Size buttons */}
+          <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-md bg-white">
+            {predefinedSizes.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => {
+                  setSelectedPredefinedSizes(prev => 
+                    prev.includes(size) 
+                      ? prev.filter(s => s !== size)
+                      : [...prev, size]
+                  );
+                }}
+                className={`px-2 py-1 text-xs rounded border transition-colors ${
+                  selectedPredefinedSizes.includes(size)
+                    ? "bg-primary-600 text-white border-primary-600"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+          
+          {/* Custom size input */}
+          <div className="flex gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Özel beden (örn: 35, 36, 37)"
+              value={newVariantSizes}
+              onChange={(e) => setNewVariantSizes(e.target.value)}
+              className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md"
+            />
+            <span className="text-xs text-gray-400">veya yazın</span>
+          </div>
         </div>
       );
     }
@@ -725,23 +799,39 @@ export default function ProductForm({
                         
                         return (
                           <div key={color} className="border border-gray-200 rounded-lg overflow-hidden">
-                            {/* Color Header - Clickable */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setExpandedColors(prev => {
-                                  const newSet = new Set(prev);
-                                  if (newSet.has(color)) {
-                                    newSet.delete(color);
-                                  } else {
-                                    newSet.add(color);
+                            {/* Color Header */}
+                            <div className="flex items-center justify-between p-3 bg-gray-50">
+                              {/* Clickable area for expand/collapse */}
+                              <div 
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => {
+                                  setExpandedColors(prev => {
+                                    const newSet = new Set(prev);
+                                    if (newSet.has(color)) {
+                                      newSet.delete(color);
+                                    } else {
+                                      newSet.add(color);
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setExpandedColors(prev => {
+                                      const newSet = new Set(prev);
+                                      if (newSet.has(color)) {
+                                        newSet.delete(color);
+                                      } else {
+                                        newSet.add(color);
+                                      }
+                                      return newSet;
+                                    });
                                   }
-                                  return newSet;
-                                });
-                              }}
-                              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                            >
-                              <div className="flex items-center gap-3">
+                                }}
+                                className="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-100 -m-3 p-3 rounded-l-lg transition-colors"
+                              >
                                 <ChevronDown 
                                   className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                                 />
@@ -754,31 +844,38 @@ export default function ProductForm({
                                 </span>
                               </div>
                               
-                              <div
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm(`"${color}" rengindeki tüm varyasyonları silmek istediğinize emin misiniz?`)) {
-                                    removeByColor(color);
-                                    toast.success(`"${color}" rengi silindi.`);
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (confirm(`"${color}" rengindeki tüm varyasyonları silmek istediğinize emin misiniz?`)) {
-                                      removeByColor(color);
-                                      toast.success(`"${color}" rengi silindi.`);
-                                    }
-                                  }
-                                }}
-                                className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </div>
-                            </button>
+                              {/* Delete button with AlertDialog */}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>&quot;{color}&quot; rengini silmek istiyor musunuz?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Bu işlem &quot;{color}&quot; rengindeki {colorVariations.length} varyasyonu silecektir. Bu işlem geri alınamaz.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        removeByColor(color);
+                                        toast.success(`"${color}" rengi silindi.`);
+                                      }}
+                                      className="bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                      Sil
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                             
                             {/* Expandable Size List */}
                             {isExpanded && (
@@ -806,13 +903,36 @@ export default function ProductForm({
                                         {variation.stockStatus ? "Stokta" : "Tükendi"}
                                       </button>
                                       
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteVariation(variation.id)}
-                                        className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <button
+                                            type="button"
+                                            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Varyasyonu silmek istiyor musunuz?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              {variation.color} - {variation.size} varyasyonunu silmek üzeresiniz. Bu işlem geri alınamaz.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => {
+                                                removeVariation(variation.id);
+                                                toast.success("Varyasyon silindi.");
+                                              }}
+                                              className="bg-red-600 hover:bg-red-700 text-white"
+                                            >
+                                              Sil
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
                                     </div>
                                   </div>
                                 ))}
@@ -981,8 +1101,14 @@ export default function ProductForm({
             <div className="grid grid-cols-2 gap-4">
               {formData.images.map((img, index) => {
                 const localImg = img as LocalImage;
+                const isPrimary: boolean = index === primaryImageIndex;
                 return (
-                  <div key={`image-${index}`} className="relative group border rounded-lg p-2 bg-gray-50 flex flex-col">
+                  <div 
+                    key={`image-${index}`} 
+                    className={`relative group border-2 rounded-lg p-2 bg-gray-50 flex flex-col ${
+                      isPrimary ? 'border-primary-400 bg-primary-50' : 'border-gray-200'
+                    }`}
+                  >
                     <div className="relative aspect-square mb-2 w-full">
                       <Image
                         src={img.url}
@@ -995,24 +1121,52 @@ export default function ProductForm({
                           <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
                         </div>
                       )}
+                      
+                      {/* Primary image indicator/button */}
                       <button
                         type="button"
-                        onClick={() => removeImage(index)}
+                        onClick={() => setPrimaryImageIndex(index)}
+                        className={`absolute top-1 left-1 p-1 rounded-full shadow-sm transition-all ${
+                          isPrimary 
+                            ? 'bg-primary-400 text-white' 
+                            : 'bg-white text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-primary-100 hover:text-primary-500'
+                        }`}
+                        title={isPrimary ? "Ana görsel" : "Ana görsel yap"}
+                      >
+                        <Star className={`w-4 h-4 ${isPrimary ? 'fill-white' : ''}`} />
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          removeImage(index);
+                          // Adjust primary index if needed
+                          if (index === primaryImageIndex && formData.images.length > 1) {
+                            setPrimaryImageIndex(0);
+                          } else if (index < primaryImageIndex) {
+                            setPrimaryImageIndex(prev => prev - 1);
+                          }
+                        }}
                         className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
                       >
                         <X className="w-4 h-4 text-red-500" />
                       </button>
                     </div>
+                    {/* Primary badge */}
+                    {isPrimary && (
+                      <div className="text-[10px] text-primary-700 font-medium text-center mb-1">
+                        ⭐ Ana Görsel
+                      </div>
+                    )}
                     
                     {/* Color Selection for Image */}
                     <div className="mt-auto">
                       {availableColors.length > 0 ? (
                         <select
-                          value={img.color || "Genel"}
+                          value={img.color || availableColors[0]}
                           onChange={(e) => handleImageColorChange(index, e.target.value)}
                           className="w-full text-xs border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 py-1"
                         >
-                          <option value="Genel">Genel (Hepsi)</option>
                           {availableColors.map(color => (
                             <option key={color} value={color}>{color}</option>
                           ))}
