@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import {useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {Product, ProductDetailClientProps, ProductImage, ProductVariant } from "@/types";
 import { useShop } from "@/contexts/ShopContext";
@@ -25,7 +25,6 @@ import Link from "next/link";
 
 export default function ProductDetailClient(props: ProductDetailClientProps): React.JSX.Element {
   const { product, allProducts } = props;
-
   const router = useRouter();
   const { addToCart, updateCartItem, favorites, toggleFavorite } = useShop();
   const { t } = useLanguage();
@@ -57,11 +56,40 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
     };
   }, [isGalleryOpen]);
 
-  // Reset success state when user changes size or color
+  // Reset success state when user changes size
   useEffect(() => {
     setIsUpdated(false);
-    setCurrentImageIndex(0);
-  }, [selectedSize, selectedColor]);
+  }, [selectedSize]);
+
+  // Show all images (no color filtering)
+  const displayImages: ProductImage[] = product.images;
+
+  // Handle color selection - switch to first image of that color if current image doesn't match
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    setSelectedSize(""); // Reset size when color changes
+
+    // Check if current image already shows this color
+    const currentImage = displayImages[currentImageIndex];
+    // If current image is not of the selected color, switch to first image of that color
+    if (currentImage && currentImage.color !== color) {
+      const colorImageIndex = displayImages.findIndex(
+        (img) => img.color === color
+      );
+      if (colorImageIndex !== -1) {
+        setCurrentImageIndex(colorImageIndex);
+        // Scroll the mobile slider to the correct image
+        if (mobileSliderRef.current) {
+          const containerWidth = mobileSliderRef.current.offsetWidth;
+          mobileSliderRef.current.scrollTo({
+            left: colorImageIndex * containerWidth,
+            behavior: "smooth",
+          });
+        }
+      }
+    }
+  };
+
 
   // Filter images based on selected color using useMemo
   const displayImages:ProductImage[] = useMemo(() => {
@@ -73,15 +101,17 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   }, [product.images, selectedColor]);
 
   // Variant Logic
-  const hasVariants:boolean = product.hasVariants;
-  const variants:ProductVariant[] = product.variants || [];
+  const hasVariants: boolean = product.hasVariants;
+  const variants: ProductVariant[] = product.variants || [];
 
   // Derived state for variants
-  const availableSizes:string[] = useMemo(() => {
+  const availableSizes: string[] = useMemo(() => {
     if (hasVariants && selectedColor) {
       // Get all sizes from all variants matching the selected color
-      const colorVariants:ProductVariant[] = variants.filter(v => v.color === selectedColor);
-      const allSizes:string[] = colorVariants.flatMap(v => v.sizes);
+      const colorVariants: ProductVariant[] = variants.filter(
+        (v) => v.color === selectedColor
+      );
+      const allSizes: string[] = colorVariants.flatMap((v) => v.sizes);
       // Return unique sizes
       return [...new Set(allSizes)];
     }
@@ -89,27 +119,29 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   }, [hasVariants, selectedColor, variants, product.sizes]);
 
   // Check if any variant of the selected color is in stock
-  const isVariantInStock:boolean = useMemo(() => {
+  const isVariantInStock: boolean = useMemo(() => {
     if (hasVariants && selectedColor) {
       // Return true if ANY variant of this color is in stock
-      return variants.some(v => v.color === selectedColor && v.inStock);
+      return variants.some((v) => v.color === selectedColor && v.inStock);
     }
     return product.inStock;
   }, [hasVariants, selectedColor, variants, product.inStock]);
 
   // Determine unavailable sizes (sizes that should be disabled)
-  const unavailableSizes:string[] = useMemo(() => {
+  const unavailableSizes: string[] = useMemo(() => {
     if (hasVariants && selectedColor) {
       // Get sizes that are out of stock for this color
-      const colorVariants:ProductVariant[] = variants.filter(v => v.color === selectedColor);
+      const colorVariants: ProductVariant[] = variants.filter(
+        (v) => v.color === selectedColor
+      );
       const outOfStockSizes: string[] = [];
-      
-      colorVariants.forEach(v => {
+
+      colorVariants.forEach((v) => {
         if (!v.inStock) {
-          v.sizes.forEach(size => outOfStockSizes.push(size));
+          v.sizes.forEach((size) => outOfStockSizes.push(size));
         }
       });
-      
+
       return [...new Set(outOfStockSizes)];
     }
     // If product itself is not in stock, all sizes are unavailable
@@ -218,16 +250,18 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   };
 
   // Check if we're in edit mode
-  const originalSize:string | null = searchParams.get("size");
-  const originalColor:string | null = searchParams.get("color");
-  const isEditMode:boolean = !!(originalSize && originalColor);
+  const originalSize: string | null = searchParams.get("size");
+  const originalColor: string | null = searchParams.get("color");
+  const isEditMode: boolean = !!(originalSize && originalColor);
 
-  const handleAddToCart:React.MouseEventHandler<HTMLButtonElement> = async () => {
+  const handleAddToCart: React.MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
     if (!selectedSize && product.sizes.length > 0) {
       showError(t("products.selectSize"));
       return;
     }
-    
+
     // Variant Stock Check
     if (hasVariants && selectedColor) {
       const variant:ProductVariant | undefined = variants.find(v => 
@@ -248,9 +282,18 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
     if (product.sizes?.length > 0 && !selectedSize) return;
     if (product.colors?.length > 0 && !selectedColor) return;
 
-    if (isEditMode && (originalSize !== selectedSize || originalColor !== selectedColor)) {
+    if (
+      isEditMode &&
+      (originalSize !== selectedSize || originalColor !== selectedColor)
+    ) {
       // Update existing cart item
-      await updateCartItem(product.id, originalSize!, originalColor!, effectiveSize, effectiveColor);
+      await updateCartItem(
+        product.id,
+        originalSize!,
+        originalColor!,
+        effectiveSize,
+        effectiveColor
+      );
       setIsUpdated(true);
     } else if (!isEditMode) {
       // Normal add to cart flow
@@ -329,9 +372,9 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
                     <span className="text-2xl font-bold text-black">
                       {finalPrice.toFixed(2)} {t("products.currency")}
                     </span>
-                  <span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
-                    -{discountPercentage}%
-                  </span>
+                    <span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
+                      -{discountPercentage}%
+                    </span>
                   </>
                 ) : (
                   <span className="text-2xl font-bold text-black">
@@ -360,10 +403,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
                   label="Renk"
                   options={product.colors}
                   selectedOption={selectedColor}
-                  onSelect={(color) => {
-                    setSelectedColor(color);
-                    setSelectedSize(""); // Reset size when color changes
-                  }}
+                  onSelect={handleColorSelect}
                 />
               </div>
             )}
@@ -507,23 +547,22 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
               label={t("products.color")}
               options={product.colors}
               selectedOption={selectedColor}
-              onSelect={(color) => {
-                setSelectedColor(color);
-                setSelectedSize("");
-              }}
+              onSelect={handleColorSelect}
             />
           )}
 
           {/* Size Selection - Inline */}
-          {product.sizes && product.sizes.length > 0 && (!product.colors.length || selectedColor) && (
-            <OptionSelector
-              label={t("products.size")}
-              options={availableSizes}
-              selectedOption={selectedSize}
-              onSelect={setSelectedSize}
-              disabledOptions={unavailableSizes}
-            />
-          )}
+          {product.sizes &&
+            product.sizes.length > 0 &&
+            (!product.colors.length || selectedColor) && (
+              <OptionSelector
+                label={t("products.size")}
+                options={availableSizes}
+                selectedOption={selectedSize}
+                onSelect={setSelectedSize}
+                disabledOptions={unavailableSizes}
+              />
+            )}
 
           {/* Description - Expandable */}
           <div className="pt-2">
