@@ -65,9 +65,10 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
 
   // Filter images based on selected color using useMemo
   const displayImages:ProductImage[] = useMemo(() => {
-    const filtered:ProductImage[] = product.images.filter(img => 
-      img.color === "Genel" || (selectedColor && img.color === selectedColor)
-    );
+    if (!selectedColor) {
+      return product.images;
+    }
+    const filtered:ProductImage[] = product.images.filter(img => img.color === selectedColor);
     return filtered.length > 0 ? filtered : product.images;
   }, [product.images, selectedColor]);
 
@@ -448,14 +449,14 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
         <div className="relative w-full h-[calc(100vh-4rem)] mt-16 bg-white group">
           <div
             className="flex flex-col overflow-y-auto snap-y snap-mandatory w-full h-full hide-scrollbar scroll-smooth"
-            onScroll={(e) => {
+            onScroll={(e:React.UIEvent<HTMLDivElement>) => {
                // Optional: Update index based on vertical scroll if we want 'dots' to reflect vertical pos.
                // For vertical "Bershka style", dots might not be necessary or should be vertical.
                // Let's implement index tracking for vertical scroll too.
-               const container = e.currentTarget;
-               const scrollTop = container.scrollTop;
-               const height = container.offsetHeight;
-               const index = Math.round(scrollTop / height);
+               const container:HTMLElement = e.currentTarget;
+               const scrollTop:number = container.scrollTop;
+               const height:number = container.offsetHeight;
+               const index:number = Math.round(scrollTop / height);
                setCurrentImageIndex(index);
             }}
           >

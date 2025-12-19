@@ -1,10 +1,5 @@
 import { ChevronLeft, Heart, Share2 } from "lucide-react";
-
-interface MobileTopBarProps {
-  onBack: () => void;
-  onToggleFavorite: () => void;
-  isFavorited: boolean;
-}
+import type { MobileTopBarProps } from "@/types/components/products";
 
 export default function MobileTopBar({
   onBack,

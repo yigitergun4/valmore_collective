@@ -281,3 +281,10 @@ export interface SwitchProps {
   /** Whether the switch is disabled */
   disabled?: boolean;
 }
+
+// Re-export organized types for backward compatibility
+export * from "./components";
+export * from "./components/products";
+export * from "./utils";
+export * from "./contexts";
+export * from "./lib";

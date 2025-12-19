@@ -1,16 +1,9 @@
 import { Product } from "@/types";
-
-interface GetButtonTextParams {
-    isSizeValid: boolean;
-    isColorValid: boolean;
-    productInStock: boolean;
-    hasVariants: boolean;
-    selectedColor: string;
-    isVariantInStock: boolean;
-    isUpdated: boolean;
-    isEditMode: boolean;
-    t: (key: string) => string;
-}
+import type {
+    GetButtonTextParams,
+    CalculateProductPriceParams,
+    ProductPriceResult,
+} from "@/types/utils";
 
 export function getAddToCartButtonText({
     isSizeValid,
@@ -47,18 +40,6 @@ export function getAddToCartButtonText({
     }
 
     return isEditMode ? t("products.updateCart") : t("products.addToCart");
-}
-
-interface CalculateProductPriceParams {
-    product: Product;
-}
-
-interface ProductPriceResult {
-    originalPrice: number;
-    discountedPrice: number;
-    finalPrice: number;
-    hasDiscount: boolean;
-    discountPercentage: number;
 }
 
 export function calculateProductPrice({

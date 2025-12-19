@@ -1,13 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-
-interface ProductPriceDisplayProps {
-  productName: string;
-  productId: string;
-  finalPrice: number;
-  originalPrice: number;
-  hasDiscount: boolean;
-  discountPercentage: number;
-}
+import type { ProductPriceDisplayProps } from "@/types/components/products";
 
 export default function ProductPriceDisplay({
   productName,
