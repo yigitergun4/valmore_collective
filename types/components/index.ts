@@ -36,3 +36,19 @@ export interface SelectionButtonProps {
     disabled?: boolean;
     className?: string;
 }
+
+export interface Option {
+    value: string;
+    label: string;
+}
+
+export interface PremiumSelectProps {
+    options: Option[];
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    label?: string;
+    error?: string;
+    className?: string;
+    disabled?: boolean;
+}

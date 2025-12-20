@@ -18,16 +18,17 @@ export interface ProductImage {
 export interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedCategory: string;
-  setSelectedCategory: (category: string) => void;
-  selectedSizes: string[];
-  setSelectedSizes: (sizes: string[]) => void;
-  priceRange: [number, number];
-  setPriceRange: (range: [number, number]) => void;
-  showDiscountedOnly: boolean;
-  setShowDiscountedOnly: (show: boolean) => void;
-  onApply: () => void;
+  onApply: (filters: {
+    category: string;
+    sizes: string[];
+    priceRange: [number, number];
+    showDiscountedOnly: boolean;
+  }) => void;
   onClear: () => void;
+  currentCategory: string;
+  currentSizes: string[];
+  currentPriceRange: [number, number];
+  currentShowDiscountedOnly: boolean;
 }
 
 export interface DiscountFilterProps {
@@ -284,9 +285,9 @@ export interface SwitchProps {
   disabled?: boolean;
 }
 
-// Re-export organized types for backward compatibility
-export * from "./components";
-export * from "./components/products";
-export * from "./utils";
-export * from "./contexts";
-export * from "./lib";
+// Re-export organized types for backward compatibility - Removed to prevent circular dependencies
+// export * from "./components";
+// export * from "./components/products";
+// export * from "./utils";
+// export * from "./contexts";
+// export * from "./lib";

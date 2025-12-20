@@ -35,7 +35,7 @@ function ProductsContent(): React.JSX.Element {
   const [sortBy, setSortBy]: ["newest" | "price-low" | "price-high", (sortBy: "newest" | "price-low" | "price-high") => void] = useState<"newest" | "price-low" | "price-high">("newest");
   const [isSortOpen, setIsSortOpen] = useState<boolean>(false);
   
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery: string = useDebounce(searchQuery, 300);
   
   // Handle URL params
   useEffect(() => {
@@ -90,10 +90,30 @@ function ProductsContent(): React.JSX.Element {
         product.category === selectedCategory || 
         (!!productCategory && productCategory.translationKey === selectedCategory);
 
-      // 4. Size Filter
-      const matchesSize: boolean =
-        selectedSizes.length === 0 ||
-        (product.sizes && product.sizes.some(size => selectedSizes.includes(String(size))));
+      // 4. Size Filter - Check variants for accurate size availability and stock
+      let matchesSize: boolean = selectedSizes.length === 0;
+      if (!matchesSize) {
+        // If product has variants, check their sizes and stock
+        if (product.hasVariants && product.variants && product.variants.length > 0) {
+          // Get sizes only from variants that are in stock
+          const inStockVariantSizes: string[] = product.variants
+            .filter((v: any) => v.inStock)
+            .flatMap((v: any) => v.sizes || []);
+          
+          matchesSize = selectedSizes.some((selectedSize: string) => 
+            inStockVariantSizes.includes(selectedSize)
+          );
+        } else if (product.sizes && product.sizes.length > 0 && product.inStock) {
+          // Fallback to product.sizes for products without variants, only if in stock
+          matchesSize = product.sizes.some((size: string) => 
+            selectedSizes.includes(String(size))
+          );
+        } else {
+          // If no variants and no sizes, or out of stock
+          matchesSize = false;
+        }
+      }
+
 
       // 5. Price Filter
       const price = product.price;
@@ -179,6 +199,24 @@ function ProductsContent(): React.JSX.Element {
     setPriceRange([0, 10000]);
     setShowDiscountedOnly(false);
     setSearchQuery("");
+  };
+
+  const handleApplyFilters: (filters: {
+    category: string;
+    sizes: string[];
+    priceRange: [number, number];
+    showDiscountedOnly: boolean;
+  }) => void = (filters: {
+    category: string;
+    sizes: string[];
+    priceRange: [number, number];
+    showDiscountedOnly: boolean;
+  }) => {
+    setSelectedCategory(filters.category);
+    setSelectedSizes(filters.sizes);
+    setPriceRange(filters.priceRange);
+    setShowDiscountedOnly(filters.showDiscountedOnly);
+    setIsFilterOpen(false);
   };
 
   return (
@@ -342,15 +380,11 @@ function ProductsContent(): React.JSX.Element {
       <FilterDrawer
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        selectedSizes={selectedSizes}
-        setSelectedSizes={setSelectedSizes}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        showDiscountedOnly={showDiscountedOnly}
-        setShowDiscountedOnly={setShowDiscountedOnly}
-        onApply={() => setIsFilterOpen(false)}
+        currentCategory={selectedCategory}
+        currentSizes={selectedSizes}
+        currentPriceRange={priceRange}
+        currentShowDiscountedOnly={showDiscountedOnly}
+        onApply={handleApplyFilters}
         onClear={clearFilters}
       />
     </div>

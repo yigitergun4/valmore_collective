@@ -14,7 +14,7 @@ const Select: React.FC<SelectProps> = ({
 }) => {
   // Map standard HTML change event to value-only change if needed, 
   // but for our internal PremiumSelect it expects value directly.
-  const handleChange = (newValue: string) => {
+  const handleChange: (newValue: string) => void = (newValue: string) => {
     if (onChange) {
       // Create a mock event for backward compatibility if necessary
       const mockEvent = {
