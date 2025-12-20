@@ -8,6 +8,7 @@ import { X, Minus, Plus, Trash2 } from "lucide-react";
 import { useShop } from "@/contexts/ShopContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatPrice } from "@/lib/utils";
+import { CartItem } from "@/types";
 
 export default function CartDrawer() {
   const {
@@ -19,7 +20,6 @@ export default function CartDrawer() {
     cartCount,
   } = useShop();
   const { t } = useLanguage();
-  const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
 
   // Handle hydration mismatch
@@ -42,7 +42,7 @@ export default function CartDrawer() {
   if (!isMounted) return null;
 
   const subtotal: number = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total: number, item: CartItem) => total + item.price * item.quantity,
     0
   );
 

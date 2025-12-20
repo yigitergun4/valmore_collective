@@ -33,7 +33,6 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
   const searchParams = useSearchParams();
   // Get the first product image's color to use as default (excluding "Genel")
   const firstImageColor:string = product.images.find(img => img.color !== "Genel")?.color || product.colors[0] || "";
-  
   const [selectedSize, setSelectedSize] = useState<string>(
     searchParams.get("size") || ""
   );
