@@ -9,6 +9,7 @@ import { Order } from "@/types/admin/orders";
 import { Product } from "@/types";
 import KPICard from "@/components/admin/KPICard";
 import RecentOrdersTable from "@/components/admin/RecentOrdersTable";
+import { formatPrice } from "@/lib/utils";
 
 
 export default function AdminDashboard(): React.JSX.Element {
@@ -97,7 +98,7 @@ export default function AdminDashboard(): React.JSX.Element {
       <div className="grid gap-4 md:grid-cols-3">
         <KPICard
           title="Toplam Satış"
-          value={`₺${stats.totalSalesNotReturn.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`}
+          value={formatPrice(stats.totalSalesNotReturn)}
           icon={<span>₺</span>}
         />
         <KPICard

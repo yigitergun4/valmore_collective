@@ -6,6 +6,7 @@ import { ProductCardProps } from "@/types/components";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getColorHex } from "@/lib/colorUtils";
+import { formatPrice } from "@/lib/utils";
 
 
 
@@ -121,15 +122,15 @@ export default function ProductCard({ product, filterGender }: ProductCardProps)
               {hasDiscount ? (
                 <>
                   <span className="text-[10px] text-gray-400 line-through decoration-primary-600/50 whitespace-nowrap">
-                    {originalPrice.toFixed(2)} {t("products.currency")}
+                    {formatPrice(originalPrice)}
                   </span>
                   <span className="text-sm font-bold text-primary-600 whitespace-nowrap">
-                    {discountedPrice?.toFixed(2)} {t("products.currency")}
+                    {formatPrice(discountedPrice || 0)}
                   </span>
                 </>
               ) : (
                 <span className="text-xs font-bold text-black whitespace-nowrap">
-                  {discountedPrice?.toFixed(2)} {t("products.currency")}
+                  {formatPrice(discountedPrice || 0)}
                 </span>
               )}
             </div>

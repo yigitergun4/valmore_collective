@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { X, Minus, Plus, Trash2 } from "lucide-react";
 import { useShop } from "@/contexts/ShopContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatPrice } from "@/lib/utils";
 
 export default function CartDrawer() {
   const {
@@ -147,7 +148,7 @@ export default function CartDrawer() {
 
                       <div className="flex items-baseline gap-2">
                         <p className="text-sm font-bold text-black">
-                          {item.price.toFixed(2)} {t("products.currency")}
+                          {formatPrice(item.price)}
                         </p>
                         <span className="text-[10px] text-gray-400">
                           × {item.quantity}
@@ -213,7 +214,7 @@ export default function CartDrawer() {
                 {t("cart.subtotal")}
               </span>
               <span className="text-lg font-bold text-black">
-                {subtotal.toFixed(2)} {t("products.currency")}
+                {formatPrice(subtotal)}
               </span>
             </div>
 

@@ -22,6 +22,7 @@ import ProductPriceDisplay from "@/components/products/ProductPriceDisplay";
 import ShippingInfo from "@/components/products/ShippingInfo";
 import { getAddToCartButtonText, calculateProductPrice } from "@/utils/productHelpers";
 import Link from "next/link";
+import { formatPrice } from "@/lib/utils";
 
 export default function ProductDetailClient(props: ProductDetailClientProps): React.JSX.Element {
   const { product, allProducts } = props;
@@ -365,10 +366,10 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
                 {hasDiscount ? (
                   <>
                     <span className="text-gray-400 line-through text-lg">
-                      {originalPrice.toFixed(2)} {t("products.currency")}
+                      {formatPrice(originalPrice)}
                     </span>
                     <span className="text-2xl font-bold text-black">
-                      {finalPrice.toFixed(2)} {t("products.currency")}
+                      {formatPrice(finalPrice)}
                     </span>
                     <span className="text-xs font-medium text-white bg-red-600 px-2 py-1 ">
                       -{discountPercentage}%
@@ -376,7 +377,7 @@ export default function ProductDetailClient(props: ProductDetailClientProps): Re
                   </>
                 ) : (
                   <span className="text-2xl font-bold text-black">
-                    {finalPrice.toFixed(2)} {t("products.currency")}
+                    {formatPrice(finalPrice)}
                   </span>
                 )}
               </div>

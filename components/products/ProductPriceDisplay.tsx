@@ -1,5 +1,5 @@
-import { useLanguage } from "@/contexts/LanguageContext";
 import type { ProductPriceDisplayProps } from "@/types/components/products";
+import { formatPrice } from "@/lib/utils";
 
 export default function ProductPriceDisplay({
   productName,
@@ -9,7 +9,6 @@ export default function ProductPriceDisplay({
   hasDiscount,
   discountPercentage,
 }: ProductPriceDisplayProps) {
-  const { t } = useLanguage();
 
   return (
     <div className="space-y-1">
@@ -25,10 +24,10 @@ export default function ProductPriceDisplay({
         {hasDiscount ? (
           <>
             <span className="text-2xl font-bold text-black">
-              {finalPrice.toFixed(2)} {t("products.currency")}
+              {formatPrice(finalPrice)}
             </span>
             <span className="text-gray-400 line-through text-sm">
-              {originalPrice.toFixed(2)} {t("products.currency")}
+              {formatPrice(originalPrice)}
             </span>
             <span className="text-xs font-bold text-white bg-red-600 px-2 py-0.5">
               -{discountPercentage}%
@@ -36,7 +35,7 @@ export default function ProductPriceDisplay({
           </>
         ) : (
           <span className="text-2xl font-bold text-black">
-            {finalPrice.toFixed(2)} {t("products.currency")}
+            {formatPrice(finalPrice)}
           </span>
         )}
       </div>

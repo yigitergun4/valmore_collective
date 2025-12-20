@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { OrderSummaryProps } from "@/types/checkout";
 import { ChevronDown, ChevronUp, ShoppingBag } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
 
 export default function OrderSummary({
   items,
@@ -64,7 +65,7 @@ export default function OrderSummary({
                   <div className="flex justify-end flex-col items-end">
                     <span className="text-[10px] text-gray-400 mb-0.5">{t("products.price")}</span>
                     <p className="text-sm font-semibold text-primary-700">
-                      ₺{(item.price * item.quantity).toFixed(2)}
+                      {formatPrice(item.price * item.quantity)}
                     </p>
                   </div>
                 </div>
@@ -76,7 +77,7 @@ export default function OrderSummary({
           <div className="border-t border-gray-200 pt-4 space-y-2">
             <div className="flex justify-between text-gray-600">
               <span>{t("cart.items")} ({totalItems})</span>
-              <span>₺{totalPrice.toFixed(2)}</span>
+              <span>{formatPrice(totalPrice)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>{t("cart.shipping")}</span>
@@ -84,14 +85,14 @@ export default function OrderSummary({
                 {shippingCost === 0 ? (
                   <span className="text-green-600 font-medium">{t("products.freeShipping")}</span>
                 ) : (
-                  `₺${shippingCost.toFixed(2)}`
+                  formatPrice(shippingCost)
                 )}
               </span>
             </div>
             <div className="border-t border-gray-200 pt-4">
               <div className="flex justify-between text-lg font-bold text-primary-800">
                 <span>{t("cart.total")}</span>
-                <span>₺{grandTotal.toFixed(2)}</span>
+                <span>{formatPrice(grandTotal)}</span>
               </div>
             </div>
           </div>
@@ -123,7 +124,7 @@ export default function OrderSummary({
               </div>
               <div className="text-left">
                 <p className="text-sm text-gray-500">{t("checkout.orderSummary")}</p>
-                <p className="text-lg font-bold text-primary-800">₺{grandTotal.toFixed(2)}</p>
+                <p className="text-lg font-bold text-primary-800">{formatPrice(grandTotal)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -170,7 +171,7 @@ export default function OrderSummary({
                         </div>
                       </div>
                       <p className="text-sm font-semibold text-primary-700">
-                        ₺{(item.price * item.quantity).toFixed(2)}
+                        {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -181,7 +182,7 @@ export default function OrderSummary({
               <div className="border-t border-gray-200 pt-3 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Ara Toplam</span>
-                  <span>₺{totalPrice.toFixed(2)}</span>
+                  <span>{formatPrice(totalPrice)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>{t("cart.shipping")}</span>
@@ -189,7 +190,7 @@ export default function OrderSummary({
                     {shippingCost === 0 ? (
                       <span className="text-green-600 font-medium">{t("products.freeShipping")}</span>
                     ) : (
-                      `₺${shippingCost.toFixed(2)}`
+                      formatPrice(shippingCost)
                     )}
                   </span>
                 </div>
@@ -204,7 +205,7 @@ export default function OrderSummary({
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-xs text-gray-500">{t("cart.total")}</p>
-            <p className="text-xl font-bold text-primary-800">₺{grandTotal.toFixed(2)}</p>
+            <p className="text-xl font-bold text-primary-800">{formatPrice(grandTotal)}</p>
           </div>
           {shippingCost === 0 && (
             <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">

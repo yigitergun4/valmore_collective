@@ -20,6 +20,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { formatPrice } from "@/lib/utils";
 
 // Status Badge Component
 const StatusBadge: React.FC<{ status: Order["status"] }> = ({ status }) => {
@@ -218,13 +219,13 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                       <p className="font-medium text-gray-900">
-                        ₺{item.price.toFixed(2)}
+                        {formatPrice(item.price)}
                       </p>
                     </div>
                     <div className="mt-4 flex justify-between items-center">
                       <span className="text-sm text-gray-500">Adet: {item.quantity}</span>
                       <span className="font-semibold text-gray-900">
-                        Top: ₺{(item.price * item.quantity).toFixed(2)}
+                        Top: {formatPrice(item.price * item.quantity)}
                       </span>
                     </div>
                   </div>
@@ -342,22 +343,22 @@ export default function OrderDetailPage() {
             <div className="p-6 space-y-3">
               <div className="flex justify-between text-gray-600">
                 <span>Ara Toplam</span>
-                <span>₺{order.subtotal.toFixed(2)}</span>
+                <span>{formatPrice(order.subtotal)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Kargo</span>
-                <span>₺{order.shippingCost.toFixed(2)}</span>
+                <span>{formatPrice(order.shippingCost)}</span>
               </div>
               {order.discountTotal && order.discountTotal > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>İndirim</span>
-                  <span>-₺{order.discountTotal.toFixed(2)}</span>
+                  <span>-{formatPrice(order.discountTotal)}</span>
                 </div>
               )}
               <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span className="font-bold text-gray-900">Toplam</span>
                 <span className="text-xl font-bold text-primary-600">
-                  ₺{order.total.toFixed(2)}
+                  {formatPrice(order.total)}
                 </span>
               </div>
               <div className="pt-4 mt-2">
