@@ -21,6 +21,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { formatPrice } from "@/lib/utils";
+import { Select } from "@/components/ui/Select";
 
 // Status Badge Component
 const StatusBadge: React.FC<{ status: Order["status"] }> = ({ status }) => {
@@ -296,8 +297,8 @@ export default function OrderDetailPage() {
         {/* Right Column - Actions & Summary */}
         <div className="space-y-6">
           {/* Status Manager */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm sticky top-6">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm sticky top-6">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-xl">
               <h2 className="font-semibold text-gray-900">Sipariş Durumu</h2>
             </div>
             <div className="p-6">
@@ -305,19 +306,19 @@ export default function OrderDetailPage() {
                 Durumu Güncelle
               </label>
               <div className="space-y-3">
-                <select
+                <Select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value as Order["status"])}
                   disabled={updating}
-                  className="w-full rounded-lg border-gray-300 shadow-sm px-2 py-2 focus:border-primary-500 focus:ring-green-500"
-                >
-                  <option value="pending">Bekliyor</option>
-                  <option value="processing">Hazırlanıyor</option>
-                  <option value="shipped">Kargolandı</option>
-                  <option value="delivered">Teslim Edildi</option>
-                  <option value="cancelled">İptal Edildi</option>
-                  <option value="returned">İade Edildi</option>
-                </select>
+                  options={[
+                    { value: "pending", label: "Bekliyor" },
+                    { value: "processing", label: "Hazırlanıyor" },
+                    { value: "shipped", label: "Kargolandı" },
+                    { value: "delivered", label: "Teslim Edildi" },
+                    { value: "cancelled", label: "İptal Edildi" },
+                    { value: "returned", label: "İade Edildi" },
+                  ]}
+                />
                 <Button
                   onClick={handleUpdateStatus}
                   disabled={updating || selectedStatus === order.status}

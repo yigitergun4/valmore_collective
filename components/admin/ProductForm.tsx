@@ -17,10 +17,11 @@ import {
   GENDER_OPTIONS
 } from "@/lib/constants";
 import { CompressionOptions } from "@/types/admin";
-import { ProductFormProps, LocalImage } from "@/types";
+import { ProductFormProps, LocalImage, SelectProps } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
+import { Select } from "@/components/ui/Select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +35,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
 import { Variation, generateUUID } from "@/types/variations";
-
 
 export default function ProductForm({
   initialData,
@@ -603,18 +603,17 @@ export default function ProductForm({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                <select
+                <Select
                   name="category"
                   required
                   value={formData.category}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="">Seçiniz</option>
-                  {PRODUCT_CATEGORIES.map((cat) => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
+                  options={PRODUCT_CATEGORIES.map((cat) => ({
+                    value: cat.value,
+                    label: cat.label,
+                  }))}
+                  placeholder="Seçiniz"
+                />
               </div>
             </div>
           </div>
@@ -1023,19 +1022,17 @@ export default function ProductForm({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cinsiyet</label>
-                <select
+                <Select
                   name="gender"
                   required
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  {GENDER_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={GENDER_OPTIONS.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                  placeholder="Seçiniz"
+                />
               </div>
 
               <div>
@@ -1152,15 +1149,15 @@ export default function ProductForm({
                     {/* Color Selection for Image */}
                     <div className="mt-auto">
                       {availableColors.length > 0 ? (
-                        <select
+                        <Select
                           value={img.color || availableColors[0]}
                           onChange={(e) => handleImageColorChange(index, e.target.value)}
-                          className="w-full text-xs border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 py-1"
-                        >
-                          {availableColors.map(color => (
-                            <option key={color} value={color}>{color}</option>
-                          ))}
-                        </select>
+                          options={availableColors.map(color => ({
+                            value: color,
+                            label: color,
+                          }))}
+                          className="py-1"
+                        />
                       ) : (
                         <div className="flex items-center gap-1.5 p-1.5 bg-orange-50 border border-orange-100 rounded-md">
                           <Info className="w-3 h-3 text-orange-500 flex-shrink-0" />

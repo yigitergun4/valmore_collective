@@ -265,6 +265,8 @@ export interface SelectProps
   options?: { value: string; label: string }[];
   /** Placeholder option text */
   placeholder?: string;
+  /** Error message to display below the select */
+  error?: string;
 }
 
 export interface SwitchProps {
