@@ -4,12 +4,13 @@ import { TURKISH_CITIES } from "@/lib/turkish-data";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AlertCircle } from "lucide-react";
 import { AddressFormData, AddressFormFieldsProps } from "@/types";
+import { Select } from "@/components/ui/Select";
 
 
 // Format phone for display (5xx xxx xx xx)
 export const formatPhoneDisplay: (phone: string) => string = (phone: string) => {
   return phone.replace(/(\d{3})(\d{0,3})(\d{0,2})(\d{0,2})/, (match, p1, p2, p3, p4) => {
-    let result = p1;
+    let result: string = p1;
     if (p2) result += " " + p2;
     if (p3) result += " " + p3;
     if (p4) result += " " + p4;
@@ -19,7 +20,7 @@ export const formatPhoneDisplay: (phone: string) => string = (phone: string) => 
 
 // Parse phone input (only digits, max 10, must start with 5)
 export const parsePhoneInput: (value: string) => string | null = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
+  const digits: string = value.replace(/\D/g, "").slice(0, 10);
   // Only allow if empty or starts with 5
   if (digits === "" || digits.startsWith("5")) {
     return digits;
@@ -37,10 +38,10 @@ export default function AddressFormFields({
   const { t } = useLanguage();
 
   // Get districts based on selected city
-  const districts: string[] = TURKISH_CITIES.find(c => c.name === formData.city)?.districts || [];
+  const districts: string[] = TURKISH_CITIES.find((c: { name: string; }) => c.name === formData.city)?.districts || [];
 
   const handlePhoneChange: (value: string) => void = (value: string) => {
-    const parsed = parsePhoneInput(value);
+    const parsed: string | null = parsePhoneInput(value);
     if (parsed !== null) {
       if (useSpreadUpdate) {
         (setFormData as (updates: Partial<AddressFormData>) => void)({ phone: parsed });
@@ -89,7 +90,7 @@ export default function AddressFormFields({
   };
 
   const handleZipChange: (value: string) => void = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 5);
+    const digits: string = value.replace(/\D/g, "").slice(0, 5);
     if (useSpreadUpdate) {
       (setFormData as (updates: Partial<AddressFormData>) => void)({ zipCode: digits });
     } else {
@@ -142,19 +143,16 @@ export default function AddressFormFields({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {t("addresses.city")}
           </label>
-          <select
+          <Select
             value={formData.city}
             onChange={(e) => handleCityChange(e.target.value)}
-            className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm"
+            options={TURKISH_CITIES.map((city) => ({
+              value: city.name,
+              label: city.name,
+            }))}
+            placeholder={t("addresses.select")}
             required
-          >
-            <option value="">{t("addresses.select")}</option>
-            {TURKISH_CITIES.map((city) => (
-              <option key={city.name} value={city.name}>
-                {city.name}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         {/* District */}
@@ -162,22 +160,17 @@ export default function AddressFormFields({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {t("addresses.district")}
           </label>
-          <select
+          <Select
             value={formData.district}
             onChange={(e) => handleDistrictChange(e.target.value)}
-            className={`w-full h-10 px-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-sm ${
-              !formData.city ? "bg-gray-100 cursor-not-allowed" : ""
-            }`}
+            options={districts.map((district) => ({
+              value: district,
+              label: district,
+            }))}
+            placeholder={t("addresses.select")}
             required
             disabled={!formData.city}
-          >
-            <option value="">{t("addresses.select")}</option>
-            {districts.map((district) => (
-              <option key={district} value={district}>
-                {district}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 

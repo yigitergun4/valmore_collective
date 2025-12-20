@@ -8,6 +8,7 @@ import { Product } from "@/types";
 import { getAdminProducts, deleteProduct } from "@/lib/firestore/products";
 import { useAlert } from "@/contexts/AlertContext";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
+import { formatPrice } from "@/lib/utils";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -122,7 +123,7 @@ export default function AdminProductsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium">
-                    ₺{product.price.toLocaleString()}
+                    {formatPrice(product.price)}
                   </td>
                   <td className="px-6 py-4">
                     <span

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Order, getStatusText, getStatusBadgeColor } from "@/types/admin/orders";
 import { fetchAllOrders } from "@/lib/firestore";
 import StatusFilterButton from "@/components/admin/StatusFilterButton";
+import { formatPrice } from "@/lib/utils";
 
 export default function AdminOrdersPage(): React.JSX.Element {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -205,7 +206,7 @@ export default function AdminOrdersPage(): React.JSX.Element {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-bold text-primary-600">
-                            ₺{order.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
+                            {formatPrice(order.total)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -257,7 +258,7 @@ export default function AdminOrdersPage(): React.JSX.Element {
                                           </div>
                                         </div>
                                         <div className="text-sm font-bold text-gray-900 flex-shrink-0">
-                                          ₺{(item.price * item.quantity).toLocaleString("tr-TR")}
+                                          {formatPrice(item.price * item.quantity)}
                                         </div>
                                       </div>
                                     ))}

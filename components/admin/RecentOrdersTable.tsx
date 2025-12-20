@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getStatusBadgeColor, getStatusText, Order } from "@/types/admin/orders";
 import { RecentOrdersTableProps } from "@/types/admin";
+import { formatPrice } from "@/lib/utils";
 
 
 export default function RecentOrdersTable({ orders, showActions = false, isExpandable = false, itemsPerPage = 10 }: RecentOrdersTableProps): React.JSX.Element {
@@ -101,7 +102,7 @@ export default function RecentOrdersTable({ orders, showActions = false, isExpan
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right font-bold">
-                          ₺{order.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
+                          {formatPrice(order.total)}
                         </td>
                         {showActions && (
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -152,7 +153,7 @@ export default function RecentOrdersTable({ orders, showActions = false, isExpan
                                           </div>
                                         </div>
                                         <div className="text-sm font-bold text-gray-900 flex-shrink-0">
-                                          ₺{(item.price * item.quantity).toLocaleString("tr-TR")}
+                                          {formatPrice(item.price * item.quantity)}
                                         </div>
                                       </div>
                                     ))}

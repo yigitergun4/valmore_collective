@@ -3,6 +3,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { TURKISH_CITIES } from "@/lib/turkish-data";
 import { ShippingFormProps } from "@/types/checkout";
+import { Select } from "@/components/ui/Select";
 
 export default function ShippingForm({
   formData,
@@ -41,23 +42,18 @@ export default function ShippingForm({
             Kayıtlı Adreslerim
           </label>
           <div className="relative">
-            <select
+            <Select
               value={selectedAddressId}
               onChange={(e) => onAddressSelect(e.target.value)}
-              className="w-full px-4 py-3 pr-10 border-2 border-primary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-medium text-gray-700 cursor-pointer hover:border-primary-300 transition-all appearance-none shadow-sm"
-            >
-              <option value="new" className="font-medium">✨ Yeni Adres Gir</option>
-              {savedAddresses.map((addr) => (
-                <option key={addr.title} value={addr.title} className="font-normal">
-                  📍 {addr.title} - {addr.city}, {addr.district}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-primary-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+              options={[
+                { value: "new", label: `${t("addresses.addNew")}` },
+                ...savedAddresses.map((addr) => ({
+                  value: addr.title,
+                  label: `${addr.title} - ${addr.city}, ${addr.district}`,
+                })),
+              ]}
+              className="border-primary-200"
+            />
           </div>
         </div>
       )}
@@ -186,24 +182,20 @@ export default function ShippingForm({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t("checkout.city")}
           </label>
-          <select
+          <Select
             name="city"
             value={formData.city}
             onChange={(e) => {
               handleInputChange(e);
               setFormData(prev => ({ ...prev, state: "" }));
             }}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-              errors.city ? "border-red-500" : "border-gray-300"
-            }`}
-          >
-            <option value="">İl Seçiniz</option>
-            {TURKISH_CITIES.map((city) => (
-              <option key={city.name} value={city.name}>
-                {city.name}
-              </option>
-            ))}
-          </select>
+            options={TURKISH_CITIES.map((city) => ({
+              value: city.name,
+              label: city.name,
+            }))}
+            placeholder={t("addresses.select")}
+            error={errors.city}
+          />
           {errors.city && (
             <p className="mt-1 text-sm text-red-600">{errors.city}</p>
           )}
@@ -214,22 +206,18 @@ export default function ShippingForm({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             İlçe
           </label>
-          <select
+          <Select
             name="state"
             value={formData.state}
             onChange={handleInputChange}
             disabled={!formData.city}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-              errors.state ? "border-red-500" : "border-gray-300"
-            } ${!formData.city ? "bg-gray-100 cursor-not-allowed" : ""}`}
-          >
-            <option value="">İlçe Seçiniz</option>
-            {formData.city && TURKISH_CITIES.find(c => c.name === formData.city)?.districts.map((district) => (
-              <option key={district} value={district}>
-                {district}
-              </option>
-            ))}
-          </select>
+            options={formData.city ? TURKISH_CITIES.find(c => c.name === formData.city)?.districts.map((district) => ({
+              value: district,
+              label: district,
+            })) : []}
+            placeholder={t("addresses.select")}
+            error={errors.state}
+          />
           {errors.state && (
             <p className="mt-1 text-sm text-red-600">{errors.state}</p>
           )}

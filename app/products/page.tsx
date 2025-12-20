@@ -2,10 +2,11 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState, useMemo, useEffect, Suspense, useRef, useCallback } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { getAllProducts } from "@/lib/productService";
 import ProductCard from "@/components/ProductCard";
 import FilterDrawer from "@/components/FilterDrawer";
-import { SlidersHorizontal, ChevronDown, Loader2 } from "lucide-react";
+import { SlidersHorizontal, ChevronDown, Loader2, Search, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Product, ProductGender, GENDER_OPTIONS } from "@/types";
 import { PRODUCT_CATEGORIES, ProductCategory } from "@/lib/constants";
@@ -34,13 +35,22 @@ function ProductsContent(): React.JSX.Element {
   const [sortBy, setSortBy]: ["newest" | "price-low" | "price-high", (sortBy: "newest" | "price-low" | "price-high") => void] = useState<"newest" | "price-low" | "price-high">("newest");
   const [isSortOpen, setIsSortOpen] = useState<boolean>(false);
   
+  const debouncedSearchQuery: string = useDebounce(searchQuery, 300);
+  
   // Handle URL params
   useEffect(() => {
     const genderParam: string | null = searchParams.get("gender");
-    const isValidGender: boolean = GENDER_OPTIONS.some(option => option.value === genderParam);
+    const queryParam: string | null = searchParams.get("q");
     
-    if (isValidGender && genderParam) {
-      setActiveGender(genderParam as ProductGender);
+    if (genderParam) {
+      const isValidGender: boolean = GENDER_OPTIONS.some(option => option.value === genderParam);
+      if (isValidGender) {
+        setActiveGender(genderParam as ProductGender);
+      }
+    }
+
+    if (queryParam) {
+      setSearchQuery(queryParam);
     }
   }, [searchParams]);
 
@@ -67,10 +77,11 @@ function ProductsContent(): React.JSX.Element {
         product.gender === "Unisex" ||
         product.gender === activeGender;
 
-      // 2. Search Filter
+       // 2. Search Filter
       const matchesSearch: boolean =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase());
+        debouncedSearchQuery === "" ||
+        product.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
       // 3. Category Filter
       const productCategory: ProductCategory | undefined = PRODUCT_CATEGORIES.find(c => c.value === product.category);
@@ -79,10 +90,30 @@ function ProductsContent(): React.JSX.Element {
         product.category === selectedCategory || 
         (!!productCategory && productCategory.translationKey === selectedCategory);
 
-      // 4. Size Filter
-      const matchesSize: boolean =
-        selectedSizes.length === 0 ||
-        (product.sizes && product.sizes.some(size => selectedSizes.includes(String(size))));
+      // 4. Size Filter - Check variants for accurate size availability and stock
+      let matchesSize: boolean = selectedSizes.length === 0;
+      if (!matchesSize) {
+        // If product has variants, check their sizes and stock
+        if (product.hasVariants && product.variants && product.variants.length > 0) {
+          // Get sizes only from variants that are in stock
+          const inStockVariantSizes: string[] = product.variants
+            .filter((v: any) => v.inStock)
+            .flatMap((v: any) => v.sizes || []);
+          
+          matchesSize = selectedSizes.some((selectedSize: string) => 
+            inStockVariantSizes.includes(selectedSize)
+          );
+        } else if (product.sizes && product.sizes.length > 0 && product.inStock) {
+          // Fallback to product.sizes for products without variants, only if in stock
+          matchesSize = product.sizes.some((size: string) => 
+            selectedSizes.includes(String(size))
+          );
+        } else {
+          // If no variants and no sizes, or out of stock
+          matchesSize = false;
+        }
+      }
+
 
       // 5. Price Filter
       const price = product.price;
@@ -109,12 +140,12 @@ function ProductsContent(): React.JSX.Element {
     });
 
     return filtered;
-  }, [products, activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
+  }, [products, activeGender, debouncedSearchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
 
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE);
-  }, [activeGender, searchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
+  }, [activeGender, debouncedSearchQuery, selectedCategory, selectedSizes, priceRange, showDiscountedOnly, sortBy]);
 
   // Derived pagination data
   const currentProducts: Product[] = useMemo(() => {
@@ -170,6 +201,24 @@ function ProductsContent(): React.JSX.Element {
     setSearchQuery("");
   };
 
+  const handleApplyFilters: (filters: {
+    category: string;
+    sizes: string[];
+    priceRange: [number, number];
+    showDiscountedOnly: boolean;
+  }) => void = (filters: {
+    category: string;
+    sizes: string[];
+    priceRange: [number, number];
+    showDiscountedOnly: boolean;
+  }) => {
+    setSelectedCategory(filters.category);
+    setSelectedSizes(filters.sizes);
+    setPriceRange(filters.priceRange);
+    setShowDiscountedOnly(filters.showDiscountedOnly);
+    setIsFilterOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-white pt-16 lg:pt-20">
       {/* Sticky Top Bar */}
@@ -177,17 +226,40 @@ function ProductsContent(): React.JSX.Element {
         <div className="max-w-[1920px] mx-auto px-4 lg:px-8">
           <div className="flex flex-col gap-4 py-4">
             {/* Controls Bar */}
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setIsFilterOpen(true)}
-                className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-60 transition-opacity"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                {t("products.filter")}
-                {(selectedCategory !== "all" || selectedSizes.length > 0) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-600" />
-                )}
-              </button>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={() => setIsFilterOpen(true)}
+                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-60 transition-opacity whitespace-nowrap"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {t("products.filter")}
+                  {(selectedCategory !== "all" || selectedSizes.length > 0) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary-600" />
+                  )}
+                </button>
+
+                {/* Inline Search Input */}
+                <div className="hidden md:flex items-center relative group">
+                  <Search className="w-3.5 h-3.5 absolute left-0 text-gray-400 group-focus-within:text-black transition-colors" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t("products.search")}
+                    className="pl-6 pr-8 py-1 text-[10px] font-bold uppercase tracking-widest border-b border-transparent focus:border-black outline-none w-32 focus:w-64 transition-all duration-300 bg-transparent"
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-0 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="relative">
                 <button 
                   onClick={() => setIsSortOpen(!isSortOpen)}
@@ -308,15 +380,11 @@ function ProductsContent(): React.JSX.Element {
       <FilterDrawer
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        selectedSizes={selectedSizes}
-        setSelectedSizes={setSelectedSizes}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        showDiscountedOnly={showDiscountedOnly}
-        setShowDiscountedOnly={setShowDiscountedOnly}
-        onApply={() => setIsFilterOpen(false)}
+        currentCategory={selectedCategory}
+        currentSizes={selectedSizes}
+        currentPriceRange={priceRange}
+        currentShowDiscountedOnly={showDiscountedOnly}
+        onApply={handleApplyFilters}
         onClear={clearFilters}
       />
     </div>

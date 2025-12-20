@@ -10,6 +10,7 @@ import { CartItem, Product } from "@/types";
 import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { useState, useEffect, useMemo } from "react";
 import { getAllProducts } from "@/lib/productService";
+import { formatPrice } from "@/lib/utils";
 
 export default function CartPage(): React.JSX.Element {
   const {
@@ -175,7 +176,7 @@ export default function CartPage(): React.JSX.Element {
                     {/* Price and Remove */}
                     <div className="flex items-center gap-4">
                       <p className="text-base lg:text-lg font-bold">
-                        ₺{(item.price * item.quantity).toFixed(2)}
+                        {formatPrice(item.price * item.quantity)}
                       </p>
                       <button
                         onClick={() =>
@@ -204,7 +205,7 @@ export default function CartPage(): React.JSX.Element {
                 <div className="flex justify-between text-sm uppercase tracking-wider">
                   <span className="text-gray-600">{t("cart.subtotal")}</span>
                   <span className="font-bold">
-                    ₺{getTotalPrice().toFixed(2)}
+                    {formatPrice(getTotalPrice())}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm uppercase tracking-wider">
@@ -213,7 +214,7 @@ export default function CartPage(): React.JSX.Element {
                     {getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? (
                       <span className="text-green-600">{t("products.freeShipping")}</span>
                     ) : (
-                      `₺${SHIPPING_COST.toFixed(2)}`
+                      formatPrice(SHIPPING_COST)
                     )}
                   </span>
                 </div>
@@ -222,7 +223,7 @@ export default function CartPage(): React.JSX.Element {
               <div className="flex justify-between text-base lg:text-lg font-bold uppercase tracking-wider mb-8">
                 <span>{t("cart.total")}</span>
                 <span>
-                  ₺{(getTotalPrice() + (getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)).toFixed(2)}
+                  {formatPrice(getTotalPrice() + (getTotalPrice() >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST))}
                 </span>
               </div>
 

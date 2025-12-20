@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, ChevronDown, Check } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PRODUCT_CATEGORIES, getCategoryType } from "@/lib/constants";
@@ -11,56 +11,60 @@ import DiscountFilter from "./DiscountFilter";
 export default function FilterDrawer({
   isOpen,
   onClose,
-  selectedCategory,
-  setSelectedCategory,
-  selectedSizes,
-  setSelectedSizes,
-  priceRange,
-  setPriceRange,
-  showDiscountedOnly,
-  setShowDiscountedOnly,
   onApply,
   onClear,
+  currentCategory = "all",
+  currentSizes = [],
+  currentPriceRange = [0, 10000],
+  currentShowDiscountedOnly = false,
 }: FilterDrawerProps) {
   const { t } = useLanguage();
   const [activeSection, setActiveSection]: [string | null, (activeSection: string | null) => void] = useState<string | null>("category");
-  const [minPriceInput, setMinPriceInput]: [string, (minPriceInput: string) => void] = useState<string>(priceRange[0].toString());
-  const [maxPriceInput, setMaxPriceInput]: [string, (maxPriceInput: string) => void] = useState<string>(priceRange[1].toString());
+  
+  // Local states for pending changes
+  const [localCategory, setLocalCategory] = useState<string>(currentCategory || "all");
+  const [localSizes, setLocalSizes] = useState<string[]>(currentSizes || []);
+  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>(currentPriceRange || [0, 10000]);
+  const [localShowDiscountedOnly, setLocalShowDiscountedOnly] = useState<boolean>(currentShowDiscountedOnly || false);
+
+  const [minPriceInput, setMinPriceInput]: [string, (minPriceInput: string) => void] = useState<string>((currentPriceRange?.[0] ?? 0).toString());
+  const [maxPriceInput, setMaxPriceInput]: [string, (maxPriceInput: string) => void] = useState<string>((currentPriceRange?.[1] ?? 10000).toString());
+
+  // Sync local state when drawer opens to match currently applied filters
+  useEffect(() => {
+    if (isOpen) {
+      setLocalCategory(currentCategory);
+      setLocalSizes(currentSizes);
+      setLocalPriceRange(currentPriceRange);
+      setLocalShowDiscountedOnly(currentShowDiscountedOnly);
+      setMinPriceInput((currentPriceRange?.[0] ?? 0).toString());
+      setMaxPriceInput((currentPriceRange?.[1] ?? 10000).toString());
+    }
+  }, [isOpen, currentCategory, currentSizes, currentPriceRange, currentShowDiscountedOnly]);
 
   const handleMinPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (val == "") {
-      setMinPriceInput("0");
-    }else{
-      setMinPriceInput(val); 
-    }
+    setMinPriceInput(val === "" ? "0" : val);
     const num = parseInt(val);
     if (!isNaN(num)) {
-      setPriceRange([num, priceRange[1]]);
+      setLocalPriceRange([num, localPriceRange[1]]);
     }
   };
 
   const handleMaxPriceChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (val == "") {
-      setMaxPriceInput("10000");
-    }else{
-      setMaxPriceInput(val); 
-    }
+    setMaxPriceInput(val === "" ? "10000" : val);
     const num = parseInt(val);
     if (!isNaN(num)) {
-      setPriceRange([priceRange[0], num]);
+      setLocalPriceRange([localPriceRange[0], num]);
     }
   };
 
-  // Sync local inputs when priceRange changes from outside (e.g. slider)
+  // Sync local inputs when localPriceRange changes (e.g. slider)
   useEffect(() => {
-    setMinPriceInput(priceRange[0].toString());
-  }, [priceRange[0]]);
-
-  useEffect(() => {
-    setMaxPriceInput(priceRange[1].toString());
-  }, [priceRange[1]]);
+    setMinPriceInput(localPriceRange[0].toString());
+    setMaxPriceInput(localPriceRange[1].toString());
+  }, [localPriceRange]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -74,32 +78,49 @@ export default function FilterDrawer({
     };
   }, [isOpen]);
 
-  // Reset sizes when category changes
+  const prevCategoryRef = useRef<string>(localCategory);
+
+  // Reset local sizes ONLY when local category actually changes to a different value
   useEffect(() => {
-    setSelectedSizes([]);
-  }, [selectedCategory, setSelectedSizes]);
+    if (isOpen && prevCategoryRef.current !== localCategory) {
+      setLocalSizes([]);
+    }
+    prevCategoryRef.current = localCategory;
+  }, [localCategory, isOpen]);
 
   const toggleSection: (section: string) => void = (section: string) => {
     setActiveSection(activeSection === section ? null : section);
   };
 
   const toggleSize: (size: string) => void = (size: string) => {
-    if (selectedSizes.includes(size)) {
-      setSelectedSizes(selectedSizes.filter((s) => s !== size));
+    if (localSizes.includes(size)) {
+      setLocalSizes(localSizes.filter((s) => s !== size));
     } else {
-      setSelectedSizes([...selectedSizes, size]);
+      setLocalSizes([...localSizes, size]);
     }
   };
 
   // Determine available sizes based on category type
-  const categoryType: string = getCategoryType(selectedCategory);
+  const categoryType: string = getCategoryType(localCategory);
   const showSizeSection: boolean = categoryType !== "accessories";
   
   const availableSizes: string[] = categoryType === "shoes" ? shoeSizes : clothingSizes;
 
-  const handleClear: () => void = () => {
+  const handleApply = () => {
+    onApply({
+      category: localCategory,
+      sizes: localSizes,
+      priceRange: localPriceRange,
+      showDiscountedOnly: localShowDiscountedOnly,
+    });
+  };
+
+  const handleClear = () => {
+    setLocalCategory("all");
+    setLocalSizes([]);
+    setLocalPriceRange([0, 10000]);
+    setLocalShowDiscountedOnly(false);
     onClear();
-    // Also reset local state if needed, though onClear from parent should handle it
   };
 
   return (
@@ -155,9 +176,9 @@ export default function FilterDrawer({
               }`}
             >
               <button
-                onClick={() => setSelectedCategory("all")}
+                onClick={() => setLocalCategory("all")}
                 className={`block w-full text-left text-sm py-1 ${
-                  selectedCategory === "all"
+                  localCategory === "all"
                     ? "font-bold text-primary-600"
                     : "text-gray-600 hover:text-black"
                 }`}
@@ -167,9 +188,9 @@ export default function FilterDrawer({
               {PRODUCT_CATEGORIES.map((cat) => (
                 <button
                   key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value)}
+                  onClick={() => setLocalCategory(cat.value)}
                   className={`block w-full text-left text-sm py-1 ${
-                    selectedCategory === cat.value
+                    localCategory === cat.value
                       ? "font-bold text-primary-600"
                       : "text-gray-600 hover:text-black"
                   }`}
@@ -207,7 +228,7 @@ export default function FilterDrawer({
                     key={size}
                     onClick={() => toggleSize(size)}
                     className={`py-2 text-sm font-medium border transition-colors ${
-                      selectedSizes.includes(size)
+                      localSizes.includes(size)
                         ? "border-primary-600 bg-primary-600 text-white"
                         : "border-gray-200 text-gray-900 hover:border-primary-600"
                     }`}
@@ -249,8 +270,8 @@ export default function FilterDrawer({
                   <div 
                     className="absolute top-1/2 h-1 bg-primary-600 rounded-lg -translate-y-1/2 z-10"
                     style={{
-                      left: `${(priceRange[0] / 10000) * 100}%`,
-                      right: `${100 - (priceRange[1] / 10000) * 100}%`
+                      left: `${(localPriceRange[0] / 10000) * 100}%`,
+                      right: `${100 - (localPriceRange[1] / 10000) * 100}%`
                     }}
                   />
                   {/* Min Slider */}
@@ -259,10 +280,10 @@ export default function FilterDrawer({
                     min="0"
                     max="10000"
                     step="100"
-                    value={priceRange[0]}
+                    value={localPriceRange[0]}
                     onChange={(e) => {
-                      const val = Math.min(parseInt(e.target.value), priceRange[1] - 100);
-                      setPriceRange([val, priceRange[1]]);
+                      const val = Math.min(parseInt(e.target.value), localPriceRange[1] - 100);
+                      setLocalPriceRange([val, localPriceRange[1]]);
                     }}
                     className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary-600 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:cursor-pointer"
                   />
@@ -273,10 +294,10 @@ export default function FilterDrawer({
                     min="0"
                     max="10000"
                     step="100"
-                    value={priceRange[1]}
+                    value={localPriceRange[1]}
                     onChange={(e) => {
-                      const val = Math.max(parseInt(e.target.value), priceRange[0] + 100);
-                      setPriceRange([priceRange[0], val]);
+                      const val = Math.max(parseInt(e.target.value), localPriceRange[0] + 100);
+                      setLocalPriceRange([localPriceRange[0], val]);
                     }}
                     className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary-600 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:cursor-pointer"
                   />
@@ -289,7 +310,7 @@ export default function FilterDrawer({
                     <input
                       type="number"
                       min="0"
-                      max={priceRange[1]}
+                      max={localPriceRange[1]}
                       step="100"
                       value={minPriceInput}
                       onChange={handleMinPriceChange}
@@ -314,8 +335,8 @@ export default function FilterDrawer({
           </div>
           {/* Discount Filter Section */}
           <DiscountFilter
-            showDiscountedOnly={showDiscountedOnly}
-            setShowDiscountedOnly={setShowDiscountedOnly}
+            showDiscountedOnly={localShowDiscountedOnly}
+            setShowDiscountedOnly={setLocalShowDiscountedOnly}
           />
         </div>
 
@@ -329,7 +350,7 @@ export default function FilterDrawer({
               {t("products.clearFilter")}
             </button>
             <button
-              onClick={onApply}
+              onClick={handleApply}
               className="flex-1 py-3 text-xs font-bold uppercase tracking-widest bg-primary-600 text-white hover:bg-primary-700 transition-colors"
             >
               {t("products.applyFilter")}

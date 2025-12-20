@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname} from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ShoppingBag, Menu, X, User, LogOut, Search, Heart, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef, JSX } from "react";
 import { useShop } from "@/contexts/ShopContext";
@@ -16,13 +16,16 @@ export default function Header() {
   const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const { favorites, cartCount } = useShop();
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const router= useRouter();
+  const router = useRouter();
   const pathname: string = usePathname();
   const langMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdmin: () => void = async () => {
@@ -46,6 +49,22 @@ export default function Header() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    const handleKeyDown: (e: KeyboardEvent) => void = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Handle outside clicks
@@ -178,7 +197,10 @@ export default function Header() {
               </div>
 
               {/* Search */}
-              <button className="hover:opacity-60 transition-opacity">
+              <button 
+                onClick={() => setIsSearchOpen(true)}
+                className="hover:opacity-60 transition-opacity"
+              >
                 <Search className="w-5 h-5" />
               </button>
 
@@ -260,6 +282,97 @@ export default function Header() {
           </div>
         </div>
       </header>
+      
+      {/* Search Overlay */}
+      <div 
+        className={`fixed inset-0 z-[60] transition-all duration-700 ease-in-out ${
+          isSearchOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+        }`}
+      >
+        {/* Glassmorphism Background */}
+        <div 
+          className="absolute inset-0 bg-white/70 backdrop-blur-3xl"
+          onClick={() => setIsSearchOpen(false)}
+        />
+        
+        <div className="relative max-w-5xl mx-auto px-6 h-full flex flex-col pt-20 lg:pt-24">
+          <div className="flex justify-between items-end mb-12 lg:mb-16">
+            <div className="space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-primary-600/60">
+                {t("common.search") || "Arama"}
+              </span>
+              <h2 className="text-3xl lg:text-4xl font-bold uppercase tracking-tighter text-primary-600">
+                {t("products.searchLabel")}
+              </h2>
+            </div>
+            <button 
+              onClick={() => setIsSearchOpen(false)}
+              className="group p-3 hover:bg-primary-600 rounded-full transition-all duration-500 hover:rotate-90"
+            >
+              <X className="w-6 h-6 lg:w-7 h-7 group-hover:text-white transition-colors" />
+            </button>
+          </div>
+          
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+                setIsSearchOpen(false);
+                setSearchQuery("");
+              }
+            }}
+            className="relative group"
+          >
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("products.search")}
+              className="w-full text-2xl lg:text-3xl font-light bg-transparent border-b border-primary-600/20 pb-4 focus:border-primary-600 outline-none transition-all duration-500 placeholder:text-primary-600/10"
+            />
+            
+            <div className="absolute right-0 bottom-4 flex items-center gap-3">
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              )}
+              <button 
+                type="submit"
+                className="p-2.5 bg-primary-600 text-white rounded-full hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl shadow-primary-600/20"
+              >
+                <Search className="w-5 h-5 lg:w-6 lg:h-6" />
+              </button>
+            </div>
+          </form>
+          
+          <div className="mt-12 lg:mt-16">
+            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-primary-600/40 mb-6 lg:mb-8 ml-1">
+              {t("search.popular") || "Popüler Aramalar"}
+            </p>
+            <div className="flex flex-wrap gap-2 lg:gap-3">
+              {["T-shirt", "Kemer", "Pantolon", "Ceket", "Aksesuar"].map((term) => (
+                <button
+                  key={term}
+                  onClick={() => {
+                    router.push(`/products?q=${encodeURIComponent(term)}`);
+                    setIsSearchOpen(false);
+                  }}
+                  className="px-6 py-2 bg-white/50 border border-primary-600/10 text-[10px] font-bold uppercase tracking-widest hover:bg-primary-600 hover:text-white hover:border-primary-600 hover:translate-y-[-2px] transition-all duration-300 rounded-full shadow-sm"
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile Menu Overlay */}
       <div 
