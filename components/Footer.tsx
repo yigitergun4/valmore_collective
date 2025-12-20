@@ -43,13 +43,6 @@ export default function Footer() {
               >
                 <Facebook className="w-6 h-6" />
               </a>
-              <a
-                href="#"
-                className="text-white hover:text-primary-400 transition-colors"
-                aria-label="X"
-              >
-                <XIcon className="w-6 h-6" />
-              </a>
             </div>
           </div>
 

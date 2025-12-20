@@ -6,6 +6,7 @@ export const translations: Record<Language, any> = {
       previous: "Önceki",
       next: "Sonraki",
       pageOf: "Sayfa {current} / {total}",
+      search: "Arama",
     },
     // Navigation
     nav: {
@@ -407,12 +408,16 @@ export const translations: Record<Language, any> = {
         addressMinLength: "Açık adres en az 10 karakter olmalıdır",
       },
     },
+    search: {
+      popular: "Popüler Aramalar",
+    },
   },
   en: {
     common: {
       previous: "Previous",
       next: "Next",
       pageOf: "Page {current} of {total}",
+      search: "Search",
     },
     // Navigation
     nav: {
@@ -798,22 +803,25 @@ export const translations: Record<Language, any> = {
       saving: "Saving...",
       deleteConfirm: "Are you sure you want to delete this address?",
       success: {
-        add: "New address added.",
-        update: "Address updated.",
-        delete: "Address deleted.",
+        add: "Address added successfully.",
+        update: "Address updated successfully.",
+        delete: "Address deleted successfully.",
       },
       error: {
-        load: "Error loading addresses.",
-        save: "Error saving address.",
-        delete: "Error deleting address.",
+        load: "An error occurred while loading addresses.",
+        save: "An error occurred while saving address.",
+        delete: "An error occurred while deleting address.",
       },
       validation: {
         phoneInvalid: "Enter a valid phone number (10 digits)",
         phoneMustStart5: "Phone number must start with 5",
         zipInvalid: "Zip code must be 5 digits",
-        nameMinLength: "Full name must be at least 3 characters",
-        addressMinLength: "Address must be at least 10 characters",
+        nameMinLength: "Full Name must be at least 3 characters",
+        addressMinLength: "Full address must be at least 10 characters",
       },
+    },
+    search: {
+      popular: "Popular Searches",
     },
   },
 };

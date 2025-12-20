@@ -46,10 +46,10 @@ export default function ShippingForm({
               value={selectedAddressId}
               onChange={(e) => onAddressSelect(e.target.value)}
               options={[
-                { value: "new", label: `✨ ${t("addresses.addNew")}` },
+                { value: "new", label: `${t("addresses.addNew")}` },
                 ...savedAddresses.map((addr) => ({
                   value: addr.title,
-                  label: `📍 ${addr.title} - ${addr.city}, ${addr.district}`,
+                  label: `${addr.title} - ${addr.city}, ${addr.district}`,
                 })),
               ]}
               className="border-primary-200"
